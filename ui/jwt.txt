@@ -1,0 +1,65 @@
+https://jcbaey.com/authentication-in-spa-reactjs-and-vuejs-the-right-way?utm_source=medium
+
+https://jwt.io/introduction/
+
+https://auth0.com/?utm_source=jwtio&utm_campaign=craftedby
+
+https://travishorn.com/api-server-with-jwt-authentication-6bb4985c5253
+
+https://medium.com/dev-bits/a-guide-for-adding-jwt-token-based-authentication-to-your-single-page-nodejs-applications-c403f7cf04f4
+
+https://github.com/jpadilla/ember-simple-auth-token
+
+https://medium.com/@leo/why-json-web-tokens-are-truly-awesome-23fb80b7fc20
+
+https://github.com/dgrijalva/jwt-go
+
+https://auth0.com/blog/authentication-in-golang/
+
+https://github.com/auth0/go-jwt-middleware
+
+https://github.com/qor/auth
+
+https://blog.usejournal.com/authentication-in-golang-c0677bcce1a8
+
+https://github.com/ory/hydra
+
+very good golang auth server with refresh endpoint
+https://www.sohamkamani.com/blog/golang/2019-01-01-jwt-authentication/
+
+https://colorlib.com/wp/free-bootstrap-registration-forms/
+
+api generator
+https://engineering.clever.com/2018/03/28/wag-go-web-api-generator/
+
+golang api server generator
+https://github.com/wantedly/apig
+
+
+
+CI/CD
+
+git commit & push
+
+jenkins job scan
+
+checkout code
+
+compile static asset and go code
+
+deploy to dev server using nomad, consul   <=== dev server = jenkins, nomad, consul, fabio, ldap, graphte, grafana, java, redis, postgres
+
+run integration test
+
+deploy to prod <= prod server = nomad, consul, fabio
+
+central service farm <= nomad cluster, consul cluster
+
+each pi 
+pi:      $55
+power:   $ 9
+sd card: $ 8
+hdmi     $ 8
+case     $15
+
+

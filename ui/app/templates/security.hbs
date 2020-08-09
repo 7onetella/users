@@ -1,0 +1,41 @@
+{{#if this.model.session.isAuthenticated}}
+  <div class="jumbotron">
+    <h1 class="display-4">Multi Factor Authentication</h1>
+    <p class="lead">two factor authentication adds additional method of security</p>
+    <hr class="my-4">
+    <p></p>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-sm">
+          <div class="card" style="width: 19rem;">
+            <img src="/ui/assets/g_auth.png" class="card-img-top" alt="Google Authenticator">
+            <div class="card-body">
+              <h5 class="card-title">TOTP</h5>
+              <p class="card-text">Time-based One-time Passwords. Use Google Authenticator or Twillo Authy</p>
+              {{#if this.model.user.mfaenabled}}
+                <button type="button" {{action "toggle_mfa"}} class="btn btn-enabled"><span>Enabled</span></button>
+              {{else}}
+                <button type="button" {{action "toggle_mfa"}} class="btn btn-disabled"><span>Disabled</span></button>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+        <div class="col-sm">
+          <div class="card" style="width: 19rem;">
+            <img src="/ui/assets/webauthn.png" class="card-img-top" alt="WebAuthn">
+            <div class="card-body">
+              <h5 class="card-title">FIDO2 WebAuthn</h5>
+              <p class="card-text">WebAuthn Key</p>
+              {{#if this.model.user.mfaenabled}}
+                <button type="button" {{action "toggle_mfa"}} class="btn btn-enabled"><span>Enabled</span></button>
+              {{else}}
+                <button type="button" {{action "toggle_mfa"}} class="btn btn-disabled"><span>Disabled</span></button>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{{/if}}

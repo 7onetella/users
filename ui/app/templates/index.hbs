@@ -1,0 +1,12 @@
+<div class="jumbotron">
+  <h1 class="display-4">Home</h1>
+  <p class="lead"></p>
+  <hr class="my-4">
+  <p>Portal</p>
+  <p class="lead">
+    {{#unless session.isAuthenticated}}
+      {{ link-to "Sign In" "signin" class="btn btn-primary btn-lg" role="button" }}
+      {{!-- {{ link-to "Sign out" "invalidateSession" class="nav-link" }} --}}
+    {{/unless}}
+  </p>
+</div>

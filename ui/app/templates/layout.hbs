@@ -1,0 +1,58 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark" >
+  {{ link-to "Home" "index" class="navbar-brand" }}
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item active">
+      </li>
+      {{#if session.isAuthenticated}}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Account
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li class="nav-item">
+              {{ link-to "Profile" "profile" class="dropdown-item" }}
+            </li>
+            <li class="nav-item">
+              {{ link-to "Security" "security" class="dropdown-item" }}
+            </li>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="#">Something else here</a>
+          </div>
+        </li>
+        <li>
+          <a href="#" {{ action "invalidateSession" preventDefault=false}} class="nav-link">Sign out</a>
+          {{!-- {{ link-to "Sign out" "invalidateSession" class="nav-link" }} --}}
+        </li>
+      {{else}}
+        <li class="nav-item">
+          <button type="button" {{action "silent_login"}} class="btn btn-success btn-block">Silent Signin</button>
+        </li>
+        <li class="nav-item">
+          {{ link-to "Sign in" "signin" class="nav-link" }}
+        </li>
+        <li class="nav-item">
+          {{ link-to "Sign up" "signup" class="nav-link" }}
+        </li>
+      {{/if}}
+    </ul>
+  </div>
+</nav>
+
+<br>
+
+<div class="container">
+  {{outlet}}
+</div>
+
+{{#if showDebugInfo}}
+  <hr>
+  <p>Config:</p>
+  <pre>{{config}}</pre>
+
+  <p>Session Data:</p>
+  <pre>{{sessionData}}</pre>
+{{/if}}

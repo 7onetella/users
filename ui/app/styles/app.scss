@@ -1,0 +1,121 @@
+@import "ember-cli-bootstrap-4/bootstrap";
+
+/* app.scss custom css */
+#session_token {
+  display: none;
+}
+
+#qr_code_image, #image_div {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#signinalertdiv {
+    text-align:center;
+}
+#totpdiv {
+    width: 40rem;
+    margin-top: 50px;
+    margin-left: auto;
+    margin-right: auto;
+}
+#signindiv {
+    width: 18rem;
+    margin-top: 50px;
+    margin-left: auto;
+    margin-right: auto;
+}
+#aboutdiv {
+    width: 18rem;
+}
+
+td.clickable {
+    cursor: pointer;
+}
+
+#flashmessagep {
+    margin-bottom: 0;
+}
+
+#passwordlisttable {
+    margin-top: 1rem;
+}
+
+.doc-section {
+    width: 260px;
+    // border: 1px solid #cccccc;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    // box-shadow: 1px 1px 4px 2px #ccc;
+    // -moz-box-shadow: 1px 1px 4px 2px #ccc;
+    // -webkit-box-shadow: 1px 1px 4px 2px #ccc;
+    margin: auto;
+
+    &__header {
+      font-weight: bold;
+    }
+
+    &__header-title {
+      padding: 5px;
+    }
+}
+
+.alert {
+	animation: fadeIn 1s ease;
+	-moz-animation: fadeIn 1s ease;
+	-webkit-animation: fadeIn 1s ease;
+	border-style: solid;
+	border-width: 0 0 1px;
+	border-radius: 0px 0px 0 0;
+	-moz-border-radius: 0px 0px 0 0;
+	-webkit-border-radius: 0px 0px 0 0;
+	font-size: 16px;
+    margin: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+	position: absolute;
+}
+
+/*This is modifying the btn-primary colors but you could create your own .btn-something class as well*/
+/* https://stackoverflow.com/questions/25923623/change-hover-color-on-a-button-with-bootstrap-customization/25933439 */
+.btn-enabled {
+    color: #fff;
+    background-color: #28a745;
+    border-color: #28a745;
+    width: 6rem;
+}
+.btn-enabled:hover, .btn-enabled:focus, .btn-enabled:active, .btn-enabled.active, .open>.dropdown-toggle.btn-enabled {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+    width: 6rem;
+}
+.btn-enabled:hover span {
+  display:none
+}
+.btn-enabled:hover:before {
+  content:"Disable";
+}
+
+.btn-disabled {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+    width: 6rem;
+}
+.btn-disabled:hover, .btn-disabled:focus, .btn-disabled:active, .btn-disabled.active, .open>.dropdown-toggle.btn-disabled {
+    color: #fff;
+    background-color: #28a745;
+    border-color: #28a745;
+    width: 6rem;
+}
+.btn-disabled:hover span {
+  display:none
+}
+.btn-disabled:hover:before {
+  content:"Enable";
+}
+
