@@ -1,5 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark" >
-  {{ link-to "Home" "index" class="navbar-brand" }}
+  {{#link-to "index" class="navbar-brand" }}
+    <img class="mr-3" id="lock_img" src="/ui/assets/lock.png" alt="Generic placeholder image">
+  {{/link-to}}
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>

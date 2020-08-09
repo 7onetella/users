@@ -1,8 +1,14 @@
 <div class="jumbotron">
-  <h1 class="display-4">Home</h1>
-  <p class="lead"></p>
+  <p class="lead">
+    <div class="media">
+      <img class="mr-3" id="id_card_img" src="/ui/assets/id_card.png" alt="Generic placeholder image">
+      <div class="media-body">
+        <h5 class="mt-0">Mock Up Site</h5>
+        This is a mock up site for testing TOTP Auth and WebAuthn
+      </div>
+    </div>
+  </p>
   <hr class="my-4">
-  <p>Portal</p>
   <p class="lead">
     {{#unless session.isAuthenticated}}
       {{ link-to "Sign In" "signin" class="btn btn-primary btn-lg" role="button" }}

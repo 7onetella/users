@@ -10,20 +10,24 @@
     margin-right: auto;
 }
 
+#totpdiv {
+    width: 30rem;
+    margin-top: 20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 #signinalertdiv {
     text-align:center;
 }
-#totpdiv {
-    width: 40rem;
-    margin-top: 50px;
+#signindiv {
+    width: 22rem;
     margin-left: auto;
     margin-right: auto;
 }
-#signindiv {
-    width: 18rem;
-    margin-top: 50px;
-    margin-left: auto;
-    margin-right: auto;
+#signindiv label {
+    font-size: 17px;
+    font-weight: bold;
 }
 #aboutdiv {
     width: 18rem;
@@ -119,3 +123,21 @@ td.clickable {
   content:"Enable";
 }
 
+#logo_img {
+  width: 48px;
+  margin-top: 33px;
+  margin-bottom: 28px;
+}
+#lock_img {
+  width: 32px;
+  margin-left: 9px;
+}
+#shield_img {
+  width: 32px;
+}
+#id_card_img {
+  width: 168px;
+}
+.jumbotron .lead .media .media-body {
+  margin-top: 24px;
+}

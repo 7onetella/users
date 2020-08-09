@@ -15,10 +15,10 @@ export default Controller.extend({
     this.get('userIdle').on('idleChanged', (isIdle) => {
       // isIdle is true if idle. False otherwise.
       console.log('contollers/layout.js: init()')
-      console.log("  user idle: " + isIdle)
+      console.log("- user idle: " + isIdle)
       if (isIdle === true) {
         this.get('session').invalidate();
-        this.get('router').transitionTo('signin');
+        this.get('router').transitionTo('session-expired');
       }
     })
   },

@@ -14,6 +14,7 @@ Router.map(function() {
     this.route('mfa', {resetNamespace: true});
     this.route('index', {resetNamespace: true, path: '/'});
     this.route('about', {resetNamespace: true});
+    this.route('session-expired', {resetNamespace: true});
   });
 
   this.route('signin');

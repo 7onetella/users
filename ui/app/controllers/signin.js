@@ -15,7 +15,7 @@ export default Controller.extend({
 
       var that = this
       promise.then(function(){
-        console.log("  authentication successful. redirecting to listing page");
+        console.log("  authentication successful. redirecting to index page");
         console.log("  router" + that.get('router'))
         that.get('router').transitionTo('index');
       },function(data) {
