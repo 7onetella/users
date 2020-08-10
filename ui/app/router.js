@@ -18,6 +18,7 @@ Router.map(function() {
   });
 
   this.route('signin');
+  this.route('totp');
 });
 
 export default Router;

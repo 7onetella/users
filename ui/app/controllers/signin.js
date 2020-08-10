@@ -20,9 +20,16 @@ export default Controller.extend({
         that.get('router').transitionTo('index');
       },function(data) {
         // console.log("  data:" + JSON.stringify(data));
-        console.log("  reason:" + data.json.reason);
-        that.set("loginFailed", true);
-        that.set("login_failure_reason", data.json.message)
+        var reason = data.json.reason
+        var message = data.json.message
+        console.log("  reason:" + reason)
+        if (reason === 'missing_totp') {
+          that.get('router').transitionTo('totp');
+        }
+        if (reason === 'invalid_credential') {
+          that.set("loginFailed", true);
+          that.set("login_failure_reason", message)
+        }
       });
 
     }
