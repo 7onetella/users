@@ -22,16 +22,14 @@
               {{ link-to "Security" "security" class="dropdown-item" }}
             </li>
             <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="#">Something else here</a>
+            <li class="nav-item">
+              <a href="#" {{ action "invalidateSession" preventDefault=false}} class="dropdown-item">Sign out</a>
+            </li>
           </div>
-        </li>
-        <li>
-          <a href="#" {{ action "invalidateSession" preventDefault=false}} class="nav-link">Sign out</a>
-          {{!-- {{ link-to "Sign out" "invalidateSession" class="nav-link" }} --}}
         </li>
       {{else}}
         <li class="nav-item">
-          <button type="button" {{action "silent_login"}} class="btn btn-success btn-block">Silent Signin</button>
+          <a href="#" {{ action "silent_login" preventDefault=false}} class="nav-link">Silent Signin</a>
         </li>
         <li class="nav-item">
           {{ link-to "Sign in" "signin" class="nav-link" }}
