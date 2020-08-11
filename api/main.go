@@ -26,7 +26,7 @@ func init() {
 	}
 	userSchema = s
 
-	//db.MustExec(dbschema)
+	db.MustExec(dbschema)
 }
 
 func main() {
@@ -37,12 +37,12 @@ func main() {
 
 	r.Use(TransactionID())
 
-	secret := "abcdefg"
+	//secret := "abcdefg"
 
 	userService := UserService{db}
 
 	jwt := JWTAuth{
-		secret:   secret,
+		//secret:   secret,
 		claimKey: "user_id",
 		ttl:      120,
 	}

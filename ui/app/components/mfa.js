@@ -12,7 +12,7 @@ export default Component.extend({
   searchtext: "",
 
   actions: {
-    edit(password) {
+    edit() {
     },
     onSuccess() {
       get(this, 'flashMessages').success('copied password to clipboard');

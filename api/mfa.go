@@ -163,7 +163,7 @@ func ValidateToken() gin.HandlerFunc {
 	}
 }
 
-func isTOTPValid(user User, token string) bool {
+func isTOTPValid(user *User, token string) bool {
 	totp := gotp.NewDefaultTOTP(user.MFASecretCurrent)
 	log.Printf(":token = %s", token)
 	now := int(time.Now().Unix())

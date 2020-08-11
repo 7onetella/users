@@ -32,11 +32,43 @@ CREATE TABLE users (
     mfa_secret_current  CHARACTER VARYING(32) DEFAULT '',
     mfa_secret_tmp      CHARACTER VARYING(32) DEFAULT '',
     mfa_secret_tmp_exp  BIGINT DEFAULT 0,
+	jwt_secret          CHARACTER VARYING(32) DEFAULT '',
     CONSTRAINT          unique_user UNIQUE (platform_name, email)
+);
+
+INSERT INTO users 
+		(user_id, platform_name, email, passhash, firstname, lastname, created_date, mfa_enabled, mfa_secret_current, mfa_secret_tmp, mfa_secret_tmp_exp, jwt_secret) 
+VALUES 
+		('ee288e8c-0b2a-41b5-937c-9a355c0483b4', 'web', 'scott@example.com', 'password', 'scott', 'bar', 1597042574, true, 'FPTUDIF2KSQAKREU', '', 0, 'FPTUDIF2KSQAKREU');
+
+INSERT INTO users 
+		(user_id, platform_name, email, passhash, firstname, lastname, created_date, mfa_enabled, mfa_secret_current, mfa_secret_tmp, mfa_secret_tmp_exp, jwt_secret) 
+VALUES 
+		('a2aee5e6-05a0-438c-9276-4ba406b7bf9e', 'web', 'user8az28y@example.com', 'password', 'scott', 'bar', 1596747095, false, 'SVVEC5VTQBMNE3DH', 'C56BRBHMW3YC4XPA', 1597089055, 'SVVEC5VTQBMNE3DH');
+
+DROP TABLE auth_event;
+
+CREATE TABLE auth_event (
+    event_id            UUID PRIMARY KEY,
+    user_id             CHARACTER(40) DEFAULT '',
+    event               CHARACTER VARYING(64) DEFAULT '',
+    event_timestamp     BIGINT DEFAULT 0,
+    ip_v4               CHARACTER(15) DEFAULT '',
+    ip_v6               CHARACTER(38) DEFAULT '',
+    agent               CHARACTER VARYING(128) DEFAULT ''
 );
 `
 
-// User is application user
+type AuthEvent struct {
+	ID        string `db:"event_id"`
+	UserIDReq string `db:"user_id"`
+	Event     string `db:"event"`
+	Timestamp int64  `db:"event_timestamp"`
+	IPV4      string `db:"ip_v4"`
+	IPV6      string `db:"ip_v6"`
+	Agent     string `db:"agent"`
+}
+
 type User struct {
 	ID               string `db:"user_id"       json:"id"            api:"users"`
 	PlatformName     string `db:"platform_name" json:"platform_name" api:"attr"`
@@ -49,6 +81,7 @@ type User struct {
 	MFASecretCurrent string `db:"mfa_secret_current"`
 	MFASecretTmp     string `db:"mfa_secret_tmp"`
 	MFASecretTmpExp  int64  `db:"mfa_secret_tmp_exp"`
+	JWTSecret        string `db:"jwt_secret"`
 }
 
 func UnmarshalUser(payload []byte, schema *jsonapi.Schema) (User, error) {
@@ -171,7 +204,7 @@ func UpdateUser(service UserService) gin.HandlerFunc {
 			return
 		}
 
-		dberr := service.Update(user)
+		dberr := service.UpdateProfile(user)
 		if rh.HandleDBError(dberr) {
 			return
 		}

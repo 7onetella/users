@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/google/uuid"
+	"github.com/xlzd/gotp"
 	"log"
 	"time"
 
@@ -51,16 +53,20 @@ func (a JWTAuth) Signin(userService UserService) gin.HandlerFunc {
 		cred := Credentials{}
 		c.ShouldBind(&cred)
 
-		authenticated, u := userService.Authenticate(cred.Username, cred.Password)
+		authenticated, user := userService.Authenticate(cred.Username, cred.Password)
+
 		if !authenticated {
 			c.AbortWithStatusJSON(401, gin.H{
 				"reason":  "invalid_credential",
 				"message": "Check login name or password",
 			})
+			dberr := userService.RecordAuthEvent(NewAuthEvent(user.ID, "invalid_credential", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
+			if rh.HandleDBError(dberr) {
+				return
+			}
 			return
 		}
 
-		user, _ := u.(User)
 		// this just to make testing easier during development phase
 		if user.Email == "user8az28y@example.com" {
 			goto SilentLogin
@@ -72,6 +78,7 @@ func (a JWTAuth) Signin(userService UserService) gin.HandlerFunc {
 					"reason":  "missing_totp",
 					"message": "TOTP required",
 				})
+				userService.RecordAuthEvent(NewAuthEvent(user.ID, "missing_totp", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
 				return
 			}
 			if !isTOTPValid(user, cred.TOTP) {
@@ -79,13 +86,14 @@ func (a JWTAuth) Signin(userService UserService) gin.HandlerFunc {
 					"reason":  "invalid_totp",
 					"message": "Check your TOTP",
 				})
+				userService.RecordAuthEvent(NewAuthEvent(user.ID, "invalid_totp", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
 				return
 			}
 		}
 
 	SilentLogin:
 		if authenticated {
-			tokenString, expTime, err := EncodeToken(a.claimKey, user.ID, a.secret, a.ttl)
+			tokenString, expTime, err := EncodeToken(a.claimKey, user.ID, user.JWTSecret, a.ttl)
 			if err != nil {
 				log.Println("encoding error")
 				c.AbortWithError(http.StatusInternalServerError, err)
@@ -104,8 +112,8 @@ func (a JWTAuth) Signin(userService UserService) gin.HandlerFunc {
 				Token:      tokenString,
 				Expiration: expTime.Unix(),
 			}
-
 			c.JSON(200, token)
+			userService.RecordAuthEvent(NewAuthEvent(user.ID, "successful_login", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
 		} else {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
@@ -129,11 +137,15 @@ func Signup(userService UserService) gin.HandlerFunc {
 			return
 		}
 
-		ID, dberr := userService.Register(user)
+		user.ID = uuid.New().String()
+		user.Created = CurrentTimeInSeconds()
+		user.PlatformName = "web"
+		user.JWTSecret = gotp.RandomSecret(16)
+
+		dberr := userService.Register(user)
 		if rh.HandleDBError(dberr) {
 			return
 		}
-		user.ID = ID
 
 		rh.SetContentTypeJSON()
 		out, err := MarshalUser(c.Request.URL.RequestURI(), userSchema, user)

@@ -34,7 +34,7 @@ type UserService struct {
 	*sqlx.DB
 }
 
-func (u UserService) Authenticate(username, password string) (bool, interface{}) {
+func (u UserService) Authenticate(username, password string) (bool, *User) {
 	user, operr := u.FindByEmail(username)
 	if operr != nil {
 		log.Printf("error while authenticating: %v", operr)
@@ -42,37 +42,38 @@ func (u UserService) Authenticate(username, password string) (bool, interface{})
 	}
 
 	if user.Password == password {
-		return true, user
+		return true, &user
 	}
 
-	return false, nil
+	return false, &User{ID: user.ID}
 }
 
-func (u UserService) Register(user User) (string, *DBOpError) {
+func (u UserService) Register(user User) *DBOpError {
+	sql := `
+		INSERT INTO users
+			  (user_id,  platform_name,  email,   passhash,  firstname, lastname,  created_date) 
+		VALUES 
+			  (:user_id, :platform_name, :email, :passhash, :firstname, :lastname, :created_date)
+	`
+	return u.Upsert(sql, &user)
+}
+
+func (u UserService) Upsert(sql string, obj interface{}) *DBOpError {
 	db := u.DB
 	tx := db.MustBegin()
-	sql := `
-		INSERT INTO 
-			users (user_id, platform_name, email, passhash, firstname, lastname, created_date) 
-		VALUES 
-			(:user_id, :platform_name, :email, :passhash, :firstname, :lastname, :created_date)
-	`
 
-	user.ID = uuid.New().String()
-	user.Created = CurrentTimeInSeconds()
-	user.PlatformName = "web"
-	_, err := tx.NamedExec(sql, &user)
+	_, err := tx.NamedExec(sql, obj)
 	if err != nil {
 		tx.Rollback()
-		return "", &DBOpError{sql, err}
+		return &DBOpError{sql, err}
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return "", &DBOpError{sql, err}
+		return &DBOpError{sql, err}
 	}
 
-	return user.ID, nil
+	return nil
 }
 
 func CurrentTimeInSeconds() int64 {
@@ -122,37 +123,22 @@ func (u UserService) List() ([]User, *DBOpError) {
 	return users, nil
 }
 
-func (u UserService) Update(user User) *DBOpError {
-	db := u.DB
-	tx := db.MustBegin()
+func (u UserService) UpdateProfile(user User) *DBOpError {
 	sql := `
 		UPDATE 
 			users 
 		SET 
 			firstname      = :firstname,  
 		    lastname       = :lastname,
-		    mfa_enabled     = :mfa_enabled 
+			email          = :email,
+			passhash       = :passhash
 		WHERE 
 			user_id = :user_id 
 	`
-
-	_, err := tx.NamedExec(sql, &user)
-	if err != nil {
-		tx.Rollback()
-		return &DBOpError{sql, err}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return &DBOpError{sql, err}
-	}
-
-	return nil
+	return u.Upsert(sql, &user)
 }
 
 func (u UserService) UpdateMFATemp(user User) *DBOpError {
-	db := u.DB
-	tx := db.MustBegin()
 	sql := `
 		UPDATE 
 			users 
@@ -162,48 +148,42 @@ func (u UserService) UpdateMFATemp(user User) *DBOpError {
 		WHERE 
 			user_id = :user_id 
 	`
-
-	_, err := tx.NamedExec(sql, &user)
-	if err != nil {
-		tx.Rollback()
-		return &DBOpError{sql, err}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return &DBOpError{sql, err}
-	}
-
-	return nil
+	return u.Upsert(sql, &user)
 }
 
 func (u UserService) UpdateMFA(user User) *DBOpError {
-	db := u.DB
-	tx := db.MustBegin()
 	sql := `
 		UPDATE 
 			users 
 		SET 
+		    mfa_enabled           = :mfa_enabled,
 		    mfa_secret_current    = :mfa_secret_current, 
 		    mfa_secret_tmp        = :mfa_secret_tmp, 
-		    mfa_secret_tmp_exp    = :mfa_secret_tmp_exp,
-		    mfa_enabled           = :mfa_enabled
+		    mfa_secret_tmp_exp    = :mfa_secret_tmp_exp
 		WHERE 
 			user_id = :user_id 
 	`
+	return u.Upsert(sql, &user)
+}
 
-	log.Printf("sql = \n%v", sql)
+func (u UserService) RecordAuthEvent(auth AuthEvent) *DBOpError {
+	sql := `
+		INSERT INTO auth_event
+			  (event_id,  user_id,  event,   event_timestamp,  ip_v4, ip_v6,  agent) 
+		VALUES 
+			  (:event_id, :user_id, :event, :event_timestamp, :ip_v4, :ip_v6, :agent)
+	`
+	return u.Upsert(sql, &auth)
+}
 
-	_, err := tx.NamedExec(sql, &user)
-	if err != nil {
-		tx.Rollback()
-		return &DBOpError{sql, err}
+func NewAuthEvent(userID, event, ipv4, ipv6, agent string) AuthEvent {
+	return AuthEvent{
+		ID:        uuid.New().String(),
+		UserIDReq: userID,
+		Event:     event,
+		IPV4:      ipv4,
+		IPV6:      ipv6,
+		Agent:     agent,
+		Timestamp: CurrentTimeInSeconds(),
 	}
-
-	err = tx.Commit()
-	if err != nil {
-		return &DBOpError{sql, err}
-	}
-
-	return nil
 }

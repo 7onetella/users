@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"testing"
 	"time"
 )
@@ -14,18 +15,22 @@ func TestRegister(t *testing.T) {
 	userService := UserService{testDB}
 	user := User{
 		FirstName: "JohnFirstName",
-		Created: time.Now().Unix(),
+		Created:   time.Now().Unix(),
 	}
 	spec.Given(fmt.Sprintf("%#v", user))
 
-	id, err := userService.Register(user)
+	user.ID = uuid.New().String()
+	user.Created = CurrentTimeInSeconds()
+	user.PlatformName = "web"
+
+	err := userService.Register(user)
 	spec.When("UserService.Register(user)")
 
 	spec.Then()
 
 	spec.Expect(func() {
 		spec.AssertAndFailNow(err == nil, "err is nil", err)
-		spec.AssertAndFailNow(len(id) > 0, "id is not empty", id)
+		spec.AssertAndFailNow(len(user.ID) > 0, "id is not empty", user.ID)
 	})
 
 	testuser = user

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -19,8 +20,21 @@ func (a JWTAuth) Validator(userService UserService) gin.HandlerFunc {
 			return
 		}
 		log.Printf("Authentication: Bearer %s", tokenString)
+		terms := strings.Split(tokenString, ".")
+		payloadRaw := terms[1]
+		log.Printf("payload = %s", payloadRaw)
+		claim, err := ExtractUserClaim(payloadRaw)
+		if err != nil {
+			log.Printf("jmap err = %v", err)
+		}
+		log.Printf("jmap = %#v", claim)
+		claimedUser, dberr := userService.Get(claim.Id)
+		if dberr != nil {
+			log.Print(err)
+			return
+		}
 
-		claims, err := DecodeToken(tokenString, a.secret)
+		claims, err := DecodeToken(tokenString, claimedUser.JWTSecret)
 		if err != nil {
 			log.Printf("error decoding: %v", err)
 			c.AbortWithStatus(http.StatusUnauthorized)
@@ -79,6 +93,11 @@ func DecodeToken(tokenString, secret string) (map[string]interface{}, error) {
 // EncodeID signs id
 func EncodeToken(claimKey, claimValue, secret string, ttl time.Duration) (string, time.Time, error) {
 	expTime := time.Now().Add(ttl * time.Second)
+
+	//claim := jwt.StandardClaims{
+	//	Id:        claimValue,
+	//	ExpiresAt: expTime.Unix(),
+	//}
 	claim := jwt.MapClaims{
 		claimKey: claimValue,
 		"exp":    expTime.Unix(),
@@ -92,6 +111,23 @@ func EncodeToken(claimKey, claimValue, secret string, ttl time.Duration) (string
 	tokenString, err := token.SignedString([]byte(secret))
 
 	return tokenString, expTime, err
+}
+
+type UserClaims struct {
+	ExpiresAt int64  `json:"exp,omitempty"`
+	Id        string `json:"user_id,omitempty"`
+}
+
+func ExtractUserClaim(s string) (*UserClaims, error) {
+	data, err := jwt.DecodeSegment(s)
+	if err != nil {
+		return nil, err
+	}
+
+	claim := &UserClaims{}
+	err = json.Unmarshal(data, claim)
+
+	return claim, err
 }
 
 // SigninHandlerFunc signs in user
