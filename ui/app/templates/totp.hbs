@@ -7,15 +7,15 @@
         <h6 id="signinalertdiv" class="card-subtitle mb-2 text-danger">{{login_failure_reason}}</h6>
       {{/if}}
       <hr>
-      <form {{action "authenticate" on="submit"}}>
+      <form >
         <div class="form-group">
           <label for="email">Authenticator code</label>
           <div class="input-group">
-            {{input type="text" class="form-control" value=totp id="totp" placeholder="6 digit code" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
+            {{input type="text" class="form-control" value=this.model.totp id="totp" placeholder="6 digit code" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
           </div>
         </div>
         <div class="form-group">
-          <button id="sigin_btn" type="submit" class="btn btn-success btn-block">Complete the sign in</button>
+          <button id="sigin_btn" type="button" {{action "authenticate" this.model}} class="btn btn-success btn-block">Complete the sign in</button>
         </div>
       </form>
     </article>

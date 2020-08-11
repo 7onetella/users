@@ -42,7 +42,7 @@ func (u UserService) Authenticate(username, password string) (bool, *User) {
 	}
 
 	if user.Password == password {
-		return true, &user
+		return true, user
 	}
 
 	return false, &User{ID: user.ID}
@@ -101,11 +101,29 @@ func (u UserService) Delete(id string) *DBOpError {
 	return nil
 }
 
-func (u UserService) FindByEmail(email string) (User, *DBOpError) {
+func (u UserService) FindByEmail(email string) (*User, *DBOpError) {
 	db := u.DB
-	user := User{}
+	user := &User{}
 	sql := "SELECT * FROM users WHERE email=$1"
-	err := db.Get(&user, sql, email)
+	err := db.Get(user, sql, email)
+	if err != nil {
+		return user, &DBOpError{sql, err}
+	}
+	return user, nil
+}
+
+func (u UserService) FindByEventID(eventID string) (*User, *DBOpError) {
+	db := u.DB
+	user := &User{}
+	sql := `
+		SELECT 
+				* 
+		FROM 
+				users
+		WHERE 
+				user_id  = UUID(TRIM(( SELECT user_id FROM auth_event WHERE event_id=$1 )))
+`
+	err := db.Get(user, sql, eventID)
 	if err != nil {
 		return user, &DBOpError{sql, err}
 	}
