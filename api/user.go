@@ -103,9 +103,7 @@ func UnmarshalUser(payload []byte, schema *jsonapi.Schema) (User, error) {
 	user.Password = res.Get("password").(string)
 	user.FirstName = res.Get("firstname").(string)
 	user.LastName = res.Get("lastname").(string)
-	user.MFAEnabled = false
-	user.MFASecretTmpExp = 0
-	user.MFASecretCurrent = ""
+	user.MFAEnabled = res.Get("mfaenabled").(bool)
 
 	return user, nil
 }

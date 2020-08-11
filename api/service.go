@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"log"
 	"time"
 )
 
@@ -32,20 +31,6 @@ func (e *DBOpError) Unwrap() error {
 
 type UserService struct {
 	*sqlx.DB
-}
-
-func (u UserService) Authenticate(username, password string) (bool, *User) {
-	user, operr := u.FindByEmail(username)
-	if operr != nil {
-		log.Printf("error while authenticating: %v", operr)
-		return false, nil
-	}
-
-	if user.Password == password {
-		return true, user
-	}
-
-	return false, &User{ID: user.ID}
 }
 
 func (u UserService) Register(user User) *DBOpError {
@@ -149,7 +134,8 @@ func (u UserService) UpdateProfile(user User) *DBOpError {
 			firstname      = :firstname,  
 		    lastname       = :lastname,
 			email          = :email,
-			passhash       = :passhash
+			passhash       = :passhash,
+			mfa_enabled    = :mfa_enabled
 		WHERE 
 			user_id = :user_id 
 	`
