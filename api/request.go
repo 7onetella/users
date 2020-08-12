@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/mfcochauxlaberge/jsonapi"
 	"io/ioutil"
 	"log"
@@ -139,4 +141,17 @@ func (rh RequestHanlder) UserFromContext() (User, error) {
 func (rh RequestHanlder) TransactionIDFromContext() string {
 	c := rh.Context
 	return c.Request.Context().Value("tid").(string)
+}
+
+func TransactionID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tid := uuid.New().String()
+		req := c.Request
+		url := req.URL
+
+		ctx := context.WithValue(req.Context(), "tid", tid)
+		c.Request = c.Request.Clone(ctx)
+		c.Request.URL = url
+		c.Next()
+	}
 }

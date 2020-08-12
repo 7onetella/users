@@ -171,17 +171,6 @@ func isTOTPValid(user *User, token string) bool {
 	return totp.Verify(token, now)
 }
 
-func GenerateOTP() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user := UserFromContext(c)
-
-		totp := gotp.NewDefaultTOTP(user.MFASecretCurrent)
-		c.JSON(200, gin.H{
-			"totp": totp.Now(),
-		})
-	}
-}
-
 func UserFromContext(c *gin.Context) User {
 	ctx := c.Request.Context()
 	user, _ := ctx.Value("user").(User)
