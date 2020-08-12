@@ -1,39 +1,36 @@
 /*eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
 import Controller from '@ember/controller';
 import { inject } from '@ember/service'
-import { storageFor } from 'ember-local-storage';
 
 export default Controller.extend({
   router: inject(),
   session: inject('session'),
-  event: storageFor('event'),
+  userService: inject('user-service'),
 
   actions: {
-    authenticate: function(data) {
-      console.log('contollers/totp.js')
-      const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
-      const credentials = {
-        totp: data.totp,
-        event_id: this.get('event.id')
-      }
-      let promise = this.get('session').authenticate(authenticator, credentials)
+    confirm: function(data) {
+      console.log('controllers/totp.js confirm()')
 
-      var that = this
-      promise.then(function(){
-        console.log("  authentication successful. redirecting to index page");
-        console.log("  router" + that.get('router'))
-        that.get('router').transitionTo('index');
-      },function(data) {
-        console.log("  data:" + JSON.stringify(data));
-        var reason = data.json.reason
-        var message = data.json.message
-        console.log("  reason:" + reason)
-        if (reason === 'invalid_totp') {
-          that.set("loginFailed", true);
-          that.set("login_failure_reason", message)
-        }
-      });
+      console.log('  otop = ' + data.totp)
+      var session_token = this.get('session.session.content.authenticated.token')
+
+      $.ajax({
+        url: "http://localhost:8080/totp/confirm",
+        type: 'post',
+        dataType: 'json',
+        data: JSON.stringify({ totp : data.totp }),
+        async: true,
+        crossDomain: 'true',
+        beforeSend: function(xhr){xhr.setRequestHeader('Authorization', 'Bearer ' + session_token);},
+        success: function(data, status) {
+          console.log("Status: "+status+"\nData: "+data);
+        },
+        error: function(error, txtStatus) {
+          console.log(txtStatus);
+          console.log('error');
+        }})
+
+      this.get('router').transitionTo('index');
     }
   }
-
 });

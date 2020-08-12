@@ -8,8 +8,8 @@ export default Controller.extend({
   userService: inject('user-service'),
 
   actions: {
-    toggle_mfa: function() {
-      console.log('controllers/security.js toggle_mfa()')
+    toggle_totp: function() {
+      console.log('controllers/security.js toggle_totp()')
 
       var user_id = this.get('session.session.content.authenticated.tokenData.user_id')
 
@@ -21,7 +21,7 @@ export default Controller.extend({
           record.save();
           that.get('router').transitionTo('index');
         } else {
-          that.get('router').transitionTo('/mfa');
+          that.get('router').transitionTo('/totp');
         }
       });
 

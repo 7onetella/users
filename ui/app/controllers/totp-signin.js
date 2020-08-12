@@ -9,10 +9,13 @@ export default Controller.extend({
   event: storageFor('event'),
 
   actions: {
-    authenticate: function() {
-      console.log('contollers/signin.js')
-      const credentials = this.getProperties('username', 'password', 'totp');
+    authenticate: function(data) {
+      console.log('contollers/totp.js')
       const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
+      const credentials = {
+        totp: data.totp,
+        event_id: this.get('event.id')
+      }
       let promise = this.get('session').authenticate(authenticator, credentials)
 
       var that = this
@@ -24,18 +27,13 @@ export default Controller.extend({
         console.log("  data:" + JSON.stringify(data));
         var reason = data.json.reason
         var message = data.json.message
-        var event_id = data.json.event_id
         console.log("  reason:" + reason)
-        if (reason === 'missing_totp') {
-          that.set('event.id', event_id)
-          that.get('router').transitionTo('totp-signin');
-        }
-        if (reason === 'invalid_credential') {
+        if (reason === 'invalid_totp') {
           that.set("loginFailed", true);
           that.set("login_failure_reason", message)
         }
       });
-
     }
   }
+
 });

@@ -1,23 +1,51 @@
-<div class="container">
-  <div id="logo"><img id="logo_img" src="/ui/assets/lock.png" class="rounded mx-auto d-block" alt="Site Logo"></div>
-  <div id="signindiv" class="card">
-    <article class="card-body">
-      <h4 class="card-title text-center mb-4 mt-1">TOTP Authentication</h4>
-      {{#if loginFailed}}
-        <h6 id="signinalertdiv" class="card-subtitle mb-2 text-danger">{{login_failure_reason}}</h6>
-      {{/if}}
-      <hr>
-      <form >
-        <div class="form-group">
-          <label for="email">Authenticator code</label>
-          <div class="input-group">
-            {{input type="text" class="form-control" value=this.model.totp id="totp" placeholder="6 digit code" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
-          </div>
-        </div>
-        <div class="form-group">
-          <button id="sigin_btn" type="button" {{action "authenticate" this.model}} class="btn btn-success btn-block">Complete the sign in</button>
-        </div>
-      </form>
-    </article>
+  <div class="container">
+    {{#if this.model.authenticated}}
+      <div id="totpdiv" class="card">
+        <div id="session_token">{{this.model.token}}</div>
+        <div id="image_div"></div>
+        <article class="card-body">
+          <form>
+            <div class="form-group">
+              <label for="email">TOTP</label>
+              <div class="input-group">
+                {{input type="text" class="form-control" value=this.model.totp id="password" placeholder="Enter TOTP from Authenticator" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
+              </div>
+            </div>
+            <div class="form-group">
+              <button type="button" {{action "confirm" this.model}} class="btn btn-success btn-block">Confirm</button>
+            </div>
+          </form>
+        </article>
+      </div>
+    {{else}}
+    {{/if}}
   </div>
-</div>
+
+<script>
+  var session_token = $('#session_token').text()
+
+  if (session_token) {
+    $.ajax({
+      url: "http://localhost:8080/totp/qr-code-json",
+      type: 'get',
+      dataType: 'json',
+      async: true,
+      crossDomain: 'true',
+      beforeSend: function(xhr){xhr.setRequestHeader('Authorization', 'Bearer ' + session_token);},
+      success: function(data, status) {
+        console.log("Status: "+status+"\nData: "+data);
+        result = data;
+
+        /* creating image assuming data is the url of image */
+        var img = $('<img id="qr_code_image" style="margin-left: auto; margin-right: auto;" >');
+        img.attr('src', 'data:image/gif;base64,' + data.payload);
+        img.appendTo('#image_div');
+      },
+      error: function(error, txtStatus) {
+        console.log(txtStatus);
+        console.log('error');
+      }
+    });
+  }
+
+</script>

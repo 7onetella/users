@@ -14,9 +14,9 @@
               <h5 class="card-title">TOTP</h5>
               <p class="card-text">Time-based One-time Passwords. Use Google Authenticator or Twillo Authy</p>
               {{#if this.model.user.mfaenabled}}
-                <button type="button" {{action "toggle_mfa"}} class="btn btn-enabled"><span>Enabled</span></button>
+                <button type="button" {{action "toggle_totp"}} class="btn btn-enabled"><span>Enabled</span></button>
               {{else}}
-                <button type="button" {{action "toggle_mfa"}} class="btn btn-disabled"><span>Disabled</span></button>
+                <button type="button" {{action "toggle_totp"}} class="btn btn-disabled"><span>Disabled</span></button>
               {{/if}}
             </div>
           </div>
@@ -28,9 +28,9 @@
               <h5 class="card-title">FIDO2 WebAuthn</h5>
               <p class="card-text">WebAuthn Key</p>
               {{#if this.model.user.mfaenabled}}
-                <button type="button" {{action "toggle_mfa"}} class="btn btn-enabled"><span>Enabled</span></button>
+                <button type="button" {{action "toggle_totp"}} class="btn btn-enabled"><span>Enabled</span></button>
               {{else}}
-                <button type="button" {{action "toggle_mfa"}} class="btn btn-disabled"><span>Disabled</span></button>
+                <button type="button" {{action "toggle_totp"}} class="btn btn-disabled"><span>Disabled</span></button>
               {{/if}}
             </div>
           </div>

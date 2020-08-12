@@ -47,11 +47,11 @@ func main() {
 	}
 	r.POST("/users", Signup(userService))
 
-	mfa := r.Group("/mfa")
+	mfa := r.Group("/totp")
 	mfa.Use(jwt.Validator(userService))
 	{
-		mfa.GET("/new", NewMFA(userService))
-		mfa.GET("/new/png_base64", NewMFABase64(userService))
+		mfa.GET("/qr-code-raw", NewMFA(userService))
+		mfa.GET("/qr-code-json", NewMFABase64(userService))
 		mfa.POST("/confirm", ConfirmToken(userService))
 	}
 
