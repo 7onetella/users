@@ -1,7 +1,10 @@
-package main
+package handlers
 
 import (
 	"encoding/base64"
+	"github.com/7onetella/users/api/internal/dbutil"
+	. "github.com/7onetella/users/api/internal/httputil"
+	. "github.com/7onetella/users/api/internal/model"
 	"github.com/gin-gonic/gin"
 	"github.com/xlzd/gotp"
 	"log"
@@ -9,7 +12,7 @@ import (
 	"time"
 )
 
-func NewMFA(userService UserService) gin.HandlerFunc {
+func NewMFA(userService dbutil.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := UserFromContext(c)
 		rh := NewRequestHandler(c)
@@ -21,7 +24,7 @@ func NewMFA(userService UserService) gin.HandlerFunc {
 		log.Println("url = " + url)
 
 		user.MFASecretTmp = secret
-		user.MFASecretTmpExp = CurrentTimeInSeconds() + 60*5
+		user.MFASecretTmpExp = dbutil.CurrentTimeInSeconds() + 60*5
 		userService.UpdateMFATemp(user)
 
 		qrBytes, err := QR(url)
@@ -36,7 +39,7 @@ func NewMFA(userService UserService) gin.HandlerFunc {
 	}
 }
 
-func NewMFABase64(userService UserService) gin.HandlerFunc {
+func NewMFABase64(userService dbutil.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
@@ -52,7 +55,7 @@ func NewMFABase64(userService UserService) gin.HandlerFunc {
 		log.Println("url = " + url)
 
 		user.MFASecretTmp = secret
-		user.MFASecretTmpExp = CurrentTimeInSeconds() + 60*5
+		user.MFASecretTmpExp = dbutil.CurrentTimeInSeconds() + 60*5
 		userService.UpdateMFATemp(user)
 
 		qrBytes, err := QR(url)
@@ -70,32 +73,7 @@ func NewMFABase64(userService UserService) gin.HandlerFunc {
 	}
 }
 
-func ConfirmMFA(userService UserService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user := UserFromContext(c)
-
-		secret := gotp.RandomSecret(16)
-		totp := gotp.NewDefaultTOTP(secret)
-		url := totp.ProvisioningUri(user.Email, "7onetella")
-		log.Println("url = " + url)
-
-		user.MFASecretTmp = secret
-		user.MFASecretTmpExp = CurrentTimeInSeconds() + 60*5
-		userService.UpdateMFATemp(user)
-
-		qrBytes, err := QR(url)
-		if err != nil {
-			c.AbortWithError(500, err)
-			return
-		}
-
-		w := c.Writer
-		w.Header().Add("Content-Type", "image/png")
-		w.Write(qrBytes)
-	}
-}
-
-func ConfirmToken(service UserService) gin.HandlerFunc {
+func ConfirmToken(service dbutil.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
@@ -133,30 +111,6 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.JSON(200, gin.H{
-			"status": "valid",
-		})
-	}
-}
-
-func ValidateToken() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		user := UserFromContext(c)
-
-		totp := gotp.NewDefaultTOTP(user.MFASecretCurrent)
-		token := c.Param("token")
-		log.Printf(":token = %s", token)
-		now := int(time.Now().Unix())
-		log.Printf("timestamp = %d", now)
-		verified := totp.Verify(token, now)
-		if !verified {
-			c.JSON(401, gin.H{
-				"status": "invalid",
-			})
-			c.Abort()
-			return
-		}
-
 		c.JSON(200, gin.H{
 			"status": "valid",
 		})

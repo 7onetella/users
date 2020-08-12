@@ -1,17 +1,16 @@
-package main
+package jsonutil
 
 import (
 	"bytes"
+	. "github.com/7onetella/users/api/internal/model"
 	"github.com/mfcochauxlaberge/jsonapi"
 )
 
-type JSONAPIOpError struct {
-	Query string
-	Err   error
-}
-
-func (e *JSONAPIOpError) Unwrap() error {
-	return e.Err
+func SchemaCheck(v interface{}) (*jsonapi.Schema, []error) {
+	schema := &jsonapi.Schema{}
+	schema.AddType(jsonapi.MustBuildType(v))
+	errors := schema.Check()
+	return schema, errors
 }
 
 func MarshalDoc(requestURI string, schema *jsonapi.Schema, doc *jsonapi.Document) (string, error) {

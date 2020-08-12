@@ -1,46 +1,18 @@
-package main
+package dbutil
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	. "github.com/7onetella/users/api/internal/httputil"
+	. "github.com/7onetella/users/api/internal/model"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
-
-type DBOpError struct {
-	Query string
-	Err   error
-}
-
-type ExecutionError struct {
-	ErrCode int    `json: "code"`
-	Message string `json: "message"`
-}
-
-func NewExecutionError(errCode int, message, txid string) gin.H {
-	return gin.H{
-		"message": message,
-		"code":    errCode,
-		"txid":    txid,
-	}
-}
-
-func (e *DBOpError) Unwrap() error {
-	return e.Err
-}
 
 type UserService struct {
 	*sqlx.DB
 }
 
-func (u UserService) Register(user User) *DBOpError {
-	sql := `
-		INSERT INTO users
-			  (user_id,  platform_name,  email,   passhash,  firstname, lastname,  created_date) 
-		VALUES 
-			  (:user_id, :platform_name, :email, :passhash, :firstname, :lastname, :created_date)
-	`
-	return u.Upsert(sql, &user)
+func CurrentTimeInSeconds() int64 {
+	return time.Now().Unix()
 }
 
 func (u UserService) Upsert(sql string, obj interface{}) *DBOpError {
@@ -61,8 +33,14 @@ func (u UserService) Upsert(sql string, obj interface{}) *DBOpError {
 	return nil
 }
 
-func CurrentTimeInSeconds() int64 {
-	return time.Now().Unix()
+func (u UserService) Register(user User) *DBOpError {
+	sql := `
+		INSERT INTO users
+			  (user_id,  platform_name,  email,   passhash,  firstname, lastname,  created_date) 
+		VALUES 
+			  (:user_id, :platform_name, :email, :passhash, :firstname, :lastname, :created_date)
+	`
+	return u.Upsert(sql, &user)
 }
 
 func (u UserService) Get(id string) (User, *DBOpError) {
@@ -178,16 +156,4 @@ func (u UserService) RecordAuthEvent(auth AuthEvent) *DBOpError {
 			  (:event_id, :user_id, :event, :event_timestamp, :ip_v4, :ip_v6, :agent)
 	`
 	return u.Upsert(sql, &auth)
-}
-
-func NewAuthEvent(userID, event, ipv4, ipv6, agent string) AuthEvent {
-	return AuthEvent{
-		ID:        uuid.New().String(),
-		UserIDReq: userID,
-		Event:     event,
-		IPV4:      ipv4,
-		IPV6:      ipv6,
-		Agent:     agent,
-		Timestamp: CurrentTimeInSeconds(),
-	}
 }

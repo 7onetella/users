@@ -1,7 +1,10 @@
-package main
+package dbutil
 
 import (
 	"fmt"
+	"github.com/7onetella/users/api"
+	. "github.com/7onetella/users/api/internal/model"
+	"github.com/7onetella/users/api/internal/testutil"
 	"github.com/google/uuid"
 	"testing"
 	"time"
@@ -10,9 +13,9 @@ import (
 var testuser User
 
 func TestRegister(t *testing.T) {
-	spec := &GSpec{t}
+	spec := &testutil.GSpec{t}
 
-	userService := UserService{testDB}
+	userService := UserService{main.testDB}
 	user := User{
 		FirstName: "JohnFirstName",
 		Created:   time.Now().Unix(),
@@ -38,9 +41,9 @@ func TestRegister(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	spec := &GSpec{t}
+	spec := &testutil.GSpec{t}
 
-	userService := UserService{testDB}
+	userService := UserService{main.testDB}
 	spec.Given("id =" + testuser.ID)
 
 	user, err := userService.Get(testuser.ID)
