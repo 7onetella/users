@@ -1,8 +1,8 @@
-import DS from 'ember-data';
 import TokenAdapterMixin from 'ember-simple-auth-token/mixins/token-adapter';
 import ENV from '../config/environment';
+import JSONAPIAdapter from '@ember-data/adapter/json-api';
 
-export default DS.JSONAPIAdapter.extend(TokenAdapterMixin, {
+export default JSONAPIAdapter.extend(TokenAdapterMixin, {
   host: ENV.APP.JSONAPIAdaptetHost,
   namespace: ''
 });

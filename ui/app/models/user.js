@@ -1,4 +1,3 @@
-import DS from 'ember-data';
 import Model, { attr } from '@ember-data/model';
 
 export default class UserModel extends Model {

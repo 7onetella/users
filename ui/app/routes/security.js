@@ -7,16 +7,16 @@ export default Route.extend({
   userService: inject('user-service'),
 
   model() {
-    if (!this.get('session.isAuthenticated')) {
+    if (!this.session.isAuthenticated) {
       console.log('invalid session')
-      return {'session': this.get('session')}
+      return {'session': this.session}
     }
 
     console.log('routes/security.js: model()')
-    var token = this.get('session.session.content.authenticated.token')
+    var token = this.session.session.content.authenticated.token
     console.log('  token = ' + token)
 
-    var user_id = this.get('session.session.content.authenticated.tokenData.user_id')
+    var user_id = this.session.session.content.authenticated.tokenData.user_id
     console.log('  user_id = ' + user_id)
     // var userStr = JSON.stringify(this.userService.getUser(user_id))
     var record = this.store.findRecord('user', user_id)
@@ -24,7 +24,7 @@ export default Route.extend({
     return {
       'token': token,
       'user': record,
-      'session': this.get('session'),
+      'session': this.session,
     };
   }
 });

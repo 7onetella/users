@@ -12,13 +12,13 @@ export default Controller.extend({
 
   init() {
     this._super(...arguments);
-    this.get('userIdle').on('idleChanged', (isIdle) => {
+    this.userIdle.on('idleChanged', (isIdle) => {
       // isIdle is true if idle. False otherwise.
       console.log('contollers/layout.js: init()')
       console.log("- user idle: " + isIdle)
       if (isIdle === true) {
-        this.get('session').invalidate();
-        this.get('router').transitionTo('session-expired');
+        this.session.invalidate();
+        this.router.transitionTo('session-expired');
       }
     })
   },
@@ -28,7 +28,7 @@ export default Controller.extend({
   }),
 
   sessionData: computed('session.session.content.authenticated', function() {
-    return JSON.stringify(this.get('session.session.content.authenticated'), null, '\t');
+    return JSON.stringify(this.session.session.content.authenticated, null, '\t');
   }),
 
   userData: function () {
@@ -41,13 +41,13 @@ export default Controller.extend({
 
       const credentials = { username: 'user8az28y@example.com', password: 'password' }
       const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
-      let promise = this.get('session').authenticate(authenticator, credentials)
+      let promise = this.session.authenticate(authenticator, credentials)
 
       var that = this
       promise.then(function(){
         console.log("  authentication successful. redirecting to listing page");
         console.log("  router" + that.get('router'))
-        that.get('router').transitionTo('security');
+        that.router.transitionTo('security');
       },function(data) {
         // console.log("  data:" + JSON.stringify(data));
         console.log("  reason:" + data.json.reason);

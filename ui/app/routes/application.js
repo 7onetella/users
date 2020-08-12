@@ -16,8 +16,8 @@ export default Route.extend(ApplicationRouteMixin, {
   actions: {
     invalidateSession: function() {
       console.log('routes/applications.js: invalidateSession()')
-      this.get('session').invalidate();
-      this.get('router').transitionTo('/index');
+      this.session.invalidate();
+      this.router.transitionTo('/index');
     }
   }
 });

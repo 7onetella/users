@@ -7,9 +7,9 @@ export default Route.extend({
 
   model() {
     console.log('routes/profile.js: model()')
-    console.log("  session.isAuthenticated: " + this.get('session.isAuthenticated'));
+    console.log("  session.isAuthenticated: " + this.session.isAuthenticated);
 
-    var user_id = this.get('session.session.content.authenticated.tokenData.user_id')
+    var user_id = this.session.session.content.authenticated.tokenData.user_id
     return this.store.findRecord('user', user_id);
   }
 });

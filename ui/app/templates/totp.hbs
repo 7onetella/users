@@ -1,25 +1,25 @@
-  <div class="container">
-    {{#if this.model.authenticated}}
-      <div id="totpdiv" class="card">
-        <div id="session_token">{{this.model.token}}</div>
-        <div id="image_div"></div>
-        <article class="card-body">
-          <form>
-            <div class="form-group">
-              <label for="email">TOTP</label>
-              <div class="input-group">
-                {{input type="text" class="form-control" value=this.model.totp id="password" placeholder="Enter TOTP from Authenticator" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
-              </div>
+<div class="container">
+  {{#if this.model.authenticated}}
+    <div id="totpdiv" class="card">
+      <div id="session_token">{{this.model.token}}</div>
+      <div id="image_div"></div>
+      <article class="card-body">
+        <form>
+          <div class="form-group">
+            <label for="email">TOTP</label>
+            <div class="input-group">
+              {{input type="text" class="form-control" value=this.model.totp id="password" placeholder="Enter TOTP from Authenticator" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
             </div>
-            <div class="form-group">
-              <button type="button" {{action "confirm" this.model}} class="btn btn-success btn-block">Confirm</button>
-            </div>
-          </form>
-        </article>
-      </div>
-    {{else}}
-    {{/if}}
-  </div>
+          </div>
+          <div class="form-group">
+            <button type="button" {{action "confirm" this.model}} class="btn btn-success btn-block">Confirm</button>
+          </div>
+        </form>
+      </article>
+    </div>
+  {{else}}
+  {{/if}}
+</div>
 
 <script>
   var session_token = $('#session_token').text()

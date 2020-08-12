@@ -13,13 +13,13 @@ export default Controller.extend({
       console.log('contollers/signin.js')
       const credentials = this.getProperties('username', 'password', 'totp');
       const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
-      let promise = this.get('session').authenticate(authenticator, credentials)
+      let promise = this.session.authenticate(authenticator, credentials)
 
       var that = this
       promise.then(function(){
         console.log("  authentication successful. redirecting to index page");
         console.log("  router" + that.get('router'))
-        that.get('router').transitionTo('index');
+        that.router.transitionTo('index');
       },function(data) {
         console.log("  data:" + JSON.stringify(data));
         var reason = data.json.reason
@@ -28,7 +28,7 @@ export default Controller.extend({
         console.log("  reason:" + reason)
         if (reason === 'missing_totp') {
           that.set('event.id', event_id)
-          that.get('router').transitionTo('totp-signin');
+          that.router.transitionTo('totp-signin');
         }
         if (reason === 'invalid_credential') {
           that.set("loginFailed", true);

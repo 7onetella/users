@@ -1,6 +1,7 @@
 /*eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
 import Controller from '@ember/controller';
 import { inject } from '@ember/service'
+import $ from 'jquery';
 
 export default Controller.extend({
   router: inject(),
@@ -12,7 +13,7 @@ export default Controller.extend({
       console.log('controllers/totp.js confirm()')
 
       console.log('  otop = ' + data.totp)
-      var session_token = this.get('session.session.content.authenticated.token')
+      var session_token = this.session.session.content.authenticated.token
 
       $.ajax({
         url: "http://localhost:8080/totp/confirm",
@@ -30,7 +31,7 @@ export default Controller.extend({
           console.log('error');
         }})
 
-      this.get('router').transitionTo('index');
+      this.router.transitionTo('index');
     }
   }
 });
