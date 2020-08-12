@@ -11,7 +11,11 @@ export default Controller.extend({
   actions: {
     authenticate: function() {
       console.log('contollers/signin.js')
-      const credentials = this.getProperties('username', 'password', 'totp');
+      const credentials = {
+        username: this.username,
+        password: this.password,
+        totp: this.totp
+      }
       const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
       let promise = this.session.authenticate(authenticator, credentials)
 

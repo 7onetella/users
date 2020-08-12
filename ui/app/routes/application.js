@@ -1,9 +1,8 @@
 /*eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
 import Route from '@ember/routing/route';
 import { inject } from '@ember/service';
-import ApplicationRouteMixin from 'ember-simple-auth/mixins/application-route-mixin';
 
-export default Route.extend(ApplicationRouteMixin, {
+export default Route.extend({
   router: inject(),
   session: inject('session'),
 
@@ -17,7 +16,7 @@ export default Route.extend(ApplicationRouteMixin, {
     invalidateSession: function() {
       console.log('routes/applications.js: invalidateSession()')
       this.session.invalidate();
-      this.router.transitionTo('/index');
+      this.router.transitionTo('index');
     }
   }
 });
