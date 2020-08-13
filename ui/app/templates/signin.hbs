@@ -11,13 +11,13 @@
         <div class="form-group">
           <label for="email">Email</label>
           <div class="input-group">
-            {{input type="text" autocomplete="username" class="form-control" value=username id="username" placeholder="Username or email address" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
+            <Input @type="text" @autocomplete="username" class="form-control" @value={{username}} @id="username" placeholder="Username or email address" @aria-label="Input group example" @aria-describedby="btnGroupAddon" />
           </div>
         </div>
         <div class="form-group">
           <label for="email">Password</label>
           <div class="input-group">
-            {{input type="password" autocomplete="current-password" class="form-control" value=password id="password" placeholder="Password" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
+            <Input @type="password" @autocomplete="current-password" class="form-control" @value={{password}} @id="password" placeholder="Password" @aria-label="Input group example" @aria-describedby="btnGroupAddon" />
           </div>
         </div>
         <div class="form-group">

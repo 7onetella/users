@@ -20,6 +20,7 @@
   "devDependencies": {
     "@ember/jquery": "^0.6.0",
     "@ember/optional-features": "^0.7.0",
+    "babel-eslint": "^10.1.0",
     "bootstrap": "^4.5.0",
     "broccoli-asset-rev": "^3.0.0",
     "ember-ajax": "^5.0.0",
@@ -38,6 +39,7 @@
     "ember-cli-sri": "^2.1.1",
     "ember-cli-template-lint": "^1.0.0",
     "ember-cli-uglify": "^2.1.0",
+    "ember-cli-update": "^0.54.6",
     "ember-data": "^3.20.0",
     "ember-export-application-global": "^2.0.1",
     "ember-load-initializers": "^2.1.1",

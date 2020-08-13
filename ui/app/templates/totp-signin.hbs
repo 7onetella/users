@@ -7,11 +7,11 @@
         <h6 id="signinalertdiv" class="card-subtitle mb-2 text-danger">{{login_failure_reason}}</h6>
       {{/if}}
       <hr>
-      <form >
+      <form>
         <div class="form-group">
           <label for="email">Authenticator code</label>
           <div class="input-group">
-            {{input type="text" class="form-control" value=this.model.totp id="totp" placeholder="6 digit code" aria-label="Input group example" aria-describedby="btnGroupAddon"}}
+            <Input @type="text" class="form-control" @value={{this.model.totp}} @id="totp" placeholder="6 digit code" @aria-label="Input group example" @aria-describedby="btnGroupAddon" />
           </div>
         </div>
         <div class="form-group">

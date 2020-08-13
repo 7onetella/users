@@ -11,7 +11,7 @@
   <hr class="my-4">
   <p class="lead">
     {{#unless session.isAuthenticated}}
-      {{ link-to "Sign In" "signin" class="btn btn-primary btn-lg" role="button" }}
+      <LinkTo @route="signin" class="btn btn-primary btn-lg" @role="button">Sign In</LinkTo>
       {{!-- {{ link-to "Sign out" "invalidateSession" class="nav-link" }} --}}
     {{/unless}}
   </p>

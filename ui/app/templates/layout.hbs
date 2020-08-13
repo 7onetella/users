@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark" >
-  {{#link-to "index" class="navbar-brand" }}
+  <LinkTo @route="index" class="navbar-brand">
     <img class="mr-3" id="lock_img" src="/ui/assets/lock.png" alt="Generic placeholder image">
-  {{/link-to}}
+  </LinkTo>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -16,10 +16,10 @@
           </a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
             <li class="nav-item">
-              {{ link-to "Profile" "profile" class="dropdown-item" }}
+              <LinkTo @route="profile" class="dropdown-item">Profile</LinkTo>
             </li>
             <li class="nav-item">
-              {{ link-to "Security" "security" class="dropdown-item" }}
+              <LinkTo @route="security" class="dropdown-item">Security</LinkTo>
             </li>
             <div class="dropdown-divider"></div>
             <li class="nav-item">
@@ -32,10 +32,10 @@
           <a href="#" {{ action "silent_login" preventDefault=false}} class="nav-link">Silent Signin</a>
         </li>
         <li class="nav-item">
-          {{ link-to "Sign in" "signin" class="nav-link" }}
+          <LinkTo @route="signin" class="nav-link">Sign in</LinkTo>
         </li>
         <li class="nav-item">
-          {{ link-to "Sign up" "signup" class="nav-link" }}
+          <LinkTo @route="signup" class="nav-link">Sign up</LinkTo>
         </li>
       {{/if}}
     </ul>
