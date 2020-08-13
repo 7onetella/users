@@ -1,6 +1,7 @@
 /*eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
 import Route from '@ember/routing/route';
 import { inject } from '@ember/service';
+import ENV from '../config/environment';
 
 export default Route.extend({
   session: inject('session'),
@@ -15,6 +16,11 @@ export default Route.extend({
     var token = this.session.session.content.authenticated.token
     console.log('  token = ' + token)
 
-    return {'token': token, 'totp': '', 'authenticated': true};
+    return {
+      'token': token,
+      'totp': '',
+      'authenticated': true,
+      'totpurl': ENV.APP.JSONAPIAdaptetHost + "/totp/qr-code-json"
+    };
   }
 });

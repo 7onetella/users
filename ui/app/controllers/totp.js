@@ -2,6 +2,7 @@
 import Controller from '@ember/controller';
 import { inject } from '@ember/service'
 import $ from 'jquery';
+import ENV from '../config/environment';
 
 export default Controller.extend({
   router: inject(),
@@ -16,7 +17,7 @@ export default Controller.extend({
       var session_token = this.session.session.content.authenticated.token
 
       $.ajax({
-        url: "http://localhost:8080/totp/confirm",
+        url: ENV.APP.JSONAPIAdaptetHost + "/totp/confirm",
         type: 'post',
         dataType: 'json',
         data: JSON.stringify({ totp : data.totp }),

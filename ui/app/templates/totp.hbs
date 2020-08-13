@@ -1,7 +1,8 @@
 <div class="container">
   {{#if this.model.authenticated}}
     <div id="totpdiv" class="card">
-      <div id="session_token">{{this.model.token}}</div>
+      <div id="session_token" class="hidden_data_field">{{this.model.token}}</div>
+      <div id="totpurl" class="hidden_data_field">{{this.model.totpurl}}</div>
       <div id="image_div"></div>
       <article class="card-body">
         <form>
@@ -23,10 +24,11 @@
 
 <script>
   var session_token = $('#session_token').text()
+  var totpurl = $('#totpurl').text()
 
   if (session_token) {
     $.ajax({
-      url: "http://localhost:8080/totp/qr-code-json",
+      url: totpurl,
       type: 'get',
       dataType: 'json',
       async: true,
