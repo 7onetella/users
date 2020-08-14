@@ -15,9 +15,9 @@ export default Controller.extend({
 
       var that = this
       this.store.findRecord('user', user_id).then(function(record) {
-        var mfaenabled = record.get("mfaenabled")
-        if (mfaenabled) {
-          record.set("mfaenabled", false)
+        var totpenabled = record.get("totpenabled")
+        if (totpenabled) {
+          record.set("totpenabled", false)
           record.save();
           that.get('router').transitionTo('index');
         } else {

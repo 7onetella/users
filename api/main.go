@@ -35,7 +35,7 @@ func main() {
 
 	jwt := JWTAuth{
 		ClaimKey: "user_id",
-		TTL:      120,
+		TTL:      3600,
 	}
 
 	usersG := r.Group("/users")
@@ -50,8 +50,8 @@ func main() {
 	mfa := r.Group("/totp")
 	mfa.Use(jwt.Validator(userService))
 	{
-		mfa.GET("/qr-code-raw", NewMFA(userService))
-		mfa.GET("/qr-code-json", NewMFABase64(userService))
+		mfa.GET("/qr-code-raw", NewTOTPRaw(userService))
+		mfa.GET("/qr-code-json", NewTOTPJson(userService))
 		mfa.POST("/confirm", ConfirmToken(userService))
 	}
 

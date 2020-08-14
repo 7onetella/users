@@ -106,7 +106,7 @@ func (a JWTAuth) Signin(userService UserService) gin.HandlerFunc {
 		}
 
 	CheckTOTP:
-		if user.MFAEnabled {
+		if user.TOTPEnabled {
 			if len(cred.TOTP) == 0 {
 				event := NewAuthEvent(user.ID, "missing_totp", c.ClientIP(), c.ClientIP(), c.Request.UserAgent())
 				userService.RecordAuthEvent(event)

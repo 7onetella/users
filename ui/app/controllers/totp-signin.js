@@ -14,7 +14,7 @@ export default Controller.extend({
       const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
       const credentials = {
         totp: data.totp,
-        event_id: this.event.id
+        event_id: this.get('event.id')
       }
       let promise = this.session.authenticate(authenticator, credentials)
 

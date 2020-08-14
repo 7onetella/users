@@ -5,5 +5,5 @@ export default class UserModel extends Model {
   @attr('string') password;
   @attr('string') firstname;
   @attr('string') lastname;
-  @attr('boolean') mfaenabled;
+  @attr('boolean') totpenabled;
 }

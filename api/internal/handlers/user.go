@@ -121,7 +121,7 @@ func UnmarshalUser(payload []byte, schema *jsonapi.Schema) (User, error) {
 	user.Password = res.Get("password").(string)
 	user.FirstName = res.Get("firstname").(string)
 	user.LastName = res.Get("lastname").(string)
-	user.MFAEnabled = res.Get("mfaenabled").(bool)
+	user.TOTPEnabled = res.Get("totpenabled").(bool)
 
 	return user, nil
 }

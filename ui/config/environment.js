@@ -36,8 +36,8 @@ module.exports = function(environment) {
     authorizationHeaderName: 'Authorization', // Header name added to each API request
     authorizationPrefix: 'Bearer ', // Prefix added to each API request
     // for dev env do not expire session
-    refreshAccessTokens: false,
-    tokenExpirationInvalidateSession: false,
+    // refreshAccessTokens: false,
+    // tokenExpirationInvalidateSession: false,
   };
 
   if (environment === 'development') {

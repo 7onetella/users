@@ -113,35 +113,35 @@ func (u UserService) UpdateProfile(user User) *DBOpError {
 		    lastname       = :lastname,
 			email          = :email,
 			passhash       = :passhash,
-			mfa_enabled    = :mfa_enabled
+			totp_enabled   = :totp_enabled
 		WHERE 
 			user_id = :user_id 
 	`
 	return u.Upsert(sql, &user)
 }
 
-func (u UserService) UpdateMFATemp(user User) *DBOpError {
+func (u UserService) UpdateTOTPTmp(user User) *DBOpError {
 	sql := `
 		UPDATE 
 			users 
 		SET 
-		    mfa_secret_tmp        = :mfa_secret_tmp, 
-		    mfa_secret_tmp_exp    = :mfa_secret_tmp_exp
+		    totp_secret_tmp        = :totp_secret_tmp, 
+		    totp_secret_tmp_exp    = :totp_secret_tmp_exp
 		WHERE 
 			user_id = :user_id 
 	`
 	return u.Upsert(sql, &user)
 }
 
-func (u UserService) UpdateMFA(user User) *DBOpError {
+func (u UserService) UpdateTOTP(user User) *DBOpError {
 	sql := `
 		UPDATE 
 			users 
 		SET 
-		    mfa_enabled           = :mfa_enabled,
-		    mfa_secret_current    = :mfa_secret_current, 
-		    mfa_secret_tmp        = :mfa_secret_tmp, 
-		    mfa_secret_tmp_exp    = :mfa_secret_tmp_exp
+		    totp_enabled           = :totp_enabled,
+		    totp_secret_current    = :totp_secret_current, 
+		    totp_secret_tmp        = :totp_secret_tmp, 
+		    totp_secret_tmp_exp    = :totp_secret_tmp_exp
 		WHERE 
 			user_id = :user_id 
 	`

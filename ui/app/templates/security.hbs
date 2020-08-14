@@ -1,6 +1,6 @@
 {{#if this.model.session.isAuthenticated}}
   <div class="jumbotron">
-    <h1 class="display-4">Multi Factor Authentication</h1>
+    <h1 class="display-4">Two Factor Authentication</h1>
     <p class="lead">two factor authentication adds additional method of security</p>
     <hr class="my-4">
     <p></p>
@@ -13,7 +13,7 @@
             <div class="card-body">
               <h5 class="card-title">TOTP</h5>
               <p class="card-text">Time-based One-time Passwords. Use Google Authenticator or Twillo Authy</p>
-              {{#if this.model.user.mfaenabled}}
+              {{#if this.model.user.totpenabled}}
                 <button type="button" {{action "toggle_totp"}} class="btn btn-enabled"><span>Enabled</span></button>
               {{else}}
                 <button type="button" {{action "toggle_totp"}} class="btn btn-disabled"><span>Disabled</span></button>
@@ -27,7 +27,7 @@
             <div class="card-body">
               <h5 class="card-title">FIDO2 WebAuthn</h5>
               <p class="card-text">WebAuthn Key</p>
-              {{#if this.model.user.mfaenabled}}
+              {{#if this.model.user.totpenabled}}
                 <button type="button" {{action "toggle_totp"}} class="btn btn-enabled"><span>Enabled</span></button>
               {{else}}
                 <button type="button" {{action "toggle_totp"}} class="btn btn-disabled"><span>Disabled</span></button>
