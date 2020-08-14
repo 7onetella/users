@@ -22,12 +22,12 @@ CREATE TABLE users (
 INSERT INTO users 
 		(user_id, platform_name, email, passhash, firstname, lastname, created_date, totp_enabled, totp_secret_current, totp_secret_tmp, totp_secret_tmp_exp, jwt_secret) 
 VALUES 
-		('ee288e8c-0b2a-41b5-937c-9a355c0483b4', 'web', 'scott@example.com', 'password', 'scott', 'bar', 1597042574, true, 'FPTUDIF2KSQAKREU', '', 0, 'FPTUDIF2KSQAKREU');
+		('ee288e8c-0b2a-41b5-937c-9a355c0483b4', 'web', 'totp_user@example.com', 'users91234', 'foo', 'bar', 1597042574, true, 'FPTUDIF2KSQAKREU', '', 0, 'FPTUDIF2KSQAKREU');
 
 INSERT INTO users 
 		(user_id, platform_name, email, passhash, firstname, lastname, created_date, totp_enabled, totp_secret_current, totp_secret_tmp, totp_secret_tmp_exp, jwt_secret) 
 VALUES 
-		('a2aee5e6-05a0-438c-9276-4ba406b7bf9e', 'web', 'user8az28y@example.com', 'password', 'scott', 'bar', 1596747095, false, 'SVVEC5VTQBMNE3DH', 'C56BRBHMW3YC4XPA', 1597089055, 'SVVEC5VTQBMNE3DH');
+		('a2aee5e6-05a0-438c-9276-4ba406b7bf9e', 'web', 'pass_user@example.com', 'users91234', 'scott', 'bar', 1596747095, false, 'SVVEC5VTQBMNE3DH', 'C56BRBHMW3YC4XPA', 1597089055, 'SVVEC5VTQBMNE3DH');
 
 DROP TABLE auth_event;
 

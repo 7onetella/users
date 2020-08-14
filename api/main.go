@@ -9,6 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"log"
+	"net/http"
 )
 
 var db *sqlx.DB
@@ -37,6 +38,11 @@ func main() {
 		ClaimKey: "user_id",
 		TTL:      3600,
 	}
+
+	h := http.StripPrefix("/ui/", http.FileServer(assetFS()))
+	r.GET("/ui/*path", func(c *gin.Context) {
+		h.ServeHTTP(c.Writer, c.Request)
+	})
 
 	users := r.Group("/users")
 	users.Use(jwt.TokenValidator(userService))
