@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/7onetella/users/api/internal/dbutil"
 	"github.com/jmoiron/sqlx"
 	"log"
 	"os"
@@ -16,7 +17,7 @@ func setup() {
 	}
 	testDB = db
 
-	db.MustExec(userSchema)
+	db.MustExec(dbutil.DBSchema)
 }
 
 func teardown() {

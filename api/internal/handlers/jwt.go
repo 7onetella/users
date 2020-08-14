@@ -48,7 +48,7 @@ func PreflightOptions() gin.HandlerFunc {
 	}
 }
 
-func (a JWTAuth) Validator(service UserService) gin.HandlerFunc {
+func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := jwtutil.ParseAuthTokenFromHeader(c.Request)
 		if err != nil {

@@ -38,21 +38,21 @@ func main() {
 		TTL:      3600,
 	}
 
-	usersG := r.Group("/users")
-	usersG.Use(jwt.Validator(userService))
+	users := r.Group("/users")
+	users.Use(jwt.TokenValidator(userService))
 	{
-		usersG.GET("/:id", GetUser(userService))
-		usersG.DELETE("/:id", DeleteUser(userService))
-		usersG.PATCH("/:id", UpdateUser(userService))
+		users.GET("/:id", GetUser(userService))
+		users.DELETE("/:id", DeleteUser(userService))
+		users.PATCH("/:id", UpdateUser(userService))
 	}
 	r.POST("/users", Signup(userService))
 
-	mfa := r.Group("/totp")
-	mfa.Use(jwt.Validator(userService))
+	totp := r.Group("/totp")
+	totp.Use(jwt.TokenValidator(userService))
 	{
-		mfa.GET("/qr-code-raw", NewTOTPRaw(userService))
-		mfa.GET("/qr-code-json", NewTOTPJson(userService))
-		mfa.POST("/confirm", ConfirmToken(userService))
+		totp.GET("/qr-code-raw", NewTOTPRaw(userService))
+		totp.GET("/qr-code-json", NewTOTPJson(userService))
+		totp.POST("/confirm", ConfirmToken(userService))
 	}
 
 	auth := r.Group("/jwt_auth")
