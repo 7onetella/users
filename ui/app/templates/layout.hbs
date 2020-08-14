@@ -48,11 +48,52 @@
   {{outlet}}
 </div>
 
-{{#if showDebugInfo}}
-  <hr>
-  <p>Config:</p>
-  <pre>{{config}}</pre>
+<hr>
 
-  <p>Session Data:</p>
-  <pre>{{sessionData}}</pre>
+{{#if showDebugInfo}}
+  <div class="container">
+    <div class="row">
+      <div class="col-md">
+        <br>
+        <h5 class="mt-0">Debugging</h5>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md">
+        <div class="accordion" id="accordionExample">
+          <div class="card">
+            <div class="card-header" id="headingOne">
+              <h2 class="mb-0">
+                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                  Config
+                </button>
+              </h2>
+            </div>
+            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">
+              <div class="card-body">
+                <pre>{{config}}</pre>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header" id="headingTwo">
+              <h2 class="mb-0">
+                <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                  Session Data
+                </button>
+              </h2>
+            </div>
+            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
+              <div class="card-body">
+                <pre>{{sessionData}}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    $('.collapse').collapse()
+  </script>
 {{/if}}
