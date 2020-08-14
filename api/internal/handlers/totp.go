@@ -14,8 +14,12 @@ import (
 
 func NewTOTPRaw(userService dbutil.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := UserFromContext(c)
 		rh := NewRequestHandler(c)
+		user, err := rh.UserFromContext()
+		if err != nil {
+			c.AbortWithError(500, err)
+			return
+		}
 		rh.WriteCORSHeader()
 
 		secret := gotp.RandomSecret(16)
@@ -117,18 +121,12 @@ func ConfirmToken(service dbutil.UserService) gin.HandlerFunc {
 	}
 }
 
-func isTOTPValid(user *User, token string) bool {
+func IsTOTPValid(user *User, token string) bool {
 	totp := gotp.NewDefaultTOTP(user.TOTPSecretCurrent)
 	log.Printf(":token = %s", token)
 	now := int(time.Now().Unix())
 	log.Printf("timestamp = %d", now)
 	return totp.Verify(token, now)
-}
-
-func UserFromContext(c *gin.Context) User {
-	ctx := c.Request.Context()
-	user, _ := ctx.Value("user").(User)
-	return user
 }
 
 func QR(url string) ([]byte, error) {

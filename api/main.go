@@ -57,7 +57,7 @@ func main() {
 
 	auth := r.Group("/jwt_auth")
 	{
-		auth.POST("/signin", jwt.Signin(userService))
+		auth.POST("/signin", Signin(userService, jwt.ClaimKey, jwt.TTL))
 		auth.POST("/refresh", jwt.RefreshToken(userService))
 	}
 

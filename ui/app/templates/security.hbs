@@ -26,7 +26,7 @@
             <img src="/ui/assets/webauthn.png" class="card-img-top" alt="WebAuthn">
             <div class="card-body">
               <h5 class="card-title">FIDO2 WebAuthn</h5>
-              <p class="card-text">WebAuthn Key</p>
+              <p class="card-text">WebAuthn key utilizes private key and public key pair to secure your identity</p>
               {{#if this.model.user.totpenabled}}
                 <button type="button" {{action "toggle_totp"}} class="btn btn-enabled"><span>Enabled</span></button>
               {{else}}
