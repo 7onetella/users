@@ -16,6 +16,7 @@ CREATE TABLE users (
     totp_secret_tmp      CHARACTER VARYING(32) DEFAULT '',
     totp_secret_tmp_exp  BIGINT DEFAULT 0,
 	jwt_secret           CHARACTER VARYING(32) DEFAULT '',
+    webauthn_enabled     BOOL DEFAULT FALSE,
     CONSTRAINT           unique_user UNIQUE (platform_name, email)
 );
 

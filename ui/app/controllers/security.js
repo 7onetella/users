@@ -25,6 +25,23 @@ export default Controller.extend({
         }
       });
 
+    },
+    toggle_webauthn: function() {
+      console.log('controllers/security.js toggle_totp()')
+
+      var user_id = this.session.session.content.authenticated.tokenData.user_id
+
+      var that = this
+      this.store.findRecord('user', user_id).then(function(record) {
+        var totpenabled = record.get("webauthnenabled")
+        if (totpenabled) {
+          record.set("webauthnenabled", false)
+          record.save();
+          that.get('router').transitionTo('index');
+        } else {
+          that.get('router').transitionTo('/totp');
+        }
+      });
     }
   }
 });

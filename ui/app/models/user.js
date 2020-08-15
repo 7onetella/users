@@ -6,4 +6,5 @@ export default class UserModel extends Model {
   @attr('string') firstname;
   @attr('string') lastname;
   @attr('boolean') totpenabled;
+  @attr('boolean') webauthnenabled;
 }
