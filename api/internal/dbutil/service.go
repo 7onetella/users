@@ -109,11 +109,12 @@ func (u UserService) UpdateProfile(user User) *DBOpError {
 		UPDATE 
 			users 
 		SET 
-			firstname      = :firstname,  
-		    lastname       = :lastname,
-			email          = :email,
-			passhash       = :passhash,
-			totp_enabled   = :totp_enabled
+			firstname        = :firstname,  
+		    lastname         = :lastname,
+			email            = :email,
+			passhash         = :passhash,
+			totp_enabled     = :totp_enabled,
+            webauthn_enabled = :webauthn_enabled
 		WHERE 
 			user_id = :user_id 
 	`
@@ -156,4 +157,71 @@ func (u UserService) RecordAuthEvent(auth AuthEvent) *DBOpError {
 			  (:event_id, :user_id, :event, :event_timestamp, :ip_v4, :ip_v6, :agent)
 	`
 	return u.Upsert(sql, &auth)
+}
+
+func (u UserService) SaveWebauthnSession(user User) *DBOpError {
+	sql := `
+		UPDATE 
+			users 
+		SET 
+		    webauthn_session    = :webauthn_session
+		WHERE 
+			user_id = :user_id 
+	`
+	return u.Upsert(sql, &user)
+}
+
+func (u UserService) SaveUserCredential(credential UserCredential) *DBOpError {
+	sql := `
+		INSERT INTO user_credential
+			  (credential_id,   user_id,  credential) 
+		VALUES 
+			  (:credential_id, :user_id, :credential)
+	`
+	return u.Upsert(sql, &credential)
+}
+
+func (u UserService) UpdateWebAuthn(user User) *DBOpError {
+	sql := `
+		UPDATE 
+			users 
+		SET 
+		    webauthn_enabled       = :webauthn_enabled,
+		    webauthn_session       = :webauthn_session 
+		WHERE 
+			user_id = :user_id 
+	`
+	return u.Upsert(sql, &user)
+}
+
+func (u UserService) UpdateTokenID(user User) *DBOpError {
+	sql := `
+		UPDATE 
+			users 
+		SET 
+		    webauthn_token_id   = :webauthn_token_id 
+		WHERE 
+			user_id = :user_id 
+	`
+	return u.Upsert(sql, &user)
+}
+
+func (u UserService) FindUserCredentialByUserID(userID string) ([]UserCredential, *DBOpError) {
+	db := u.DB
+	sql := `
+		SELECT 
+				* 
+		FROM 
+				user_credential
+		WHERE 
+				user_id  = $1
+`
+	credentials := []UserCredential{}
+
+	err := db.Select(&credentials, sql, userID)
+	if err != nil {
+		return nil, &DBOpError{sql, err}
+	}
+
+	return credentials, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/handlers"
+	"github.com/duo-labs/webauthn/webauthn"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -39,6 +40,15 @@ func main() {
 		TTL:      3600,
 	}
 
+	web, err := webauthn.New(&webauthn.Config{
+		RPDisplayName: "7onetella", // display name for your site
+		RPID:          "localhost", // generally the domain name for your site
+		RPOrigin:      "http://localhost:4200",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	h := http.StripPrefix("/ui/", http.FileServer(assetFS()))
 	r.GET("/ui/*path", func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -66,6 +76,15 @@ func main() {
 		auth.POST("/signin", Signin(userService, jwt.ClaimKey, jwt.TTL))
 		auth.POST("/refresh", jwt.RefreshToken(userService))
 	}
+
+	webauthn := r.Group("/webauthn")
+	webauthn.Use(jwt.TokenValidator(userService))
+	{
+		webauthn.POST("/register/begin", BeginRegistration(userService, web))
+		webauthn.POST("/register/finish", FinishRegistration(userService, web))
+	}
+	r.POST("/webauthn/login/begin", BeginLogin(userService, web))
+	r.POST("/webauthn/login/finish", FinishLogin(userService, web))
 
 	r.Run()
 }

@@ -36,8 +36,6 @@
       beforeSend: function(xhr){xhr.setRequestHeader('Authorization', 'Bearer ' + session_token);},
       success: function(data, status) {
         console.log("Status: "+status+"\nData: "+data);
-        result = data;
-
         /* creating image assuming data is the url of image */
         var img = $('<img id="qr_code_image" style="margin-left: auto; margin-right: auto;" >');
         img.attr('src', 'data:image/gif;base64,' + data.payload);

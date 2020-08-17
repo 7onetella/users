@@ -1,0 +1,25 @@
+<div class="container">
+  {{#if this.model.authenticated}}
+    <div id="totpdiv" class="card">
+      <div id="image_div"></div>
+      <article class="card-body">
+        <form>
+          <div class="form-group">
+            <button type="button" {{action "register" this.model}} class="btn btn-success btn-block">Register Authenticator</button>
+          </div>
+        </form>
+      </article>
+    </div>
+  {{else}}
+  {{/if}}
+</div>
+
+<script>
+  $(document).ready(function () {
+    // check whether current browser supports WebAuthn
+    if (!window.PublicKeyCredential) {
+      alert("Error: this browser does not support WebAuthn");
+      return;
+    }
+  });
+</script>

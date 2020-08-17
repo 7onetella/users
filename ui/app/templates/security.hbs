@@ -28,9 +28,9 @@
               <h5 class="card-title">FIDO2 WebAuthn</h5>
               <p class="card-text">WebAuthn key utilizes private key and public key pair to secure your identity</p>
               {{#if this.model.user.webauthnenabled}}
-                <button type="button" {{action "toggle_totp"}} class="btn btn-enabled"><span>Enabled</span></button>
+                <button type="button" {{action "toggle_webauthn"}} class="btn btn-enabled"><span>Enabled</span></button>
               {{else}}
-                <button type="button" {{action "toggle_totp"}} class="btn btn-disabled"><span>Disabled</span></button>
+                <button type="button" {{action "toggle_webauthn"}} class="btn btn-disabled"><span>Disabled</span></button>
               {{/if}}
             </div>
           </div>

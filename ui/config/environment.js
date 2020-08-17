@@ -52,6 +52,8 @@ module.exports = function(environment) {
     ENV.APP.JSONAPIAdaptetHost = 'http://localhost:8080';
   }
 
+  ENV.APP.JSONAPIAdaptetHost = 'http://localhost:8080';
+
   if (environment === 'test') {
     // Testem prefers this...
     ENV.locationType = 'none';

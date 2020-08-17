@@ -34,6 +34,10 @@ export default Controller.extend({
           that.set('event.id', event_id)
           that.router.transitionTo('totp-signin');
         }
+        if (reason === 'webauthn_required') {
+          that.set('event.id', event_id)
+          that.router.transitionTo('webauthn-signin');
+        }
         if (reason === 'invalid_credential') {
           that.set("loginFailed", true);
           that.set("login_failure_reason", message)

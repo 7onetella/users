@@ -39,7 +39,7 @@ export default Controller.extend({
     silent_login: function() {
       console.log('controllers/layout.js silent_login()')
 
-      const credentials = { username: 'user8az28y@example.com', password: 'password' }
+      const credentials = { username: 'pass_user@example.com', password: 'users91234' }
       const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
       let promise = this.session.authenticate(authenticator, credentials)
 

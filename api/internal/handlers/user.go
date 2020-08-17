@@ -85,11 +85,10 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 				})
 				return
 			}
-			goto CheckTOTP
+			goto Check2FA
 		}
 
 		if len(cred.Username) > 0 {
-			// this just to make testing easier during development phase
 			user, dberr = userService.FindByEmail(cred.Username)
 			if dberr != nil {
 				log.Printf("error while authenticating: %v", dberr)
@@ -111,12 +110,13 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 				return
 			}
 
-			if user.Email == "user8az28y@example.com" {
+			// this just to make testing easier during development phase
+			if user.Email == "foo_pass_user@example.com" {
 				goto GrantAccess
 			}
 		}
 
-	CheckTOTP:
+	Check2FA:
 		if user.TOTPEnabled {
 			if len(cred.TOTP) == 0 {
 				event := NewAuthEvent(user.ID, "missing_totp", c.ClientIP(), c.ClientIP(), c.Request.UserAgent())
@@ -134,6 +134,18 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 					"message": "Check your TOTP",
 				})
 				userService.RecordAuthEvent(NewAuthEvent(user.ID, "invalid_totp", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
+				return
+			}
+		}
+		if user.WebAuthnEnabled {
+			if len(cred.TokenID) == 0 {
+				event := NewAuthEvent(user.ID, "webauthn_required", c.ClientIP(), c.ClientIP(), c.Request.UserAgent())
+				userService.RecordAuthEvent(event)
+				c.AbortWithStatusJSON(401, gin.H{
+					"reason":   "webauthn_required",
+					"message":  "WebAuthn Auth Required",
+					"event_id": event.ID,
+				})
 				return
 			}
 		}
@@ -159,6 +171,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 			Expiration: expTime.Unix(),
 		}
 		c.JSON(200, token)
+
 		userService.RecordAuthEvent(NewAuthEvent(user.ID, "successful_login", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
 	}
 }

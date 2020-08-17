@@ -4,7 +4,8 @@ go 1.13
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/duo-labs/webauthn v0.0.0-20200714211715-1daaee874e43 // indirect
+	github.com/duo-labs/webauthn v0.0.0-20200714211715-1daaee874e43
+	github.com/duo-labs/webauthn.io v0.0.0-20200717012147-67203c5c36a7
 	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/gin-gonic/gin v1.6.3

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/base64"
-	"github.com/7onetella/users/api/internal/dbutil"
+	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
 	. "github.com/7onetella/users/api/internal/model"
 	"github.com/gin-gonic/gin"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func NewTOTPRaw(userService dbutil.UserService) gin.HandlerFunc {
+func NewTOTPRaw(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
 		user, err := rh.UserFromContext()
@@ -28,7 +28,7 @@ func NewTOTPRaw(userService dbutil.UserService) gin.HandlerFunc {
 		log.Println("url = " + url)
 
 		user.TOTPSecretTmp = secret
-		user.TOTPSecretTmpExp = dbutil.CurrentTimeInSeconds() + 60*5
+		user.TOTPSecretTmpExp = CurrentTimeInSeconds() + 60*5
 		userService.UpdateTOTPTmp(user)
 
 		qrBytes, err := QR(url)
@@ -43,7 +43,7 @@ func NewTOTPRaw(userService dbutil.UserService) gin.HandlerFunc {
 	}
 }
 
-func NewTOTPJson(userService dbutil.UserService) gin.HandlerFunc {
+func NewTOTPJson(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
@@ -59,7 +59,7 @@ func NewTOTPJson(userService dbutil.UserService) gin.HandlerFunc {
 		log.Println("url = " + url)
 
 		user.TOTPSecretTmp = secret
-		user.TOTPSecretTmpExp = dbutil.CurrentTimeInSeconds() + 60*5
+		user.TOTPSecretTmpExp = CurrentTimeInSeconds() + 60*5
 		userService.UpdateTOTPTmp(user)
 
 		qrBytes, err := QR(url)
@@ -77,7 +77,7 @@ func NewTOTPJson(userService dbutil.UserService) gin.HandlerFunc {
 	}
 }
 
-func ConfirmToken(service dbutil.UserService) gin.HandlerFunc {
+func ConfirmToken(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()

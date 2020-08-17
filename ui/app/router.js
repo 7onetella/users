@@ -12,6 +12,7 @@ Router.map(function() {
     this.route('profile', {resetNamespace: true});
     this.route('security', {resetNamespace: true});
     this.route('totp', {resetNamespace: true});
+    this.route('webauthn', {resetNamespace: true});
     this.route('index', {resetNamespace: true, path: '/'});
     this.route('about', {resetNamespace: true});
     this.route('session-expired', {resetNamespace: true});
@@ -19,6 +20,7 @@ Router.map(function() {
 
   this.route('signin');
   this.route('totp-signin');
+  this.route('webauthn-signin');
 });
 
 export default Router;

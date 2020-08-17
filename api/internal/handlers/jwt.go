@@ -20,6 +20,7 @@ type Credentials struct {
 	Password string `json:"password"`
 	TOTP     string `json:"totp"`
 	EventID  string `json:"event_id"`
+	TokenID  string `json:"token_id"`
 }
 
 type AuthToken struct {
@@ -39,7 +40,7 @@ func PreflightOptions() gin.HandlerFunc {
 			w := c.Writer
 			w.Header().Add("Access-Control-Allow-Origin", "*")
 			w.Header().Add("Access-Control-Allow-Methods", "GET, OPTIONS, HEAD, POST, PUT, PATCH, DELETE")
-			w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+			w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, EventID")
 			w.WriteHeader(http.StatusAccepted)
 			c.Abort()
 			return
