@@ -11,12 +11,11 @@ type User struct {
 	LastName            string `db:"lastname"             json:"lastname"           api:"attr"`
 	Created             int64  `db:"created_date"         json:"created"            api:"attr"`
 	TOTPEnabled         bool   `db:"totp_enabled"         json:"totpenabled"        api:"attr"`
-	WebAuthnEnabled     bool   `db:"webauthn_enabled"     json:"webauthnenabled"    api:"attr"`
-	WebAuthnSessionData string `db:"webauthn_session"`
-	WebAuthnTokenID     string `db:"webauthn_token_id"`
 	TOTPSecretCurrent   string `db:"totp_secret_current"`
 	TOTPSecretTmp       string `db:"totp_secret_tmp"`
 	TOTPSecretTmpExp    int64  `db:"totp_secret_tmp_exp"`
+	WebAuthnEnabled     bool   `db:"webauthn_enabled"     json:"webauthnenabled"    api:"attr"`
+	WebAuthnSessionData string `db:"webauthn_session"`
 	JWTSecret           string `db:"jwt_secret"`
 	Credentials         []webauthn.Credential
 }

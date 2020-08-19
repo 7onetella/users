@@ -16,11 +16,11 @@ import (
 )
 
 type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	TOTP     string `json:"totp"`
-	EventID  string `json:"event_id"`
-	TokenID  string `json:"token_id"`
+	Username           string `json:"username"`
+	Password           string `json:"password"`
+	TOTP               string `json:"totp"`
+	PrimaryAuthToken   string `json:"auth_token"`
+	SecondaryAuthToken string `json:"sec_auth_token"`
 }
 
 type AuthToken struct {
@@ -40,7 +40,7 @@ func PreflightOptions() gin.HandlerFunc {
 			w := c.Writer
 			w.Header().Add("Access-Control-Allow-Origin", "*")
 			w.Header().Add("Access-Control-Allow-Methods", "GET, OPTIONS, HEAD, POST, PUT, PATCH, DELETE")
-			w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, EventID")
+			w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, AuthToken")
 			w.WriteHeader(http.StatusAccepted)
 			c.Abort()
 			return

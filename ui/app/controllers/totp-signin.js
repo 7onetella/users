@@ -6,15 +6,15 @@ import { storageFor } from 'ember-local-storage';
 export default Controller.extend({
   router: inject(),
   session: inject('session'),
-  event: storageFor('event'),
+  event: storageFor('datastore'),
 
   actions: {
     authenticate: function(data) {
       console.log('contollers/totp.js')
       const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
       const credentials = {
-        totp: data.totp,
-        event_id: this.get('event.id')
+        auth_token: this.get('datastore.auth_token'),
+        totp: data.totp
       }
       let promise = this.session.authenticate(authenticator, credentials)
 

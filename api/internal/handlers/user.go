@@ -6,6 +6,7 @@ import (
 	. "github.com/7onetella/users/api/internal/httputil"
 	. "github.com/7onetella/users/api/internal/jsonutil"
 	. "github.com/7onetella/users/api/internal/model"
+	"github.com/7onetella/users/api/pkg/crypto"
 	"github.com/7onetella/users/api/pkg/jwtutil"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -62,11 +63,95 @@ func Signup(userService UserService) gin.HandlerFunc {
 	}
 }
 
+type AuthEventHandler struct {
+	RequestHanlder RequestHanlder
+	UserService    UserService
+}
+
+func (ah AuthEventHandler) ErrorOccurred(eventName, message string) {
+	rh := ah.RequestHanlder
+	c := rh.Context
+	userService := ah.UserService
+
+	event := rh.NewAuthEvent("", eventName)
+	c.AbortWithStatusJSON(401, gin.H{
+		"reason":  event.Event,
+		"message": message,
+	})
+	dberr := userService.RecordAuthEvent(event)
+	if dberr != nil {
+		LogErr(rh.TransactionIDFromContext(), "db error", dberr.Err)
+	}
+}
+
+func (ah AuthEventHandler) AccessDenied(userID, eventName, message string) {
+	rh := ah.RequestHanlder
+	c := rh.Context
+	userService := ah.UserService
+
+	event := rh.NewAuthEvent(userID, eventName)
+	c.AbortWithStatusJSON(401, gin.H{
+		"reason":  event.Event,
+		"message": message,
+	})
+	dberr := userService.RecordAuthEvent(event)
+	if dberr != nil {
+		LogErr(rh.TransactionIDFromContext(), "db error", dberr.Err)
+	}
+}
+
+func (ah AuthEventHandler) SendPrimaryAuthToken(userID, eventName, message string) {
+	rh := ah.RequestHanlder
+	c := rh.Context
+	userService := ah.UserService
+
+	event := rh.NewAuthEvent(userID, eventName)
+	userService.RecordAuthEvent(event)
+
+	c.AbortWithStatusJSON(401, gin.H{
+		"reason":     event.Event,
+		"message":    message,
+		"auth_token": crypto.Base64Encode(event.ID),
+	})
+}
+
+func (ah AuthEventHandler) FinishSecondAuth(userID, eventName, message string) {
+	rh := ah.RequestHanlder
+	c := rh.Context
+	userService := ah.UserService
+
+	event := rh.NewAuthEvent(userID, eventName)
+	userService.RecordAuthEvent(event)
+
+	secEvent := rh.NewAuthEvent(userID, "sec_auth_generated")
+	userService.RecordAuthEvent(secEvent)
+
+	c.AbortWithStatusJSON(401, gin.H{
+		"reason":         event.Event,
+		"message":        message,
+		"auth_token":     crypto.Base64Encode(event.ID),
+		"sec_auth_token": crypto.Base64Encode(secEvent.ID),
+	})
+}
+
+func (ah AuthEventHandler) IsSecondaryAuthTokenValidForUer(userID, secAuthToken string) bool {
+	userService := ah.UserService
+	eventID, _ := crypto.Base64Decode(secAuthToken)
+	user, dberr := userService.FindUserByAuthEventID(eventID)
+	if dberr != nil {
+		return false
+	}
+
+	return userID == user.ID
+}
+
 // Signin signs in user
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		rh := NewRequestHandler(c)
+		auth := AuthEventHandler{rh, userService}
+
 		rh.WriteCORSHeader()
 
 		cred := Credentials{}
@@ -75,14 +160,12 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		var user *User
 		var dberr *DBOpError
 
-		if len(cred.EventID) > 0 {
-			user, dberr = userService.FindByEventID(cred.EventID)
+		if len(cred.PrimaryAuthToken) > 0 {
+			eventID, _ := crypto.Base64Decode(cred.PrimaryAuthToken)
+			user, dberr = userService.FindUserByAuthEventID(eventID)
 			if dberr != nil {
 				log.Printf("error while authenticating: %v", dberr)
-				c.AbortWithStatusJSON(401, gin.H{
-					"reason":  "invalid_event_id",
-					"message": "TOTP auth failed",
-				})
+				auth.ErrorOccurred("invalid_auth_token", "Authentication failed")
 				return
 			}
 			goto Check2FA
@@ -92,21 +175,12 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 			user, dberr = userService.FindByEmail(cred.Username)
 			if dberr != nil {
 				log.Printf("error while authenticating: %v", dberr)
-				c.AbortWithStatusJSON(401, gin.H{
-					"reason":  "server_error",
-					"message": "Authentication failed",
-				})
+				auth.ErrorOccurred("server_error", "Authentication failed")
+				return
 			}
 
 			if user.Password != cred.Password {
-				c.AbortWithStatusJSON(401, gin.H{
-					"reason":  "invalid_credential",
-					"message": "Check login name or password",
-				})
-				dberr := userService.RecordAuthEvent(NewAuthEvent(user.ID, "invalid_credential", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
-				if rh.HandleDBError(dberr) {
-					return
-				}
+				auth.AccessDenied(user.ID, "invalid_password", "Check login name or password")
 				return
 			}
 
@@ -119,36 +193,26 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 	Check2FA:
 		if user.TOTPEnabled {
 			if len(cred.TOTP) == 0 {
-				event := NewAuthEvent(user.ID, "missing_totp", c.ClientIP(), c.ClientIP(), c.Request.UserAgent())
-				userService.RecordAuthEvent(event)
-				c.AbortWithStatusJSON(401, gin.H{
-					"reason":   "missing_totp",
-					"message":  "TOTP required",
-					"event_id": event.ID,
-				})
+				auth.SendPrimaryAuthToken(user.ID, "missing_totp", "TOTP required")
 				return
 			}
 			if !IsTOTPValid(user, cred.TOTP) {
-				c.AbortWithStatusJSON(401, gin.H{
-					"reason":  "invalid_totp",
-					"message": "Check your TOTP",
-				})
-				userService.RecordAuthEvent(NewAuthEvent(user.ID, "invalid_totp", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
+				auth.AccessDenied(user.ID, "invalid_totp", "Check your TOTP")
 				return
 			}
+			goto GrantAccess
 		}
+
 		if user.WebAuthnEnabled {
-			if len(cred.TokenID) == 0 {
-				event := NewAuthEvent(user.ID, "webauthn_required", c.ClientIP(), c.ClientIP(), c.Request.UserAgent())
-				userService.RecordAuthEvent(event)
-				c.AbortWithStatusJSON(401, gin.H{
-					"reason":   "webauthn_required",
-					"message":  "WebAuthn Auth Required",
-					"event_id": event.ID,
-				})
+			if len(cred.SecondaryAuthToken) == 0 {
+				auth.SendPrimaryAuthToken(user.ID, "webauthn_required", "WebAuthn Auth Required")
 				return
 			}
-			// TODO: make sure token id match
+			if !auth.IsSecondaryAuthTokenValidForUer(user.ID, cred.SecondaryAuthToken) {
+				auth.AccessDenied(user.ID, "invalid_sec_auth_token", "Authentication failed")
+				return
+			}
+			goto GrantAccess
 		}
 
 	GrantAccess:
@@ -160,12 +224,6 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		}
 
 		log.Println("Signin successful")
-		//log.Println("Sign-In successful dropping token cookie")
-		//http.SetCookie(w, &http.Cookie{
-		//	Name:    "token",
-		//	Value:   tokenString,
-		//	Expires: expTime,
-		//})
 
 		token := AuthToken{
 			Token:      tokenString,

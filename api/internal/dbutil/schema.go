@@ -18,13 +18,12 @@ CREATE TABLE users (
 	jwt_secret           CHARACTER VARYING(32) DEFAULT '',
     webauthn_enabled     BOOL DEFAULT FALSE,
     webauthn_session     CHARACTER VARYING(2048) DEFAULT '',
-    webauthn_token_id    CHARACTER(40) DEFAULT '',
     CONSTRAINT           unique_user UNIQUE (platform_name, email)
 );
 
-INSERT INTO users (user_id, platform_name, email, passhash, firstname, lastname, created_date, totp_enabled, totp_secret_current, totp_secret_tmp, totp_secret_tmp_exp, jwt_secret, webauthn_enabled, webauthn_session, webauthn_token_id) VALUES ('ee288e8c-0b2a-41b5-937c-9a355c0483b4', 'web', 'totp_user@example.com', 'users91234', 'foo', 'bar', 1597042574, true, 'FPTUDIF2KSQAKREU', '', 0, 'FPTUDIF2KSQAKREU', false, '', '                                        ');
-INSERT INTO users (user_id, platform_name, email, passhash, firstname, lastname, created_date, totp_enabled, totp_secret_current, totp_secret_tmp, totp_secret_tmp_exp, jwt_secret, webauthn_enabled, webauthn_session, webauthn_token_id) VALUES ('a2aee5e6-05a0-438c-9276-4ba406b7bf9e', 'web', 'pass_user@example.com', 'users91234', 'scott', 'bar', 1596747095, false, 'SVVEC5VTQBMNE3DH', 'C56BRBHMW3YC4XPA', 1597089055, 'SVVEC5VTQBMNE3DH', false, '', '                                        ');
-INSERT INTO users (user_id, platform_name, email, passhash, firstname, lastname, created_date, totp_enabled, totp_secret_current, totp_secret_tmp, totp_secret_tmp_exp, jwt_secret, webauthn_enabled, webauthn_session, webauthn_token_id) VALUES ('a2aee5e6-05a0-438c-9276-4ba406b7bf9f', 'web', 'webauth_user@example.com', 'users91234', 'scott', 'bar', 1596747095, false, 'SVVEC5VTQBMNE3DH', 'C56BRBHMW3YC4XPA', 1597089055, 'SVVEC5VTQBMNE3DH', true, '', '                                        ');
+INSERT INTO users (user_id, platform_name, email, passhash, firstname, lastname, created_date, totp_enabled, totp_secret_current, totp_secret_tmp, totp_secret_tmp_exp, jwt_secret, webauthn_enabled, webauthn_session) VALUES ('ee288e8c-0b2a-41b5-937c-9a355c0483b4', 'web', 'totp_user@example.com', 'users91234', 'foo', 'bar', 1597042574, true, 'FPTUDIF2KSQAKREU', '', 0, 'FPTUDIF2KSQAKREU', false, '');
+INSERT INTO users (user_id, platform_name, email, passhash, firstname, lastname, created_date, totp_enabled, totp_secret_current, totp_secret_tmp, totp_secret_tmp_exp, jwt_secret, webauthn_enabled, webauthn_session) VALUES ('a2aee5e6-05a0-438c-9276-4ba406b7bf9e', 'web', 'pass_user@example.com', 'users91234', 'scott', 'bar', 1596747095, false, 'SVVEC5VTQBMNE3DH', 'C56BRBHMW3YC4XPA', 1597089055, 'SVVEC5VTQBMNE3DH', false, '');
+INSERT INTO users (user_id, platform_name, email, passhash, firstname, lastname, created_date, totp_enabled, totp_secret_current, totp_secret_tmp, totp_secret_tmp_exp, jwt_secret, webauthn_enabled, webauthn_session) VALUES ('a2aee5e6-05a0-438c-9276-4ba406b7bf9f', 'web', 'webauth_user@example.com', 'users91234', 'scott', 'bar', 1596747095, false, 'SVVEC5VTQBMNE3DH', 'C56BRBHMW3YC4XPA', 1597089055, 'SVVEC5VTQBMNE3DH', true, '');
 
 DROP TABLE auth_event;
 

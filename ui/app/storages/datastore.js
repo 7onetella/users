@@ -5,7 +5,7 @@ const Storage = StorageObject.extend();
 // Uncomment if you would like to set initialState
 Storage.reopenClass({
   initialState() {
-    return {id: ''};
+    return {val: ''};
   }
 });
 

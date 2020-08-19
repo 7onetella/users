@@ -7,7 +7,7 @@ import ENV from '../config/environment';
 export default Controller.extend({
   router: inject(),
   session: inject('session'),
-  event: storageFor('event'),
+  datastore: storageFor('datastore'),
 
   actions: {
     authenticate: function(data) {
@@ -25,7 +25,7 @@ export default Controller.extend({
         crossDomain: 'true',
         beforeSend: function (xhr) {
           xhr.setRequestHeader('Authorization', 'Bearer ' + session_token);
-          xhr.setRequestHeader('EventID', that.get('event.id'));
+          xhr.setRequestHeader('AuthToken', that.get('datastore.auth_token'));
         }
       }
 
@@ -66,8 +66,8 @@ export default Controller.extend({
           alert("successfully logged in !")
           const authenticator = 'authenticator:jwt';
           const credentials = {
-            token_id: data.token_id,
-            event_id: this.get('event.id')
+            auth_token: this.get('datastore.auth_token'),
+            sec_auth_token: data.sec_auth_token
           }
           let promise = this.session.authenticate(authenticator, credentials)
 

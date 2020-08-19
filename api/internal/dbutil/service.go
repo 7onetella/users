@@ -75,7 +75,7 @@ func (u UserService) FindByEmail(email string) (*User, *DBOpError) {
 	return user, nil
 }
 
-func (u UserService) FindByEventID(eventID string) (*User, *DBOpError) {
+func (u UserService) FindUserByAuthEventID(eventID string) (*User, *DBOpError) {
 	db := u.DB
 	user := &User{}
 	sql := `
@@ -188,18 +188,6 @@ func (u UserService) UpdateWebAuthn(user User) *DBOpError {
 		SET 
 		    webauthn_enabled       = :webauthn_enabled,
 		    webauthn_session       = :webauthn_session 
-		WHERE 
-			user_id = :user_id 
-	`
-	return u.Upsert(sql, &user)
-}
-
-func (u UserService) UpdateTokenID(user User) *DBOpError {
-	sql := `
-		UPDATE 
-			users 
-		SET 
-		    webauthn_token_id   = :webauthn_token_id 
 		WHERE 
 			user_id = :user_id 
 	`

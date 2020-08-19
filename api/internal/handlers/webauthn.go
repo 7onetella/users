@@ -5,9 +5,9 @@ import (
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
 	"github.com/7onetella/users/api/internal/model"
+	. "github.com/7onetella/users/api/pkg/crypto"
 	"github.com/duo-labs/webauthn/webauthn"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"log"
 	"net/http"
 )
@@ -93,9 +93,10 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
 
-		eventID := c.GetHeader("EventID")
+		authToken := c.GetHeader("AuthToken")
+		eventID, _ := Base64Decode(authToken)
 		log.Printf("event id = %s", eventID)
-		user, dberr := service.FindByEventID(eventID)
+		user, dberr := service.FindUserByAuthEventID(eventID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -145,8 +146,9 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
 
-		eventID := c.GetHeader("EventID")
-		user, dberr := service.FindByEventID(eventID)
+		authToken := c.GetHeader("AuthToken")
+		eventID, _ := Base64Decode(authToken)
+		user, dberr := service.FindUserByAuthEventID(eventID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -176,15 +178,13 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 			return
 		}
 
-		user.WebAuthnTokenID = uuid.New().String()
-		dberr = service.UpdateTokenID(*user)
-		if rh.HandleDBError(dberr) {
-			return
-		}
+		secAuthEvent := model.NewAuthEvent(user.ID, "sec_auth_success", "", "", "")
+		service.RecordAuthEvent(secAuthEvent)
 
 		c.JSON(200, gin.H{
-			"result":   true,
-			"token_id": user.WebAuthnTokenID,
+			"result":         true,
+			"auth_token":     authToken,
+			"sec_auth_token": Base64Encode(secAuthEvent.ID),
 		})
 	}
 }

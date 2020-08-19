@@ -1,6 +1,8 @@
 package httputil
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 // txid, logging, cors header, payload
 type RequestHanlder struct {

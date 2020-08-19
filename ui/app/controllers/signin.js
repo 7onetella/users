@@ -6,7 +6,7 @@ import { storageFor } from 'ember-local-storage';
 export default Controller.extend({
   router: inject(),
   session: inject('session'),
-  event: storageFor('event'),
+  datastore: storageFor('datastore'),
 
   actions: {
     authenticate: function() {
@@ -28,14 +28,14 @@ export default Controller.extend({
         console.log("  data:" + JSON.stringify(data));
         var reason = data.json.reason
         var message = data.json.message
-        var event_id = data.json.event_id
+        var auth_token = data.json.auth_token
         console.log("  reason:" + reason)
         if (reason === 'missing_totp') {
-          that.set('event.id', event_id)
+          that.set('datastore.auth_token', auth_token)
           that.router.transitionTo('totp-signin');
         }
         if (reason === 'webauthn_required') {
-          that.set('event.id', event_id)
+          that.set('datastore.auth_token', auth_token)
           that.router.transitionTo('webauthn-signin');
         }
         if (reason === 'invalid_credential') {
