@@ -2,10 +2,10 @@
 There is a need for good secure authentication. I have decided to implement an authentication server to be able to
 understand JWT, TOTP and FIDO2 WebAuthn. 
 
-## Demo
+# Demo
 ![](/assets/auth.gif)
 
-## Work In Progress
+# Work In Progress
 There is a lot to be done in order to make the authentication even more secure. I will be doing some internal clean up
 of code in near future.
 
