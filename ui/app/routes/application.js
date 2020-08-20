@@ -8,7 +8,6 @@ export default Route.extend({
 
   setupController (controller, model) {
     console.log('routes/application.js')
-    // console.log("session.isAuthenticated: " + this.get('session.isAuthenticated'));
     this._super(controller, model);
   },
 

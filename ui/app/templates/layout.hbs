@@ -29,9 +29,6 @@
         </li>
       {{else}}
         <li class="nav-item">
-          <a href="#" {{ action "silent_login" preventDefault=false}} class="nav-link">Silent Signin</a>
-        </li>
-        <li class="nav-item">
           <LinkTo @route="signin" class="nav-link">Sign in</LinkTo>
         </li>
         <li class="nav-item">

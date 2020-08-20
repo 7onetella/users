@@ -8,13 +8,13 @@ export default Route.extend({
 
   model() {
     console.log('routes/totp.js: model()')
+
     if (!this.session.isAuthenticated) {
-      console.log('invalid session')
+      console.log('> invalid session')
       return {'authenticated': false}
     }
 
     var token = this.session.session.content.authenticated.token
-    console.log('  token = ' + token)
 
     return {
       'token': token,

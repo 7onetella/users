@@ -1,13 +1,15 @@
 <div class="container">
   {{#if this.model.authenticated}}
     <div id="totpdiv" class="card">
-      <div id="session_token" class="hidden_data_field">{{this.model.token}}</div>
       <div id="totpurl" class="hidden_data_field">{{this.model.totpurl}}</div>
       <div id="image_div"></div>
       <article class="card-body">
         <form>
           <div class="form-group">
-            <label for="email">TOTP</label>
+            {{#if totp_validation_failed}}
+              <h6 id="signinalertdiv" class="card-subtitle mb-2 text-danger">{{totp_validation_message}}</h6>
+            {{/if}}
+            <label for="email">Authenticator code</label>
             <div class="input-group">
               <Input @type="text" class="form-control" @value={{this.model.totp}} @id="password" placeholder="Enter TOTP from Authenticator" @aria-label="Input group example" @aria-describedby="btnGroupAddon" />
             </div>
@@ -23,7 +25,7 @@
 </div>
 
 <script>
-  var session_token = $('#session_token').text()
+  var session_token = JSON.parse(localStorage.getItem("ember_simple_auth-session")).authenticated.token
   var totpurl = $('#totpurl').text()
 
   if (session_token) {
@@ -35,15 +37,15 @@
       crossDomain: 'true',
       beforeSend: function(xhr){xhr.setRequestHeader('Authorization', 'Bearer ' + session_token);},
       success: function(data, status) {
-        console.log("Status: "+status+"\nData: "+data);
+        console.log("totp.hbs")
+        console.log("> status: "+status+"\n> data: "+ JSON.stringify(data));
         /* creating image assuming data is the url of image */
-        var img = $('<img id="qr_code_image" style="margin-left: auto; margin-right: auto;" >');
+        let img = $('<img id="qr_code_image" style="margin-left: auto; margin-right: auto;" >');
         img.attr('src', 'data:image/gif;base64,' + data.payload);
         img.appendTo('#image_div');
       },
       error: function(error, txtStatus) {
-        console.log(txtStatus);
-        console.log('error');
+        console.log('> error: ' + JSON.stringify(error));
       }
     });
   }

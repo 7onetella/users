@@ -13,13 +13,10 @@ export default Route.extend({
     }
 
     console.log('routes/security.js: model()')
-    var token = this.session.session.content.authenticated.token
-    console.log('  token = ' + token)
-
-    var user_id = this.session.session.content.authenticated.tokenData.user_id
-    console.log('  user_id = ' + user_id)
-    // var userStr = JSON.stringify(this.userService.getUser(user_id))
-    var record = this.store.findRecord('user', user_id)
+    let token = this.session.session.content.authenticated.token
+    let user_id = this.session.session.content.authenticated.tokenData.user_id
+    console.log('> user_id = ' + user_id)
+    let record = this.store.findRecord('user', user_id)
 
     return {
       'token': token,

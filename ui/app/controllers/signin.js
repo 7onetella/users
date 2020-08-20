@@ -16,20 +16,19 @@ export default Controller.extend({
         password: this.password,
         totp: this.totp
       }
-      const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
+      const authenticator = 'authenticator:jwt';
       let promise = this.session.authenticate(authenticator, credentials)
 
       var that = this
       promise.then(function(){
-        console.log("  authentication successful. redirecting to index page");
-        console.log("  router" + that.get('router'))
+        console.log("> authentication successful. redirecting to index page");
         that.router.transitionTo('index');
-      },function(data) {
-        console.log("  data:" + JSON.stringify(data));
+      }, data => {
+        console.log("> data:" + JSON.stringify(data));
         var reason = data.json.reason
         var message = data.json.message
         var auth_token = data.json.auth_token
-        console.log("  reason:" + reason)
+        console.log("> reason:" + reason)
         if (reason === 'missing_totp') {
           that.set('datastore.auth_token', auth_token)
           that.router.transitionTo('totp-signin');
@@ -38,7 +37,7 @@ export default Controller.extend({
           that.set('datastore.auth_token', auth_token)
           that.router.transitionTo('webauthn-signin');
         }
-        if (reason === 'invalid_credential') {
+        if (reason === 'invalid_password') {
           that.set("loginFailed", true);
           that.set("login_failure_reason", message)
         }

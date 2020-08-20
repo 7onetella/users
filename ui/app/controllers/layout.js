@@ -40,17 +40,15 @@ export default Controller.extend({
       console.log('controllers/layout.js silent_login()')
 
       const credentials = { username: 'pass_user@example.com', password: 'users91234' }
-      const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
+      const authenticator = 'authenticator:jwt';
       let promise = this.session.authenticate(authenticator, credentials)
 
       var that = this
       promise.then(function(){
-        console.log("  authentication successful. redirecting to listing page");
-        console.log("  router" + that.get('router'))
+        console.log("> authentication successful. redirecting to security page");
         that.router.transitionTo('security');
       },function(data) {
-        // console.log("  data:" + JSON.stringify(data));
-        console.log("  reason:" + data.json.reason);
+        console.log("> reason:" + data.json.reason);
         that.set("loginFailed", true);
         that.set("login_failure_reason", data.json.message)
       });

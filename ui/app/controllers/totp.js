@@ -12,10 +12,10 @@ export default Controller.extend({
   actions: {
     confirm: function(data) {
       console.log('controllers/totp.js confirm()')
-
-      console.log('  otop = ' + data.totp)
+      console.log('> totp = ' + data.totp)
       var session_token = this.session.session.content.authenticated.token
 
+      var that = this
       $.ajax({
         url: ENV.APP.JSONAPIAdaptetHost + "/totp/confirm",
         type: 'post',
@@ -25,14 +25,15 @@ export default Controller.extend({
         crossDomain: 'true',
         beforeSend: function(xhr){xhr.setRequestHeader('Authorization', 'Bearer ' + session_token);},
         success: function(data, status) {
-          console.log("Status: "+status+"\nData: "+data);
+          console.log("> status: "+status+"\n> data: "+data);
+          this.router.transitionTo('index');
         },
         error: function(error, txtStatus) {
-          console.log(txtStatus);
-          console.log('error');
+          // console.log(txtStatus);
+          console.log('> error: ' + JSON.stringify(error));
+          that.set("totp_validation_failed", true);
+          that.set("totp_validation_message", "Invalid TOTP")
         }})
-
-      this.router.transitionTo('index');
     }
   }
 });

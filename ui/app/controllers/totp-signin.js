@@ -6,12 +6,12 @@ import { storageFor } from 'ember-local-storage';
 export default Controller.extend({
   router: inject(),
   session: inject('session'),
-  event: storageFor('datastore'),
+  datastore: storageFor('datastore'),
 
   actions: {
     authenticate: function(data) {
       console.log('contollers/totp.js')
-      const authenticator = 'authenticator:jwt'; // or 'authenticator:jwt'
+      const authenticator = 'authenticator:jwt';
       const credentials = {
         auth_token: this.get('datastore.auth_token'),
         totp: data.totp
@@ -20,14 +20,13 @@ export default Controller.extend({
 
       var that = this
       promise.then(function(){
-        console.log("  authentication successful. redirecting to index page");
-        console.log("  router" + that.get('router'))
+        console.log("> authentication successful. redirecting to index page");
         that.get('router').transitionTo('index');
       },function(data) {
-        console.log("  data:" + JSON.stringify(data));
+        console.log("> data:" + JSON.stringify(data));
         var reason = data.json.reason
         var message = data.json.message
-        console.log("  reason:" + reason)
+        console.log("> reason:" + reason)
         if (reason === 'invalid_totp') {
           that.set("loginFailed", true);
           that.set("login_failure_reason", message)
