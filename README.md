@@ -5,11 +5,11 @@ understand JWT, TOTP and FIDO2 WebAuthn.
 ## Demo
 ![](/assets/auth.gif)
 
-##Work In Progress
+## Work In Progress
 There is a lot to be done in order to make the authentication even more secure. I will be doing some internal clean up
 of code in near future.
 
-#Future enhancement
+# Future enhancement
 - Add source IP check against previously recorded source IPs
 - Add backoff period when password auth or totp auth fails three times in a row
 - Add browser agent check against previously recorded browser agents
