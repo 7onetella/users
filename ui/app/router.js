@@ -16,6 +16,8 @@ Router.map(function() {
     this.route('index', {resetNamespace: true, path: '/'});
     this.route('about', {resetNamespace: true});
     this.route('session-expired', {resetNamespace: true});
+    this.route('webauthn-success', {resetNamespace: true});
+    this.route('totp-success', {resetNamespace: true});
   });
 
   this.route('signin');

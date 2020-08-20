@@ -183,26 +183,9 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 				auth.AccessDenied(user.ID, "invalid_password", "Check login name or password")
 				return
 			}
-
-			// this just to make testing easier during development phase
-			if user.Email == "foo_pass_user@example.com" {
-				goto GrantAccess
-			}
 		}
 
 	Check2FA:
-		if user.TOTPEnabled {
-			if len(cred.TOTP) == 0 {
-				auth.SendPrimaryAuthToken(user.ID, "missing_totp", "TOTP required")
-				return
-			}
-			if !IsTOTPValid(user, cred.TOTP) {
-				auth.AccessDenied(user.ID, "invalid_totp", "Check your TOTP")
-				return
-			}
-			goto GrantAccess
-		}
-
 		if user.WebAuthnEnabled {
 			if len(cred.SecondaryAuthToken) == 0 {
 				auth.SendPrimaryAuthToken(user.ID, "webauthn_required", "WebAuthn Auth Required")
@@ -210,6 +193,18 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 			}
 			if !auth.IsSecondaryAuthTokenValidForUer(user.ID, cred.SecondaryAuthToken) {
 				auth.AccessDenied(user.ID, "invalid_sec_auth_token", "Authentication failed")
+				return
+			}
+			goto GrantAccess
+		}
+
+		if user.TOTPEnabled {
+			if len(cred.TOTP) == 0 {
+				auth.SendPrimaryAuthToken(user.ID, "missing_totp", "TOTP required")
+				return
+			}
+			if !IsTOTPValid(user, cred.TOTP) {
+				auth.AccessDenied(user.ID, "invalid_totp", "Check your TOTP")
 				return
 			}
 			goto GrantAccess

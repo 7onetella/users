@@ -1,18 +1,31 @@
-<div class="jumbotron">
-  <p class="lead">
+{{#if this.model.session.isAuthenticated}}
+  <div class="jumbotron">
+    <p class="lead">
+    <div class="media">
+      <div class="media-body">
+        <h5 class="mt-0">I am {{this.model.user.firstname}} {{this.model.user.lastname}}</h5>
+      </div>
+    </div>
+    </p>
+    <hr class="my-4">
+    <p class="lead">
+    </p>
+  </div>
+{{else}}
+  <div class="jumbotron">
+    <p class="lead">
     <div class="media">
       <img class="mr-3" id="id_card_img" src="/ui/assets/id_card.png" alt="ID card">
       <div class="media-body">
-        <h5 class="mt-0">Mock Up Site</h5>
-        This is a mock up site for testing TOTP Auth and WebAuthn
+        <h5 class="mt-0">Your Profile</h5>
+        store your profile here
       </div>
     </div>
-  </p>
-  <hr class="my-4">
-  <p class="lead">
-    {{#unless session.isAuthenticated}}
+    </p>
+    <hr class="my-4">
+    <p class="lead">
       <LinkTo @route="signin" class="btn btn-primary btn-lg" @role="button">Sign In</LinkTo>
-      {{!-- {{ link-to "Sign out" "invalidateSession" class="nav-link" }} --}}
-    {{/unless}}
-  </p>
-</div>
+    </p>
+  </div>
+{{/if}}
+

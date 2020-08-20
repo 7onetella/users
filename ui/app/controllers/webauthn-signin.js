@@ -63,7 +63,6 @@ export default Controller.extend({
         // console.log("  then(assertion) ajax settings = " + JSON.stringify(settings))
         $.ajax(settings).then((data) => {
           console.log('  data = ' + JSON.stringify(data))
-          alert("successfully logged in !")
           const authenticator = 'authenticator:jwt';
           const credentials = {
             auth_token: this.get('datastore.auth_token'),

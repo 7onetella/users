@@ -53,28 +53,17 @@ export default Controller.extend({
             clientDataJSON: bufferEncode(clientDataJSON),
           },
         })
-        // settings.success = (data) => {
-        //   console.log("  success(data) = " + JSON.stringify(data))
-        //   return data
-        // }
-        // settings.error = function(error, txtStatus) {
-        //   console.log(txtStatus);
-        //   console.log('error');
-        // }
-
         console.log("  then(credential) ajax settings = " + JSON.stringify(settings))
         $.ajax(settings)
       })
       .then((success) => {
-        alert("successfully registered !")
+        this.router.transitionTo('webauthn-success');
         return
       })
       .catch((error) => {
         console.log(error)
         alert("failed to register ")
       })
-
-      //this.router.transitionTo('index');
     }
   }
 });

@@ -130,7 +130,7 @@ func IsTOTPValid(user *User, token string) bool {
 }
 
 func QR(url string) ([]byte, error) {
-	code, err := qr.Encode(url, qr.Q)
+	code, err := qr.Encode(url, qr.M)
 	if err != nil {
 		return nil, err
 	}

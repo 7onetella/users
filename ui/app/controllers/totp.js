@@ -26,10 +26,9 @@ export default Controller.extend({
         beforeSend: function(xhr){xhr.setRequestHeader('Authorization', 'Bearer ' + session_token);},
         success: function(data, status) {
           console.log("> status: "+status+"\n> data: "+data);
-          this.router.transitionTo('index');
+          that.router.transitionTo('totp-success');
         },
-        error: function(error, txtStatus) {
-          // console.log(txtStatus);
+        error: function(error) {
           console.log('> error: ' + JSON.stringify(error));
           that.set("totp_validation_failed", true);
           that.set("totp_validation_message", "Invalid TOTP")
