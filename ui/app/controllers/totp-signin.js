@@ -11,6 +11,8 @@ export default Controller.extend({
   actions: {
     authenticate: function(data) {
       console.log('contollers/totp.js')
+      this.set("login_failed", false);
+
       const authenticator = 'authenticator:jwt';
       const credentials = {
         auth_token: this.get('datastore.auth_token'),
@@ -24,12 +26,21 @@ export default Controller.extend({
         that.get('router').transitionTo('index');
       },function(data) {
         console.log("> data:" + JSON.stringify(data));
-        var reason = data.json.reason
-        var message = data.json.message
-        console.log("> reason:" + reason)
-        if (reason === 'invalid_totp') {
-          that.set("loginFailed", true);
-          that.set("login_failure_reason", message)
+        if (data.status && data.status == 500) {
+          that.set("login_failed", true);
+          that.set("login_failure_reason", data.statusText)
+        }
+        if (data.json) {
+          var reason = data.json.reason
+          var message = data.json.message
+          console.log("> reason:" + reason)
+          if (reason === 'login_totp_invalid') {
+            that.set("login_failed", true);
+            that.set("login_failure_reason", message)
+          }
+          if (reason === 'login_auth_expired') {
+            that.get('router').transitionTo('login-session-expired');
+          }
         }
       });
     }

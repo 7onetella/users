@@ -7,7 +7,7 @@ import (
 
 type AuthEvent struct {
 	ID        string `db:"event_id"`
-	UserIDReq string `db:"user_id"`
+	UserID    string `db:"user_id"`
 	Event     string `db:"event"`
 	Timestamp int64  `db:"event_timestamp"`
 	IPV4      string `db:"ip_v4"`
@@ -18,7 +18,7 @@ type AuthEvent struct {
 func NewAuthEvent(userID, event, ipv4, ipv6, agent string) AuthEvent {
 	return AuthEvent{
 		ID:        uuid.New().String(),
-		UserIDReq: userID,
+		UserID:    userID,
 		Event:     event,
 		IPV4:      ipv4,
 		IPV6:      ipv6,

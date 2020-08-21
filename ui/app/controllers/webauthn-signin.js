@@ -11,6 +11,7 @@ export default Controller.extend({
 
   actions: {
     authenticate: function(data) {
+      this.set("login_failed", false);
       console.log('contollers/webauthn-signin.js')
 
       var session_token = this.session.session.content.authenticated.token
@@ -72,16 +73,15 @@ export default Controller.extend({
 
           var that = this
           promise.then(function(){
-            console.log("  authentication successful. redirecting to index page");
-            console.log("  router" + that.get('router'))
+            console.log("> authentication successful. redirecting to index page");
             that.get('router').transitionTo('index');
           },function(data) {
-            console.log("  data:" + JSON.stringify(data));
+            console.log("> data:" + JSON.stringify(data));
             var reason = data.json.reason
             var message = data.json.message
-            console.log("  reason:" + reason)
-            if (reason === 'invalid_totp') {
-              that.set("loginFailed", true);
+            console.log("> reason:" + reason)
+            if (reason === 'invalid_sec_auth_token') {
+              that.set("login_failed", true);
               that.set("login_failure_reason", message)
             }
           });

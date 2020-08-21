@@ -121,7 +121,7 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 	}
 }
 
-func IsTOTPValid(user *User, token string) bool {
+func IsTOTPValid(user User, token string) bool {
 	totp := gotp.NewDefaultTOTP(user.TOTPSecretCurrent)
 	log.Printf(":token = %s", token)
 	now := int(time.Now().Unix())

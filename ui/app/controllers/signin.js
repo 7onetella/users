@@ -11,6 +11,8 @@ export default Controller.extend({
   actions: {
     authenticate: function() {
       console.log('contollers/signin.js')
+      // initialize vars
+      this.set("login_failed", false);
       const credentials = {
         username: this.username,
         password: this.password,
@@ -22,6 +24,9 @@ export default Controller.extend({
       var that = this
       promise.then(function(){
         console.log("> authentication successful. redirecting to index page");
+        // clean up variables after successful login
+        that.username = ''
+        that.password = ''
         that.router.transitionTo('index');
       }, data => {
         console.log("> data:" + JSON.stringify(data));
@@ -29,16 +34,16 @@ export default Controller.extend({
         var message = data.json.message
         var auth_token = data.json.auth_token
         console.log("> reason:" + reason)
-        if (reason === 'missing_totp') {
+        if (reason === 'login_totp_requested') {
           that.set('datastore.auth_token', auth_token)
           that.router.transitionTo('totp-signin');
         }
-        if (reason === 'webauthn_required') {
+        if (reason === 'login_webauthn_requested') {
           that.set('datastore.auth_token', auth_token)
           that.router.transitionTo('webauthn-signin');
         }
-        if (reason === 'invalid_password') {
-          that.set("loginFailed", true);
+        if (reason === 'login_password_invalid') {
+          that.set("login_failed", true);
           that.set("login_failure_reason", message)
         }
       });

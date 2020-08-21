@@ -8,7 +8,7 @@ export default Route.extend({
   model() {
     console.log('routes/index.js: model()')
 
-    console.log("  session.isAuthenticated: " + this.session.isAuthenticated);
+    console.log("> session.isAuthenticated: " + this.session.isAuthenticated);
 
     if (this.session.isAuthenticated) {
       let user_id = this.session.session.content.authenticated.tokenData.user_id

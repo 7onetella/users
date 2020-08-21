@@ -64,20 +64,20 @@ func (u UserService) Delete(id string) *DBOpError {
 	return nil
 }
 
-func (u UserService) FindByEmail(email string) (*User, *DBOpError) {
+func (u UserService) FindByEmail(email string) (User, *DBOpError) {
 	db := u.DB
-	user := &User{}
+	user := User{}
 	sql := "SELECT * FROM users WHERE email=$1"
-	err := db.Get(user, sql, email)
+	err := db.Get(&user, sql, email)
 	if err != nil {
 		return user, &DBOpError{sql, err}
 	}
 	return user, nil
 }
 
-func (u UserService) FindUserByAuthEventID(eventID string) (*User, *DBOpError) {
+func (u UserService) FindUserByAuthEventID(eventID string) (User, *DBOpError) {
 	db := u.DB
-	user := &User{}
+	user := User{}
 	sql := `
 		SELECT 
 				* 
@@ -86,11 +86,22 @@ func (u UserService) FindUserByAuthEventID(eventID string) (*User, *DBOpError) {
 		WHERE 
 				user_id  = UUID(TRIM(( SELECT user_id FROM auth_event WHERE event_id=$1 )))
 `
-	err := db.Get(user, sql, eventID)
+	err := db.Get(&user, sql, eventID)
 	if err != nil {
 		return user, &DBOpError{sql, err}
 	}
 	return user, nil
+}
+
+func (u UserService) GetAuthEvent(id string) (AuthEvent, *DBOpError) {
+	db := u.DB
+	auth := AuthEvent{}
+	sql := "SELECT * FROM auth_event WHERE event_id=$1"
+	err := db.Get(&auth, sql, id)
+	if err != nil {
+		return auth, &DBOpError{sql, err}
+	}
+	return auth, nil
 }
 
 func (u UserService) List() ([]User, *DBOpError) {

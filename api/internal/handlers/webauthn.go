@@ -127,7 +127,7 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 			return
 		}
 		user.WebAuthnSessionData = string(marshaledData)
-		dberr = service.SaveWebauthnSession(*user)
+		dberr = service.SaveWebauthnSession(user)
 		if rh.HandleDBError(dberr) {
 			return
 		}

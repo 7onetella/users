@@ -157,12 +157,18 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		cred := Credentials{}
 		c.ShouldBind(&cred)
 
-		var user *User
+		var user User
 		var dberr *DBOpError
 
 		if len(cred.PrimaryAuthToken) > 0 {
 			eventID, _ := crypto.Base64Decode(cred.PrimaryAuthToken)
-			user, dberr = userService.FindUserByAuthEventID(eventID)
+			e, _ := userService.GetAuthEvent(eventID)
+			// if it took more than 5 mins after initial pass login
+			if (time.Now().Unix() - e.Timestamp) > 300 {
+				auth.AccessDenied(e.UserID, "login_auth_expired", "Your login session timed out")
+				return
+			}
+			user, dberr = userService.Get(e.UserID)
 			if dberr != nil {
 				log.Printf("error while authenticating: %v", dberr)
 				auth.ErrorOccurred("invalid_auth_token", "Authentication failed")
@@ -180,7 +186,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 			}
 
 			if user.Password != cred.Password {
-				auth.AccessDenied(user.ID, "invalid_password", "Check login name or password")
+				auth.AccessDenied(user.ID, "login_password_invalid", "Check login name or password")
 				return
 			}
 		}
@@ -188,7 +194,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 	Check2FA:
 		if user.WebAuthnEnabled {
 			if len(cred.SecondaryAuthToken) == 0 {
-				auth.SendPrimaryAuthToken(user.ID, "webauthn_required", "WebAuthn Auth Required")
+				auth.SendPrimaryAuthToken(user.ID, "login_webauthn_requested", "WebAuthn Auth Required")
 				return
 			}
 			if !auth.IsSecondaryAuthTokenValidForUer(user.ID, cred.SecondaryAuthToken) {
@@ -200,11 +206,11 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 
 		if user.TOTPEnabled {
 			if len(cred.TOTP) == 0 {
-				auth.SendPrimaryAuthToken(user.ID, "missing_totp", "TOTP required")
+				auth.SendPrimaryAuthToken(user.ID, "login_totp_requested", "TOTP required")
 				return
 			}
 			if !IsTOTPValid(user, cred.TOTP) {
-				auth.AccessDenied(user.ID, "invalid_totp", "Check your TOTP")
+				auth.AccessDenied(user.ID, "login_totp_invalid", "Your code is invalid")
 				return
 			}
 			goto GrantAccess
@@ -226,7 +232,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		}
 		c.JSON(200, token)
 
-		userService.RecordAuthEvent(NewAuthEvent(user.ID, "successful_login", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
+		userService.RecordAuthEvent(NewAuthEvent(user.ID, "log_successful", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
 	}
 }
 

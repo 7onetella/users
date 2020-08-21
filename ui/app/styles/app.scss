@@ -153,3 +153,10 @@ td.clickable {
 #webauthn_card {
   width: 19rem;
 }
+
+.fadeout {
+  color: red;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s 2s, opacity 2s linear;
+}
