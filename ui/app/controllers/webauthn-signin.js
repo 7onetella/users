@@ -77,12 +77,14 @@ export default Controller.extend({
             that.get('router').transitionTo('index');
           },function(data) {
             console.log("> data:" + JSON.stringify(data));
-            var reason = data.json.reason
-            var message = data.json.message
-            console.log("> reason:" + reason)
-            if (reason === 'invalid_sec_auth_token') {
-              that.set("login_failed", true);
-              that.set("login_failure_reason", message)
+            if (data.json) {
+              var reason = data.json.reason
+              var message = data.json.message
+              console.log("> reason:" + reason)
+              if (reason === 'invalid_sec_auth_token') {
+                that.set("login_failed", true);
+                that.set("login_failure_reason", message)
+              }
             }
           });
 
@@ -90,8 +92,16 @@ export default Controller.extend({
         })
       })
       .catch((error) => {
-        console.log(error)
-        alert("failed to login")
+        console.log("> error:" + JSON.stringify(error));
+        if (error.json) {
+          var reason = data.json.reason
+          var message = data.json.message
+          that.set("login_failed", true);
+          that.set("login_failure_reason", message)
+        } else {
+          that.set("login_failed", true);
+          that.set("login_failure_reason", "Error occurred")
+        }
       })
 
     }

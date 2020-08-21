@@ -232,7 +232,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		}
 		c.JSON(200, token)
 
-		userService.RecordAuthEvent(NewAuthEvent(user.ID, "log_successful", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
+		userService.RecordAuthEvent(NewAuthEvent(user.ID, "login_successful", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
 	}
 }
 

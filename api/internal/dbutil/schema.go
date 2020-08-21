@@ -23,18 +23,18 @@ CREATE TABLE users (
 DROP TABLE IF EXISTS auth_event CASCADE;
 CREATE TABLE auth_event (
     event_id            UUID PRIMARY KEY,
-    user_id             CHARACTER(40) DEFAULT '',
+    user_id             CHARACTER VARYING(40) DEFAULT '',
     event               CHARACTER VARYING(64) DEFAULT '',
     event_timestamp     BIGINT DEFAULT 0,
-    ip_v4               CHARACTER(15) DEFAULT '',
-    ip_v6               CHARACTER(38) DEFAULT '',
+    ip_v4               CHARACTER VARYING(15) DEFAULT '',
+    ip_v6               CHARACTER VARYING(38) DEFAULT '',
     agent               CHARACTER VARYING(128) DEFAULT ''
 );
 
 DROP TABLE IF EXISTS user_credential CASCADE;
 CREATE TABLE user_credential (
     credential_id        UUID PRIMARY KEY,
-    user_id              CHARACTER(40) DEFAULT '',
+    user_id              CHARACTER VARYING(40) DEFAULT '',
     credential           CHARACTER VARYING(1024) DEFAULT '',
     CONSTRAINT           unique_cred_user UNIQUE (credential_id, user_id)
 );
