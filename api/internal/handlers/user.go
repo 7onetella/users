@@ -236,6 +236,17 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 	}
 }
 
+// GetUser godoc
+// @Summary Returns user's profile
+// @Description get user by ID
+// @ID get-user-by-string
+// @Accept  json
+// @Produce  json
+// @Param id path string true "User ID"
+// @Success 200 {object} model.User
+// @Failure 500
+// @Router /{id} [get]
+// @Security ApiKeyAuth
 func GetUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// user granted access to his/her own account

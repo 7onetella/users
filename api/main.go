@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "github.com/7onetella/users/api/docs"
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/handlers"
 	"github.com/duo-labs/webauthn/webauthn"
@@ -9,9 +10,31 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/swaggo/files"
+	"github.com/swaggo/gin-swagger"
 	"log"
 	"net/http"
 )
+
+// @title Users API
+// @version 1.0
+// @description API for totp and webauthn auth with user self mgt api
+
+// @contact.name 7onetella
+// @contact.url https://github.com/7onetella/users
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /users
+// @query.collection.format multi
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
+// @x-extension-openapi {"example": "value on a json format"}
 
 var db *sqlx.DB
 
@@ -85,6 +108,8 @@ func main() {
 	}
 	r.POST("/webauthn/login/begin", BeginLogin(userService, web))
 	r.POST("/webauthn/login/finish", FinishLogin(userService, web))
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.Run()
 }
