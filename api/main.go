@@ -14,6 +14,8 @@ import (
 	"github.com/swaggo/gin-swagger"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 // @title Users API
@@ -37,9 +39,24 @@ import (
 // @x-extension-openapi {"example": "value on a json format"}
 
 var db *sqlx.DB
+var stage string
+var port string
+var _RPID string
+var _RPOrigin string
+var connStr string
 
 func init() {
-	newdb, err := sqlx.Connect("postgres", "host=tmt-vm11.7onetella.net user=dev password=dev114 dbname=devdb sslmode=disable")
+	stage = GetEnvWithDefault("STAGE", "localhost")
+
+	port = ":" + GetEnvWithDefault("HTTP_PORT", "8080")
+
+	_RPID = GetEnvWithDefault("RPID", "localhost")
+
+	_RPOrigin = GetEnvWithDefault("RPORIGIN", "http://localhost:4200")
+
+	connStr = GetEnvWithDefault("DB_CONNSTR", "host=tmt-vm11.7onetella.net user=dev password=dev114 dbname=devdb sslmode=disable")
+
+	newdb, err := sqlx.Connect("postgres", connStr)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -64,9 +81,9 @@ func main() {
 	}
 
 	web, err := webauthn.New(&webauthn.Config{
-		RPDisplayName: "7onetella", // display name for your site
-		RPID:          "localhost", // generally the domain name for your site
-		RPOrigin:      "http://localhost:4200",
+		RPDisplayName: _RPID, // display name for your site
+		RPID:          _RPID, // generally the domain name for your site
+		RPOrigin:      _RPOrigin,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -111,7 +128,17 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	r.Run()
+	log.Printf("rpid = %s, rporigin = %s \n", _RPID, _RPOrigin)
+
+	switch stage {
+	case "localhost":
+		r.Run(port)
+	case "live":
+		certFile, keyFile := GetCertAndKey()
+		r.RunTLS(port, certFile, keyFile)
+	default:
+	}
+
 }
 
 func TransactionID() gin.HandlerFunc {
@@ -125,4 +152,25 @@ func TransactionID() gin.HandlerFunc {
 		c.Request.URL = url
 		c.Next()
 	}
+}
+
+// GetCertAndKey returns cert and key locations
+func GetCertAndKey() (string, string) {
+	// this will resolve to refresh or api
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("workfolder:", dir)
+
+	return dir + "/" + stage + "-crt.pem", dir + "/" + stage + "-key.pem"
+}
+
+// GetEnvWithDefault attemps to retrieve from env. default calculated based on stage if env value empty.
+func GetEnvWithDefault(env, defaultV string) string {
+	v := os.Getenv(env)
+	if v == "" {
+		return defaultV
+	}
+	return v
 }

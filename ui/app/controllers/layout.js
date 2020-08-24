@@ -8,17 +8,17 @@ export default Controller.extend({
   router: inject(),
   session: inject('session'),
   userIdle: inject('userIdle'),
-  showDebugInfo: false,
+  showDebugInfo: true,
 
   init() {
     this._super(...arguments);
     this.userIdle.on('idleChanged', (isIdle) => {
       // isIdle is true if idle. False otherwise.
       console.log('contollers/layout.js: init()')
-      console.log("- user idle: " + isIdle)
+      console.log("> user idle: " + isIdle)
       if (isIdle === true) {
-        this.session.invalidate();
-        this.router.transitionTo('session-expired');
+        //this.session.invalidate();
+        //this.router.transitionTo('session-expired');
       }
     })
   },

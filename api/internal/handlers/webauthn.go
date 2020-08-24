@@ -42,7 +42,7 @@ func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerF
 		}
 
 		rh.SetContentTypeJSON()
-		out, err := json.Marshal(&options)
+		out, err := json.Marshal(options)
 		if rh.HandleError(err) {
 			return
 		}

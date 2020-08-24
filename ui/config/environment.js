@@ -40,6 +40,8 @@ module.exports = function(environment) {
     // tokenExpirationInvalidateSession: false,
   };
 
+  ENV.APP.JSONAPIAdaptetHost = 'https://authp.7onetella.net';
+
   if (environment === 'development') {
     // ENV.APP.LOG_RESOLVER = true;
     // ENV.APP.LOG_ACTIVE_GENERATION = true;
@@ -51,8 +53,6 @@ module.exports = function(environment) {
     ENV['ember-simple-auth-token'].serverTokenRefreshEndpoint = 'http://localhost:8080/jwt_auth/refresh'
     ENV.APP.JSONAPIAdaptetHost = 'http://localhost:8080';
   }
-
-  ENV.APP.JSONAPIAdaptetHost = 'http://localhost:8080';
 
   if (environment === 'test') {
     // Testem prefers this...

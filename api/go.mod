@@ -14,12 +14,14 @@ require (
 	github.com/go-openapi/spec v0.19.9 // indirect
 	github.com/go-openapi/swag v0.19.9 // indirect
 	github.com/google/uuid v1.1.1
+	github.com/hashicorp/go-version v1.2.1 // indirect
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.2.0
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/markbates/refresh v1.11.1 // indirect
 	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mfcochauxlaberge/jsonapi v0.18.2-0.20200623194829-f6e2e2cfe4bd
+	github.com/mitchellh/gox v1.0.1 // indirect
 	github.com/sec51/convert v0.0.0-20190309075348-ebe586d87951 // indirect
 	github.com/sec51/cryptoengine v0.0.0-20180911112225-2306d105a49e // indirect
 	github.com/sec51/gf256 v0.0.0-20160126143050-2454accbeb9e // indirect
