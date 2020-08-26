@@ -24,6 +24,7 @@ Router.map(function() {
   this.route('totp-signin');
   this.route('webauthn-signin');
   this.route('login-session-expired');
+  this.route('oauth2');
 });
 
 export default Router;

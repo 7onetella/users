@@ -2,7 +2,7 @@
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLongTitle"><img class="mr-3" id="lock_img" src="/ui/assets/lock.png" alt="Clock">Your key has been registered</h5>
+        <h5 class="modal-title" id="exampleModalLongTitle"><img class="mr-3" id="lock_img" src="{{rootURL}}assets/lock.png" alt="Clock">Your key has been registered</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -21,6 +21,6 @@
   $('#exampleModalCenter').modal()
 
   $('#exampleModalCenter').on('hide.bs.modal', function (e) {
-    window.location = '/ui/'
+    window.location = '/accounts/'
   })
 </script>

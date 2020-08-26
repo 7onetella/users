@@ -1,0 +1,17 @@
+{{#if this.model.session.isAuthenticated}}
+  <div class="jumbotron">
+    <p class="lead">
+    <div class="media">
+      <div class="media-body">
+        <h5 class="mt-0">I am {{this.model.user.firstname}} {{this.model.user.lastname}}</h5>
+      </div>
+    </div>
+    </p>
+    <hr class="my-4">
+    <p class="lead">
+    </p>
+  </div>
+{{else}}
+  <Signin/>
+{{/if}}
+

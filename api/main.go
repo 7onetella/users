@@ -89,11 +89,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	h := http.StripPrefix("/ui/", http.FileServer(assetFS()))
-	r.GET("/ui/*path", func(c *gin.Context) {
+	// ----- EmberJS SPA resource ---------------------------------
+	h := http.StripPrefix("/accounts/", http.FileServer(assetFS()))
+	r.GET("/accounts/*path", func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
 	})
 
+	// ----- User Profile -----------------------------------------
 	users := r.Group("/users")
 	users.Use(jwt.TokenValidator(userService))
 	{
@@ -103,6 +105,7 @@ func main() {
 	}
 	r.POST("/users", Signup(userService))
 
+	// ----- User Authentication ----------------------------------
 	totp := r.Group("/totp")
 	totp.Use(jwt.TokenValidator(userService))
 	{
@@ -126,6 +129,7 @@ func main() {
 	r.POST("/webauthn/login/begin", BeginLogin(userService, web))
 	r.POST("/webauthn/login/finish", FinishLogin(userService, web))
 
+	// ---- Swagger Documentation ---------------------------------
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	log.Printf("rpid = %s, rporigin = %s \n", _RPID, _RPOrigin)

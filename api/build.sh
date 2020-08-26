@@ -4,20 +4,20 @@ set +x
 rm -f users
 rm -f authp
 
-cd ../ui
+cd ../accounts
 ./build.sh
 cd ../api
 
 echo copying the emberjs asset from ui/dist/*
-mkdir -p ui/
-rm -r ui/*
-cp -r ../ui/dist/* ./ui/
+mkdir -p accounts/
+rm -r accounts/*
+cp -r ../accounts/dist/* ./accounts/
 
 # Jenkins path can be missing this
 PATH=$PATH:.:~/bin
 
 echo generate binddata.go file
-go-bindata-assetfs ui/...
+go-bindata-assetfs accounts/...
 
 # get gox for cross compilation
 go get -u github.com/mitchellh/gox

@@ -2,10 +2,10 @@
 
 module.exports = function(environment) {
   let ENV = {
-    modulePrefix: 'ui',
+    modulePrefix: 'accounts',
     environment,
-    rootURL: '/ui',
-    locationType: 'auto',
+    rootURL: '/accounts',
+    locationType: 'hash',
     EmberENV: {
       FEATURES: {
         // Here you can enable experimental features on an ember canary build
