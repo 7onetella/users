@@ -25,6 +25,7 @@ Router.map(function() {
   this.route('webauthn-signin');
   this.route('login-session-expired');
   this.route('oauth2');
+  this.route('consent');
 });
 
 export default Router;

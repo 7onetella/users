@@ -224,3 +224,16 @@ func (u UserService) FindUserCredentialByUserID(userID string) ([]UserCredential
 
 	return credentials, nil
 }
+
+func (u UserService) DoesClientExist(clientID string) (bool, *DBOpError) {
+	return true, nil
+}
+
+func (u UserService) UpdatePermissions(clientID, userID, scope string) *DBOpError {
+	// check to see if the scope is valid for resource
+	// ["profile:read", "profile:write"]
+	// split by comma
+	// further parse scope token by colon to get resource name and operation. e.g. profile for resource name read for operation
+
+	return nil
+}

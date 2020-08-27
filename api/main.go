@@ -129,6 +129,14 @@ func main() {
 	r.POST("/webauthn/login/begin", BeginLogin(userService, web))
 	r.POST("/webauthn/login/finish", FinishLogin(userService, web))
 
+	// ---- OAuth2 ---------------------------------
+	oauth2author := r.Group("/oauth2")
+	oauth2author.Use(jwt.TokenValidator(userService))
+	{
+		oauth2author.POST("/authorize", OAuth2Authorize(userService))
+	}
+	r.POST("/access_token", OAuth2AccessToken(userService))
+
 	// ---- Swagger Documentation ---------------------------------
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

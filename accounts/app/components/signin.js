@@ -1,6 +1,6 @@
 /*eslint no-console: ["error", { allow: ["warn", "error"] }] */
 import Component from '@ember/component';
-import {inject as service} from '@ember/service'
+import {inject} from '@ember/service'
 import {storageFor} from "ember-local-storage";
 
 export default Component.extend({
@@ -10,7 +10,7 @@ export default Component.extend({
 
   actions: {
     authenticate: function() {
-      console.log('contollers/signin.js')
+      console.log('components/signin.js')
       // initialize vars
       this.set("login_failed", false);
       const credentials = {
@@ -27,7 +27,11 @@ export default Component.extend({
         // clean up variables after successful login
         that.username = ''
         that.password = ''
-        that.router.transitionTo('index');
+        if (that.get('datastore.client_id')) {
+          that.router.transitionTo('consent');
+        } else {
+          that.router.transitionTo('index');
+        }
       }, data => {
         console.log("> data:" + JSON.stringify(data));
         var reason = data.json.reason

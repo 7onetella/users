@@ -23,7 +23,11 @@ export default Controller.extend({
       var that = this
       promise.then(function(){
         console.log("> authentication successful. redirecting to index page");
-        that.get('router').transitionTo('index');
+        if (that.get('datastore.client_id')) {
+          that.get('router').transitionTo('consent');
+        } else {
+          that.get('router').transitionTo('index');
+        }
       },function(data) {
         console.log("> data:" + JSON.stringify(data));
         if (data.status && data.status == 500) {

@@ -1,0 +1,18 @@
+<div class="container">
+  <div id="logo"><img id="logo_img" src="{{rootURL}}assets/lock.png" class="rounded mx-auto d-block" alt="Lock"></div>
+  <div id="signindiv" class="card">
+    <article class="card-body">
+      <form>
+        <h5>Do you authorize this app to </h5>
+        {{#each this.model.scopes as |scope|}}
+          <li>{{scope}}</li>
+        {{/each}}
+        <hr>
+        <div class="form-group">
+          <button type="button" {{action "authorize" this.model}} class="btn btn-primary">Allow</button>
+          <button type="button" {{action "deny" this.model}} class="btn btn-danger">Deny</button>
+        </div>
+      </form>
+    </article>
+  </div>
+</div>
