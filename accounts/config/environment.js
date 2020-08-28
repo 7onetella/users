@@ -40,7 +40,9 @@ module.exports = function(environment) {
     // tokenExpirationInvalidateSession: false,
   };
 
-  ENV.APP.JSONAPIAdaptetHost = 'https://authp.7onetella.net';
+  if (environment === 'production') {
+    ENV.APP.JSONAPIAdaptetHost = 'https://accounts.7onetella.net';
+  }
 
   if (environment === 'development') {
     // ENV.APP.LOG_RESOLVER = true;

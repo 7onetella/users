@@ -1,13 +1,15 @@
 #!/bin/sh
 set +x
 
-rm -f users
-rm -f authp
+# delete the go binary
+rm -f api_linux_amd64
 
+# build emberjs app
 cd ../accounts
 ./build.sh
-cd ../api
 
+# copy emberjs app deployment package to api/accounts
+cd ../api
 echo copying the emberjs asset from ui/dist/*
 mkdir -p accounts/
 rm -r accounts/*
@@ -25,8 +27,8 @@ go get -u github.com/mitchellh/gox
 echo cross compile
 "${GOPATH}"/bin/gox -osarch="linux/amd64"
 
-mv api_linux_amd64 authp
-cp authp ../../box/playbooks/roles/authp/files/authp
-scp -i ~/.aws/7onetella.pem authp ubuntu@authp.7onetella.net:/root/
+mv api_linux_amd64 api_linux_amd64
+cp api_linux_amd64 ../../box/playbooks/roles/authp/files/api_linux_amd64
+scp -i ~/.aws/7onetella.pem api_linux_amd64 ubuntu@authp.7onetella.net:/root/
 
 
