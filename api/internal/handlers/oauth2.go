@@ -6,6 +6,7 @@ import (
 	"github.com/7onetella/users/api/internal/model/oauth2"
 	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -37,7 +38,7 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 		}
 
 		// has this request been made before with the current nonce
-		if NonceUsedBefore(ar.ClientID, user.ID, ar.Nonce) {
+		if service.NonceUsedBefore(ar.ClientID, user.ID, ar.Nonce) {
 			c.JSON(401, gin.H{
 				"status": "error",
 				"reason": "nonce has been used already",
@@ -46,7 +47,7 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 		}
 
 		// Upsert permission for the user
-		dberr = service.UpdatePermissions(ar.ClientID, user.ID, ar.Scope)
+		dberr = service.UpdatePermissions(oauth2.UserGrants{user.ID, ar.ClientID, ar.Scope})
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -128,8 +129,22 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 	}
 }
 
-func NonceUsedBefore(clientID, userID, nonce string) bool {
-	return false
+func GetClientName(service UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rh := NewRequestHandler(c)
+		rh.WriteCORSHeader()
+		clientID := c.Param("id")
+
+		client, dberr := service.GetClient(clientID)
+		if dberr != nil {
+			c.AbortWithError(http.StatusInternalServerError, dberr.Err)
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"name": client.Name,
+		})
+	}
 }
 
 func IsClientValid(clientID, clientSecret string) bool {

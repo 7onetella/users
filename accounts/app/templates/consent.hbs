@@ -3,7 +3,7 @@
   <div id="signindiv" class="card">
     <article class="card-body">
       <form>
-        <h5>Do you authorize this app to </h5>
+        <h5>Allow [{{this.model.client_name}}] to </h5>
         {{#each this.model.scopes as |scope|}}
           <li>{{scope}}</li>
         {{/each}}

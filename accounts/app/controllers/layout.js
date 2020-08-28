@@ -52,7 +52,6 @@ export default Controller.extend({
         that.set("loginFailed", true);
         that.set("login_failure_reason", data.json.message)
       });
-
     }
   }
 

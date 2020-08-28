@@ -9,11 +9,15 @@ export default Route.extend({
 
   model() {
     console.log('routes/consent.js: model()')
+
+    let client_name = this.get('datastore.client_name')
     let s = this.get('datastore.scope')
     console.log("s = " + JSON.stringify(s))
     let scopes = this.get('datastore.scope').split(",")
+
     return {
-      "scopes": scopes
+      "scopes": scopes,
+      "client_name": client_name
     }
   },
 

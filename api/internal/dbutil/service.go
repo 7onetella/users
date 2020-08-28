@@ -3,6 +3,7 @@ package dbutil
 import (
 	. "github.com/7onetella/users/api/internal/httputil"
 	. "github.com/7onetella/users/api/internal/model"
+	"github.com/7onetella/users/api/internal/model/oauth2"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
@@ -226,14 +227,51 @@ func (u UserService) FindUserCredentialByUserID(userID string) ([]UserCredential
 }
 
 func (u UserService) DoesClientExist(clientID string) (bool, *DBOpError) {
-	return true, nil
+	client, dberr := u.GetClient(clientID)
+	if dberr != nil {
+		return false, dberr
+	}
+
+	return len(client.ID) > 0 && len(client.Name) > 0, nil
 }
 
-func (u UserService) UpdatePermissions(clientID, userID, scope string) *DBOpError {
+func (u UserService) GetClient(clientID string) (oauth2.Client, *DBOpError) {
+	db := u.DB
+	sql := `
+		SELECT 
+				* 
+		FROM 
+				clients
+		WHERE 
+				client_id  = $1
+`
+	client := oauth2.Client{}
+
+	err := db.Get(&client, sql, clientID)
+	if err != nil {
+		return client, &DBOpError{sql, err}
+	}
+
+	return client, nil
+}
+
+func (u UserService) UpdatePermissions(userGrants oauth2.UserGrants) *DBOpError {
 	// check to see if the scope is valid for resource
 	// ["profile:read", "profile:write"]
 	// split by comma
 	// further parse scope token by colon to get resource name and operation. e.g. profile for resource name read for operation
 
+	sql := `
+		INSERT INTO user_grants
+			  (user_id,   client_id,  scope) 
+		VALUES 
+			  (:user_id, :client_id,  :scope)
+	`
+	return u.Upsert(sql, &userGrants)
+
 	return nil
+}
+
+func (u UserService) NonceUsedBefore(clientID, userID, nonce string) bool {
+	return false
 }

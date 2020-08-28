@@ -11,9 +11,9 @@ type AuthorizationRequest struct {
 }
 
 type Client struct {
-	ID     string `json:"client_id"`
-	Name   string `json:"name"`
-	Secret string `json:"-"`
+	ID     string `db:"client_id" json:"client_id"`
+	Name   string `db:"name"      json:"name"`
+	Secret string `db:"secret"    json:"-"`
 }
 
 type ResourceOwnerGrantedPermissions struct {
@@ -29,4 +29,10 @@ type Resource struct {
 		Name string `json:"name"`
 		Desc string `json:"desc"`
 	} `json:"permissions"`
+}
+
+type UserGrants struct {
+	UserID   string `db:"user_id"    json:"user_id"`
+	ClientID string `db:"client_id"  json:"client_id"`
+	Scope    string `db:"scope"      json:"scope"`
 }

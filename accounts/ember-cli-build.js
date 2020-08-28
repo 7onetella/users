@@ -7,7 +7,15 @@ module.exports = function(defaults) {
     // Add options here
     'ember-cli-bootstrap-4': {
       'importBootstrapJS': true
-    }    
+    },
+    // disable console logging for production
+    'ember-cli-uglify': {
+      uglify: {
+        compress: {
+          drop_console: true
+        }
+      },
+    }
   });
 
   // Use `app.import` to add additional libraries to the generated

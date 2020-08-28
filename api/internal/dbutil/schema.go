@@ -39,6 +39,22 @@ CREATE TABLE user_credential (
     CONSTRAINT           unique_cred_user UNIQUE (credential_id, user_id)
 );
 
+DROP TABLE IF EXISTS clients CASCADE;
+CREATE TABLE clients (
+    client_id            UUID PRIMARY KEY,
+    name                 CHARACTER VARYING(40) DEFAULT '',
+    secret               CHARACTER VARYING(1024) DEFAULT '',
+    CONSTRAINT           unique_client_name UNIQUE (name)
+);
+
+DROP TABLE IF EXISTS user_grants CASCADE;
+CREATE TABLE user_grants (
+    user_id              CHARACTER VARYING(40)   DEFAULT '',
+    client_id            CHARACTER VARYING(40)   DEFAULT '',
+    scope                CHARACTER VARYING(1024) DEFAULT '',
+    CONSTRAINT           unique_user_to_client_grants UNIQUE (user_id, client_id)
+);
+
 INSERT INTO users 
             (user_id, 
              platform_name, 
@@ -137,5 +153,7 @@ VALUES      ('113af9e8-810d-45fe-81d7-0eefb40390bf',
              'a2aee5e6-05a0-438c-9276-4ba406b7bf9f', 
 '{"ID":"L1Mfkf2IL/mzT4xbGheLCG/5dAPA487hIU+bfRWTAu4EQ50AtdON99F09d9EebHBesLmYCU3rU/Czdv0Bcopmg==","PublicKey":"pQMmIAEhWCCljDUqf+Ug6KgYIG/mo7PDBo9x6rVFQt4rPZ1lJhvrmyJYIHdLOCFt0Tv4buqgILjGng6KbxuBpafmhWHePNKIyw/tAQI=","AttestationType":"none","Authenticator":{"AAGUID":"AAAAAAAAAAAAAAAAAAAAAA==","SignCount":3,"CloneWarning":false}}' 
 );
+
+INSERT INTO clients (client_id, name, secret) VALUES ('352b6e64-e498-4307-b64d-ec9e5b9da65c', 'my password app', '9191');
 
 `
