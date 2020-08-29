@@ -71,6 +71,27 @@ func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 			return
 		}
 
+		// if this is oauth2 delegated api call
+		// make sure the token was actually issued
+		if claims.Issuer != claims.Audience {
+			accessToken, dberr := service.GetAccessToken(claims.Id)
+			if dberr != nil {
+				log.Printf("token not found")
+				c.AbortWithError(http.StatusUnauthorized, dberr.Err)
+				return
+			}
+			if accessToken.Token != tokenString {
+				log.Printf("invalid access token")
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+			if claims.Subject != accessToken.UserID {
+				log.Printf("user id differs from what's stored in db")
+				c.AbortWithStatus(http.StatusUnauthorized)
+				return
+			}
+		}
+
 		userID := claims.Subject
 		req := c.Request
 		user, operr := service.Get(userID)

@@ -321,6 +321,19 @@ func (u UserService) NonceUsedBefore(clientID, userID, nonce string) bool {
 	return false
 }
 
+func (u UserService) GetAccessToken(tokenID string) (oauth2.AccessToken, *DBOpError) {
+	db := u.DB
+	sql := `SELECT * FROM access_token WHERE token_id = $1`
+	at := oauth2.AccessToken{}
+
+	err := db.Get(&at, sql, tokenID)
+	if err != nil {
+		return at, &DBOpError{sql, err}
+	}
+
+	return at, nil
+}
+
 func (u UserService) StoreAccessTokenForUser(accessToken oauth2.AccessToken) *DBOpError {
 	sql := `INSERT INTO access_token (token_id, user_id, token) VALUES (:token_id, :user_id, :token)`
 	return u.NamedExec(sql, accessToken)
