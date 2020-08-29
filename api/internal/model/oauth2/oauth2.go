@@ -17,7 +17,7 @@ type Client struct {
 }
 
 type ResourceOwnerGrantedPermissions struct {
-	ID       string   `json:"user_id"`
+	UserID   string   `json:"user_id"`
 	ClientID string   `json:"client_id"`
 	Scope    []string `json:"scope"`
 }
@@ -35,4 +35,11 @@ type UserGrants struct {
 	UserID   string `db:"user_id"    json:"user_id"`
 	ClientID string `db:"client_id"  json:"client_id"`
 	Scope    string `db:"scope"      json:"scope"`
+}
+
+type AuthorizationCode struct {
+	Code      string `db:"code"`
+	ClientID  string `db:"client_id"`
+	CreatedAt int64  `db:"created_at"`
+	UserID    string `db:"user_id"`
 }

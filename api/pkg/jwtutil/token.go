@@ -63,3 +63,26 @@ func ParseAuthTokenFromHeader(req *http.Request) (string, error) {
 	token := terms[1]
 	return token, nil
 }
+
+// EncodeID signs id
+func EncodeOAuth2Token(issuer, user, client, scope, secret string, ttl time.Duration) (string, error) {
+	expTime := time.Now().Add(ttl * time.Second)
+
+	claim := jwt.MapClaims{
+		"iss":   issuer,
+		"sub":   user,
+		"aud":   client,
+		"iat":   time.Now().Unix(),
+		"exp":   expTime.Unix(),
+		"scope": scope,
+	}
+
+	// Create a new token object, specifying signing method and the claims
+	// you would like it to contain.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
+
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := token.SignedString([]byte(secret))
+
+	return tokenString, err
+}

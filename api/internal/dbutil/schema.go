@@ -55,6 +55,15 @@ CREATE TABLE user_grants (
     CONSTRAINT           unique_user_to_client_grants UNIQUE (user_id, client_id)
 );
 
+DROP TABLE IF EXISTS authorization_code CASCADE;
+CREATE TABLE authorization_code (
+    code                 CHARACTER VARYING(1024) DEFAULT '',
+    client_id            CHARACTER VARYING(40)   DEFAULT '',
+    created_at           BIGINT DEFAULT 0,
+    user_id              CHARACTER VARYING(40)   DEFAULT '',
+	CONSTRAINT           unique_authorization_code UNIQUE (code, client_id)
+);
+
 INSERT INTO users 
             (user_id, 
              platform_name, 

@@ -4,7 +4,9 @@ import (
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
 	"github.com/7onetella/users/api/internal/model/oauth2"
+	"github.com/7onetella/users/api/pkg/jwtutil"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"time"
@@ -46,19 +48,23 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 			return
 		}
 
-		// Upsert permission for the user
+		// NamedExec permission for the user
 		dberr = service.UpdatePermissions(oauth2.UserGrants{user.ID, ar.ClientID, ar.Scope})
 		if rh.HandleDBError(dberr) {
 			return
 		}
 
-		// persist the following: (code, client_id, created_at) and user_id
-		// in oauth2_event table
+		code := uuid.New().String()
+		authorizationCode := oauth2.AuthorizationCode{code, ar.ClientID, time.Now().Unix(), user.ID}
+		dberr = service.StoreAuthorizationRequestCode(authorizationCode)
+		if rh.HandleDBError(dberr) {
+			return
+		}
 
 		log.Printf("payload = \n%#v\n", ar)
 
 		c.JSON(200, gin.H{
-			"code":         "1234567890",
+			"code":         code,
 			"redirect_uri": ar.RedirectURI,
 			"nonce":        ar.Nonce,
 			"state":        ar.State,
@@ -71,7 +77,7 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
 
-		grantType := c.Query("grant_type")
+		grantType := c.PostForm("grant_type")
 		if grantType != "authorization_code" {
 			c.JSON(401, gin.H{
 				"status": "error",
@@ -86,7 +92,12 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 
 		// is this valid request from client?
 		// validate client with client_secret
-		if !IsClientValid(clientID, clientSecret) {
+		authenticated, dberr := service.AuthenticateClientUsingSecret(clientID, clientSecret)
+		if rh.HandleDBError(dberr) {
+			return
+		}
+
+		if !authenticated {
 			c.JSON(401, gin.H{
 				"status": "error",
 				"reason": "we don't know who you are",
@@ -101,30 +112,44 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 		}
 
 		// find authorization request record with (code, client_id)
-		createdAt, userID := GetUserIDFromAuthorizationRequest(code, clientID)
+		authCode, dberr := service.GetAuthorizationRequestCode(code, clientID)
+		if rh.HandleDBError(dberr) {
+			return
+		}
+
 		// make sure the authorization request was within last 20 seconds
-		if (time.Now().Unix() - createdAt) > 20 {
-			c.JSON(401, gin.H{
-				"status": "error",
-				"reason": "access token request took longer than 20 seconds from authorization request",
-			})
+		//if (time.Now().Unix() - authCode.CreatedAt) > 20 {
+		//	c.JSON(401, gin.H{
+		//		"status": "error",
+		//		"reason": "access token request took longer than 20 seconds from authorization request",
+		//	})
+		//}
+
+		userFromDB, dberr := service.Get(authCode.UserID)
+		if rh.HandleDBError(dberr) {
+			return
+		}
+
+		grants, dberr := service.GetUserGrantsForClient(authCode.UserID, clientID)
+		if rh.HandleDBError(dberr) {
+			return
 		}
 
 		// generate the access token
-		accessToken := GenerateAccessToken("7onetella", clientID, userID)
+		accessToken, _ := jwtutil.EncodeOAuth2Token("7onetella", authCode.UserID, clientID, grants.Scope, userFromDB.JWTSecret, 60*60*24*365)
 
 		// persist the user_id, access token for token validation from resource servers
-		StoreAccessTokenForUser(accessToken, userID)
+		StoreAccessTokenForUser(accessToken, authCode.UserID)
 
 		// if successful then serve the access token
 		c.Header("Cache-Control", "no-store")
 		c.Header("Pragma", "no-cache")
 		c.JSON(200, gin.H{
-			"access_token":  "MTQ0NjJkZmQ5OTM2NDE1ZTZjNGZmZjI3", // jwt token
+			"access_token":  accessToken, // jwt token
 			"token_type":    "bearer",
-			"expires_in":    3600,
+			"expires_in":    1 * 60 * 60 * 24 * 365,
 			"refresh_token": "IwOGYzYTlmM2YxOTQ5MGE3YmNmMDFkNTVk", // random string token
-			"scope":         "profile:read,profile:write",
+			"scope":         grants.Scope,
 		})
 	}
 }
@@ -145,18 +170,6 @@ func GetClientName(service UserService) gin.HandlerFunc {
 			"name": client.Name,
 		})
 	}
-}
-
-func IsClientValid(clientID, clientSecret string) bool {
-	return true
-}
-
-func GetUserIDFromAuthorizationRequest(clientID, clientSecret string) (int64, string) {
-	return time.Now().Unix(), ""
-}
-
-func GenerateAccessToken(issuer, clientID, userID string) string {
-	return ""
 }
 
 func StoreAccessTokenForUser(accessToken, userID string) {

@@ -16,7 +16,7 @@ func CurrentTimeInSeconds() int64 {
 	return time.Now().Unix()
 }
 
-func (u UserService) Upsert(sql string, obj interface{}) *DBOpError {
+func (u UserService) NamedExec(sql string, obj interface{}) *DBOpError {
 	db := u.DB
 	tx := db.MustBegin()
 
@@ -34,6 +34,20 @@ func (u UserService) Upsert(sql string, obj interface{}) *DBOpError {
 	return nil
 }
 
+func (u UserService) MustExec(sql string, args ...interface{}) *DBOpError {
+	db := u.DB
+	tx := db.MustBegin()
+
+	tx.MustExec(sql, args...)
+
+	err := tx.Commit()
+	if err != nil {
+		return &DBOpError{sql, err}
+	}
+
+	return nil
+}
+
 func (u UserService) Register(user User) *DBOpError {
 	sql := `
 		INSERT INTO users
@@ -41,7 +55,7 @@ func (u UserService) Register(user User) *DBOpError {
 		VALUES 
 			  (:user_id, :platform_name, :email, :passhash, :firstname, :lastname, :created_date)
 	`
-	return u.Upsert(sql, &user)
+	return u.NamedExec(sql, &user)
 }
 
 func (u UserService) Get(id string) (User, *DBOpError) {
@@ -130,7 +144,7 @@ func (u UserService) UpdateProfile(user User) *DBOpError {
 		WHERE 
 			user_id = :user_id 
 	`
-	return u.Upsert(sql, &user)
+	return u.NamedExec(sql, &user)
 }
 
 func (u UserService) UpdateTOTPTmp(user User) *DBOpError {
@@ -143,7 +157,7 @@ func (u UserService) UpdateTOTPTmp(user User) *DBOpError {
 		WHERE 
 			user_id = :user_id 
 	`
-	return u.Upsert(sql, &user)
+	return u.NamedExec(sql, &user)
 }
 
 func (u UserService) UpdateTOTP(user User) *DBOpError {
@@ -158,7 +172,7 @@ func (u UserService) UpdateTOTP(user User) *DBOpError {
 		WHERE 
 			user_id = :user_id 
 	`
-	return u.Upsert(sql, &user)
+	return u.NamedExec(sql, &user)
 }
 
 func (u UserService) RecordAuthEvent(auth AuthEvent) *DBOpError {
@@ -168,7 +182,7 @@ func (u UserService) RecordAuthEvent(auth AuthEvent) *DBOpError {
 		VALUES 
 			  (:event_id, :user_id, :event, :event_timestamp, :ip_v4, :ip_v6, :agent)
 	`
-	return u.Upsert(sql, &auth)
+	return u.NamedExec(sql, &auth)
 }
 
 func (u UserService) SaveWebauthnSession(user User) *DBOpError {
@@ -180,7 +194,7 @@ func (u UserService) SaveWebauthnSession(user User) *DBOpError {
 		WHERE 
 			user_id = :user_id 
 	`
-	return u.Upsert(sql, &user)
+	return u.NamedExec(sql, &user)
 }
 
 func (u UserService) SaveUserCredential(credential UserCredential) *DBOpError {
@@ -190,7 +204,7 @@ func (u UserService) SaveUserCredential(credential UserCredential) *DBOpError {
 		VALUES 
 			  (:credential_id, :user_id, :credential)
 	`
-	return u.Upsert(sql, &credential)
+	return u.NamedExec(sql, &credential)
 }
 
 func (u UserService) UpdateWebAuthn(user User) *DBOpError {
@@ -203,7 +217,7 @@ func (u UserService) UpdateWebAuthn(user User) *DBOpError {
 		WHERE 
 			user_id = :user_id 
 	`
-	return u.Upsert(sql, &user)
+	return u.NamedExec(sql, &user)
 }
 
 func (u UserService) FindUserCredentialByUserID(userID string) ([]UserCredential, *DBOpError) {
@@ -237,14 +251,7 @@ func (u UserService) DoesClientExist(clientID string) (bool, *DBOpError) {
 
 func (u UserService) GetClient(clientID string) (oauth2.Client, *DBOpError) {
 	db := u.DB
-	sql := `
-		SELECT 
-				* 
-		FROM 
-				clients
-		WHERE 
-				client_id  = $1
-`
+	sql := `SELECT * FROM clients WHERE client_id  = $1`
 	client := oauth2.Client{}
 
 	err := db.Get(&client, sql, clientID)
@@ -255,21 +262,59 @@ func (u UserService) GetClient(clientID string) (oauth2.Client, *DBOpError) {
 	return client, nil
 }
 
+func (u UserService) GetUserGrantsForClient(userID, clientID string) (oauth2.UserGrants, *DBOpError) {
+	db := u.DB
+	sql := `SELECT * FROM user_grants WHERE user_id  = $1 and client_id =$2`
+	userGrants := oauth2.UserGrants{}
+
+	err := db.Get(&userGrants, sql, userID, clientID)
+	if err != nil {
+		return userGrants, &DBOpError{sql, err}
+	}
+
+	return userGrants, nil
+}
+
 func (u UserService) UpdatePermissions(userGrants oauth2.UserGrants) *DBOpError {
 	// check to see if the scope is valid for resource
 	// ["profile:read", "profile:write"]
 	// split by comma
 	// further parse scope token by colon to get resource name and operation. e.g. profile for resource name read for operation
+	_, dberr := u.GetUserGrantsForClient(userGrants.UserID, userGrants.ClientID)
+	// if not found insert record
+	if dberr != nil {
+		sql := `INSERT INTO user_grants (user_id, client_id, scope) VALUES (:user_id, :client_id, :scope)`
+		return u.NamedExec(sql, userGrants)
+	} else {
+		sql := `UPDATE user_grants SET scope = :scope WHERE user_id = :user_id AND client_id = :client_id`
+		return u.NamedExec(sql, userGrants)
+	}
+}
 
-	sql := `
-		INSERT INTO user_grants
-			  (user_id,   client_id,  scope) 
-		VALUES 
-			  (:user_id, :client_id,  :scope)
-	`
-	return u.Upsert(sql, &userGrants)
+func (u UserService) StoreAuthorizationRequestCode(ac oauth2.AuthorizationCode) *DBOpError {
+	sql := `INSERT INTO authorization_code (code, client_id, created_at, user_id) VALUES (:code, :client_id, :created_at, :user_id)`
+	return u.NamedExec(sql, ac)
+}
 
-	return nil
+func (u UserService) GetAuthorizationRequestCode(code, clientID string) (oauth2.AuthorizationCode, *DBOpError) {
+	db := u.DB
+	sql := `SELECT * FROM authorization_code WHERE code = $1 and client_id =$2`
+	ac := oauth2.AuthorizationCode{}
+
+	err := db.Get(&ac, sql, code, clientID)
+	if err != nil {
+		return ac, &DBOpError{sql, err}
+	}
+
+	return ac, nil
+}
+
+func (u UserService) AuthenticateClientUsingSecret(clientID, clientSecret string) (bool, *DBOpError) {
+	client, dberr := u.GetClient(clientID)
+	if dberr != nil {
+		return false, dberr
+	}
+	return client.Secret == clientSecret, nil
 }
 
 func (u UserService) NonceUsedBefore(clientID, userID, nonce string) bool {
