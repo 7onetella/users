@@ -4,7 +4,6 @@ import (
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
 	"github.com/7onetella/users/api/internal/model/oauth2"
-	"github.com/7onetella/users/api/pkg/jwtutil"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"log"
@@ -136,18 +135,27 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 		}
 
 		// generate the access token
-		accessToken, _ := jwtutil.EncodeOAuth2Token("7onetella", authCode.UserID, clientID, grants.Scope, userFromDB.JWTSecret, 60*60*24*365)
+		jti := uuid.New().String()
+		accessTokenStr, _ := EncodeOAuth2Token(jti, "7onetella", authCode.UserID, clientID, grants.Scope, userFromDB.JWTSecret, 60*60*24)
 
 		// persist the user_id, access token for token validation from resource servers
-		StoreAccessTokenForUser(accessToken, authCode.UserID)
+		accessToken := oauth2.AccessToken{
+			TokenID: jti,
+			UserID:  authCode.UserID,
+			Token:   accessTokenStr,
+		}
+		dberr = service.StoreAccessTokenForUser(accessToken)
+		if rh.HandleDBError(dberr) {
+			return
+		}
 
 		// if successful then serve the access token
 		c.Header("Cache-Control", "no-store")
 		c.Header("Pragma", "no-cache")
 		c.JSON(200, gin.H{
-			"access_token":  accessToken, // jwt token
+			"access_token":  accessTokenStr, // jwt token
 			"token_type":    "bearer",
-			"expires_in":    1 * 60 * 60 * 24 * 365,
+			"expires_in":    1 * 60 * 60 * 24,
 			"refresh_token": "IwOGYzYTlmM2YxOTQ5MGE3YmNmMDFkNTVk", // random string token
 			"scope":         grants.Scope,
 		})
@@ -170,10 +178,6 @@ func GetClientName(service UserService) gin.HandlerFunc {
 			"name": client.Name,
 		})
 	}
-}
-
-func StoreAccessTokenForUser(accessToken, userID string) {
-
 }
 
 func DoesRedirectURIMatch(redirectURI string) bool {

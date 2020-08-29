@@ -45,7 +45,7 @@ func (rh RequestHanlder) HandleError(errs ...error) bool {
 func (rh RequestHanlder) HandleDBError(dberr *DBOpError) bool {
 	if dberr != nil {
 		c := rh.Context
-		LogErr(rh.TransactionIDFromContext(), "db error", dberr.Err)
+		LogDBErr(rh.TransactionIDFromContext(), dberr.Query, "db error", dberr.Err)
 		c.AbortWithStatus(500)
 		return true
 	}
@@ -64,4 +64,8 @@ func (rh RequestHanlder) HandleSecurityError(serr *SecurityError) bool {
 
 func LogErr(txid string, message string, opserr interface{}) {
 	log.Printf("%s %s: %#v", txid, message, opserr)
+}
+
+func LogDBErr(txid string, sql, message string, opserr interface{}) {
+	log.Printf("%s %s: %#v, sql: %s", txid, message, opserr, sql)
 }

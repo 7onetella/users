@@ -43,3 +43,9 @@ type AuthorizationCode struct {
 	CreatedAt int64  `db:"created_at"`
 	UserID    string `db:"user_id"`
 }
+
+type AccessToken struct {
+	TokenID string `db:"token_id"`
+	UserID  string `db:"user_id"`
+	Token   string `db:"token"`
+}

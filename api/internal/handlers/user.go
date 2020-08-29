@@ -7,7 +7,6 @@ import (
 	. "github.com/7onetella/users/api/internal/jsonutil"
 	. "github.com/7onetella/users/api/internal/model"
 	"github.com/7onetella/users/api/pkg/crypto"
-	"github.com/7onetella/users/api/pkg/jwtutil"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/mfcochauxlaberge/jsonapi"
@@ -217,7 +216,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		}
 
 	GrantAccess:
-		tokenString, expTime, err := jwtutil.EncodeToken(claimKey, user.ID, user.JWTSecret, ttl)
+		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, ttl)
 		if err != nil {
 			log.Println("encoding error")
 			c.AbortWithError(http.StatusInternalServerError, err)

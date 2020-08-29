@@ -11,7 +11,7 @@ export default Controller.extend({
     toggle_totp: function() {
       console.log('controllers/security.js toggle_totp()')
 
-      var user_id = this.session.session.content.authenticated.tokenData.user_id
+      var user_id = this.session.session.content.authenticated.tokenData.sub
 
       var that = this
       this.store.findRecord('user', user_id).then(function(record) {
@@ -29,7 +29,7 @@ export default Controller.extend({
     toggle_webauthn: function() {
       console.log('controllers/security.js toggle_webauthn()')
 
-      var user_id = this.session.session.content.authenticated.tokenData.user_id
+      var user_id = this.session.session.content.authenticated.tokenData.sub
 
       var that = this
       this.store.findRecord('user', user_id).then(function(record) {

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
-	"github.com/7onetella/users/api/pkg/jwtutil"
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"strings"
@@ -51,52 +50,48 @@ func PreflightOptions() gin.HandlerFunc {
 
 func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tokenString, err := jwtutil.ParseAuthTokenFromHeader(c.Request)
+		tokenString, err := ParseAuthTokenFromAuthorizationHeader(c.Request)
 		if err != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
 		log.Printf("Authentication: Bearer %s", tokenString)
 		terms := strings.Split(tokenString, ".")
-		jwtSecret, dberr := GetJWTSecretFromClaim(terms, service)
+		payloadRaw := terms[1]
+		jwtSecret, dberr := GetJWTSecretForUser(payloadRaw, service)
 		if dberr != nil {
 			c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
 
-		claims, err := jwtutil.DecodeToken(tokenString, jwtSecret)
+		claims, err := DecodeTokenAsCustomClaims(tokenString, jwtSecret)
 		if err != nil {
 			log.Printf("error decoding: %v", err)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		if userID, ok := claims[a.ClaimKey].(string); ok {
-			req := c.Request
-			user, operr := service.Get(userID)
-			if err != nil {
-				c.AbortWithError(http.StatusUnauthorized, operr.Err)
-				return
-			}
-			ctx := context.WithValue(req.Context(), "user", user)
-			c.Request = req.Clone(ctx)
-			c.Next()
-		} else {
-			c.AbortWithError(http.StatusUnauthorized, err)
+		userID := claims.Subject
+		req := c.Request
+		user, operr := service.Get(userID)
+		if err != nil {
+			c.AbortWithError(http.StatusUnauthorized, operr.Err)
+			return
 		}
-
+		ctx := context.WithValue(req.Context(), "user", user)
+		c.Request = req.Clone(ctx)
+		c.Next()
 	}
 }
 
-func GetJWTSecretFromClaim(terms []string, userService UserService) (string, *DBOpError) {
-	payloadRaw := terms[1]
+func GetJWTSecretForUser(payloadRaw string, userService UserService) (string, *DBOpError) {
 	log.Printf("payload = %s", payloadRaw)
-	claim, err := ExtractUserClaim(payloadRaw)
+	claims, err := ExtractClaimsFromPayload(payloadRaw)
 	if err != nil {
 		log.Printf("jmap err = %v", err)
 	}
-	log.Printf("jmap = %#v", claim)
-	claimedUser, dberr := userService.Get(claim.Id)
+	log.Printf("jmap = %#v", claims)
+	claimedUser, dberr := userService.Get(claims.Subject)
 	if dberr != nil {
 		log.Print(err)
 		return "", dberr
@@ -104,21 +99,16 @@ func GetJWTSecretFromClaim(terms []string, userService UserService) (string, *DB
 	return claimedUser.JWTSecret, nil
 }
 
-type UserClaims struct {
-	ExpiresAt int64  `json:"exp,omitempty"`
-	Id        string `json:"user_id,omitempty"`
-}
-
-func ExtractUserClaim(s string) (*UserClaims, error) {
+func ExtractClaimsFromPayload(s string) (*CustomClaims, error) {
 	data, err := jwt.DecodeSegment(s)
 	if err != nil {
 		return nil, err
 	}
 
-	claim := &UserClaims{}
-	err = json.Unmarshal(data, claim)
+	claims := &CustomClaims{}
+	err = json.Unmarshal(data, claims)
 
-	return claim, err
+	return claims, err
 }
 
 // SigninHandlerFunc signs in user
@@ -132,7 +122,8 @@ func (a JWTAuth) RefreshToken(service UserService) gin.HandlerFunc {
 		c.ShouldBindJSON(&rt)
 
 		terms := strings.Split(rt.Token, ".")
-		jwtSecret, dberr := GetJWTSecretFromClaim(terms, service)
+		payloadRaw := terms[1]
+		jwtSecret, dberr := GetJWTSecretForUser(payloadRaw, service)
 		if dberr != nil {
 			c.AbortWithError(http.StatusUnauthorized, dberr.Err)
 			return
@@ -140,15 +131,15 @@ func (a JWTAuth) RefreshToken(service UserService) gin.HandlerFunc {
 
 		log.Println("token =", rt.Token)
 
-		claims, err := jwtutil.DecodeToken(rt.Token, jwtSecret)
+		claims, err := DecodeTokenAsCustomClaims(rt.Token, jwtSecret)
 		if err != nil {
 			log.Println("Issue with decoding", err)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		claimValue, _ := claims[a.ClaimKey].(string)
-		tokenString, expTime, err := jwtutil.EncodeToken(a.ClaimKey, claimValue, jwtSecret, 120)
+		userID := claims.Subject
+		tokenString, expTime, err := EncodeToken(userID, jwtSecret, 120)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return

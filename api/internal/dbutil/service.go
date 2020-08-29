@@ -320,3 +320,18 @@ func (u UserService) AuthenticateClientUsingSecret(clientID, clientSecret string
 func (u UserService) NonceUsedBefore(clientID, userID, nonce string) bool {
 	return false
 }
+
+func (u UserService) StoreAccessTokenForUser(accessToken oauth2.AccessToken) *DBOpError {
+	sql := `INSERT INTO access_token (token_id, user_id, token) VALUES (:token_id, :user_id, :token)`
+	return u.NamedExec(sql, accessToken)
+	//_, dberr := u.GetUserGrantsForClient(userGrants.UserID, userGrants.ClientID)
+	//// if not found insert record
+	//if dberr != nil {
+	//	sql := `INSERT INTO user_grants (user_id, client_id, scope) VALUES (:user_id, :client_id, :scope)`
+	//	return u.NamedExec(sql, userGrants)
+	//} else {
+	//	sql := `UPDATE user_grants SET scope = :scope WHERE user_id = :user_id AND client_id = :client_id`
+	//	return u.NamedExec(sql, userGrants)
+	//}
+	return nil
+}

@@ -1,4 +1,4 @@
-package jwtutil
+package handlers
 
 import (
 	"errors"
@@ -8,6 +8,16 @@ import (
 	"strings"
 	"time"
 )
+
+type CustomClaims struct {
+	jwt.StandardClaims
+	Scope string `json:"scope"`
+}
+
+func (cc CustomClaims) Valid() error {
+	log.Println("standard claims valid()")
+	return cc.StandardClaims.Valid()
+}
 
 // DecodeToken decodes jwt token then returns claims in map
 func DecodeToken(tokenString, secret string) (map[string]interface{}, error) {
@@ -30,17 +40,53 @@ func DecodeToken(tokenString, secret string) (map[string]interface{}, error) {
 
 }
 
+// DecodeToken decodes jwt token then returns claims in map
+func DecodeTokenAsCustomClaims(tokenString, secret string) (CustomClaims, error) {
+	cm, err := DecodeToken(tokenString, secret)
+	if err != nil {
+		return CustomClaims{}, err
+	}
+
+	toStr := func(m map[string]interface{}, attr string) string {
+		if s, ok := m[attr].(string); ok {
+			return s
+		}
+		return ""
+	}
+
+	toInt64 := func(m map[string]interface{}, attr string) int64 {
+		if f, ok := m[attr].(float64); ok {
+			return int64(f)
+		}
+		return 0
+	}
+
+	claims := CustomClaims{
+		StandardClaims: jwt.StandardClaims{
+			Audience:  toStr(cm, "aud"),
+			ExpiresAt: toInt64(cm, "exp"),
+			Id:        toStr(cm, "jti"),
+			IssuedAt:  toInt64(cm, "iat"),
+			Issuer:    toStr(cm, "iss"),
+			NotBefore: toInt64(cm, "nbf"),
+			Subject:   toStr(cm, "sub"),
+		},
+		Scope: toStr(cm, "scope"),
+	}
+
+	return claims, nil
+}
+
 // EncodeID signs id
-func EncodeToken(claimKey, claimValue, secret string, ttl time.Duration) (string, time.Time, error) {
+func EncodeToken(userID, secret string, ttl time.Duration) (string, time.Time, error) {
 	expTime := time.Now().Add(ttl * time.Second)
 
-	//claim := jwt.StandardClaims{
-	//	Id:        claimValue,
-	//	ExpiresAt: expTime.Unix(),
-	//}
 	claim := jwt.MapClaims{
-		claimKey: claimValue,
-		"exp":    expTime.Unix(),
+		"iss": "7onetella",
+		"sub": userID,
+		"aud": "7onetella",
+		"iat": time.Now().Unix(),
+		"exp": expTime.Unix(),
 	}
 
 	// Create a new token object, specifying signing method and the claims
@@ -53,7 +99,7 @@ func EncodeToken(claimKey, claimValue, secret string, ttl time.Duration) (string
 	return tokenString, expTime, err
 }
 
-func ParseAuthTokenFromHeader(req *http.Request) (string, error) {
+func ParseAuthTokenFromAuthorizationHeader(req *http.Request) (string, error) {
 	authorization := req.Header.Get("Authorization")
 	if authorization == "" {
 		return "", errors.New("header Authorization is empty")
@@ -65,10 +111,11 @@ func ParseAuthTokenFromHeader(req *http.Request) (string, error) {
 }
 
 // EncodeID signs id
-func EncodeOAuth2Token(issuer, user, client, scope, secret string, ttl time.Duration) (string, error) {
+func EncodeOAuth2Token(jti, issuer, user, client, scope, secret string, ttl time.Duration) (string, error) {
 	expTime := time.Now().Add(ttl * time.Second)
 
 	claim := jwt.MapClaims{
+		"jti":   jti,
 		"iss":   issuer,
 		"sub":   user,
 		"aud":   client,

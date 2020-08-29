@@ -64,6 +64,27 @@ CREATE TABLE authorization_code (
 	CONSTRAINT           unique_authorization_code UNIQUE (code, client_id)
 );
 
+DROP TABLE IF EXISTS access_token CASCADE;
+CREATE TABLE access_token (
+    token_id             CHARACTER VARYING(40)   DEFAULT '',
+    user_id              CHARACTER VARYING(40)   DEFAULT '',
+    token                CHARACTER VARYING(1024) DEFAULT '',
+	CONSTRAINT           unique_access_token UNIQUE (token_id, user_id)
+);
+
+INSERT INTO authorization_code (code, client_id, created_at, user_id) VALUES (
+	'f7cd9875-8386-4d16-97ef-7ae858ebe4c2', 
+	'352b6e64-e498-4307-b64d-ec9e5b9da65c', 
+	1598737919, 
+	'a2aee5e6-05a0-438c-9276-4ba406b7bf9e'
+);
+
+INSERT INTO user_grants (user_id, client_id, scope) VALUES (
+	'a2aee5e6-05a0-438c-9276-4ba406b7bf9e', 
+	'352b6e64-e498-4307-b64d-ec9e5b9da65c', 
+	'read:profile,write:profile'
+);
+
 INSERT INTO users 
             (user_id, 
              platform_name, 

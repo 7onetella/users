@@ -11,7 +11,7 @@ export default Route.extend({
     console.log("> session.isAuthenticated: " + this.session.isAuthenticated);
 
     if (this.session.isAuthenticated) {
-      let user_id = this.session.session.content.authenticated.tokenData.user_id
+      let user_id = this.session.session.content.authenticated.tokenData.sub
       let record = this.store.findRecord('user', user_id)
       return {
         'user': record,

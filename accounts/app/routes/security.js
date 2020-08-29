@@ -14,7 +14,7 @@ export default Route.extend({
 
     console.log('routes/security.js: model()')
     let token = this.session.session.content.authenticated.token
-    let user_id = this.session.session.content.authenticated.tokenData.user_id
+    let user_id = this.session.session.content.authenticated.tokenData.sub
     console.log('> user_id = ' + user_id)
     let record = this.store.findRecord('user', user_id)
 
