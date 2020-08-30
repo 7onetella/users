@@ -10,7 +10,7 @@ export default Controller.extend({
   userService: inject('user-service'),
 
   actions: {
-    register: function(data) {
+    register: function() {
       console.log('controllers/webauthn.js register()')
 
       var session_token = this.session.session.content.authenticated.token

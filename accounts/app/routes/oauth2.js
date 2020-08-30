@@ -1,6 +1,5 @@
 /*eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
 import Route from '@ember/routing/route';
-// import fetch from 'fetch';
 import { inject } from '@ember/service';
 import {storageFor} from "ember-local-storage";
 import ENV from '../config/environment';
@@ -10,7 +9,7 @@ export default Route.extend({
   datastore: storageFor('datastore'),
   queryParams: {},
 
-  afterModel(model, transition) {
+  afterModel() {
     console.log('routes/oauth2.js: afterModel()')
 
     if (this.session.isAuthenticated) {
@@ -39,11 +38,4 @@ export default Route.extend({
     this.set('datastore.state', params.state)
     return {}
   },
-
-  resetController(controller, isExiting, transition) {
-    // if (isExiting) {
-    //   // isExiting would be false if only the route's model was changing
-    //   controller.set('client_id', '');
-    // }
-  }
 });

@@ -1,7 +1,6 @@
 /*eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
 import Route from '@ember/routing/route';
 import { inject } from '@ember/service';
-import ENV from '../config/environment';
 
 export default Route.extend({
   session: inject('session'),

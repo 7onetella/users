@@ -10,7 +10,7 @@ export default Controller.extend({
   datastore: storageFor('datastore'),
 
   actions: {
-    authenticate: function(data) {
+    authenticate: function() {
       this.set("login_failed", false);
       console.log('contollers/webauthn-signin.js')
 
@@ -99,7 +99,6 @@ export default Controller.extend({
       .catch((error) => {
         console.log("> error:" + JSON.stringify(error));
         if (error.json) {
-          var reason = data.json.reason
           var message = data.json.message
           that.set("login_failed", true);
           that.set("login_failure_reason", message)

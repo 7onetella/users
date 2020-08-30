@@ -1,4 +1,4 @@
-/*eslint no-console: ["error", { allow: ["warn", "error"] }] */
+/*eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
 import Component from '@ember/component';
 import {inject} from '@ember/service'
 import {storageFor} from "ember-local-storage";

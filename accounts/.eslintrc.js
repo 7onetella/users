@@ -16,6 +16,8 @@ module.exports = {
     browser: true
   },
   rules: {
+    'ember/no-get': 'off',     // special cases like datastore need to do this.get('datastore.foo')
+    'ember/no-mixins': 'off'   // adapters/application.js needs to use mixin
   },
   overrides: [
     // node files
