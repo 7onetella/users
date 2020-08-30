@@ -136,6 +136,7 @@ func main() {
 		oauth2author.POST("/authorize", OAuth2Authorize(userService))
 	}
 	r.POST("/oauth2/access_token", OAuth2AccessToken(userService))
+	r.GET("/oauth2/scope/:scope", OAuth2Scope(userService))
 
 	// ---- Client --------------------------------
 	r.GET("/oauth2/clients/:id", GetClientName(userService))

@@ -101,6 +101,7 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 				"status": "error",
 				"reason": "we don't know who you are",
 			})
+			return
 		}
 
 		if !DoesRedirectURIMatch(redirectURI) {
@@ -182,4 +183,21 @@ func GetClientName(service UserService) gin.HandlerFunc {
 
 func DoesRedirectURIMatch(redirectURI string) bool {
 	return true
+}
+
+func OAuth2Scope(service UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		rh := NewRequestHandler(c)
+		rh.WriteCORSHeader()
+
+		scope := c.Param("scope")
+
+		c.Header("Cache-Control", "no-store")
+		c.Header("Pragma", "no-cache")
+		c.JSON(200, gin.H{
+			"scope": scope,
+			"desc":  "read user's profile", // random string token
+		})
+
+	}
 }
