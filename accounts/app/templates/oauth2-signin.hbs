@@ -1,14 +1,24 @@
 <div class="container">
+  <div class="jumbotron">
+    <p class="lead">
+    <div class="media">
+      <div class="media-body">
+        <h5 class="mt-0">Faux Site ACME</h5>
+        This page is simulating a third party site. This is a demo of SSO using OAuth2 Flow.
+      </div>
+    </div>
+    </p>
+    <hr class="my-4">
+    <p class="lead">
+    </p>
+  </div>
+
   <div id="signindiv" class="card">
     <article class="card-body">
-      {{#if login_failed}}
-        <h6 id="signinalertdiv" class="card-subtitle mb-2 text-danger">{{login_failure_reason}}</h6>
-      {{/if}}
       <form>
         <div class="form-group">
           <button class="btn btn-light btn-block" type="button" onclick="openSignInWindow('/accounts/#/oauth2?' +
             'client_id=352b6e64-e498-4307-b64d-ec9e5b9da65c'+
-            '&redirect_uri=http%3A%2F%2Flocalhost%3A4200%2Faccounts%2F%23%2Fdemo%2Foauth2-callback'+
             '&scope=read:profile,write:profile'+
             '&response_type=code'+
             '&response_mode=query'+
@@ -23,16 +33,17 @@
   </div>
 </div>
 
-
 <script>
   // CREDIT: https://dev.to/dinkydani21/how-we-use-a-popup-for-google-and-outlook-oauth-oci
 
   const receiveMessage = event => {
     console.log('receiving event')
+    console.log('previous url = ' + previousUrl)
+    console.log('window.origin = ' + this.window.origin)
 
     // Do we trust the sender of this message? (might be
     // different from what we originally opened, for example).
-    if (event.origin !== 'http://localhost:4200') {
+    if (event.origin !== this.window.origin) {
       return;
     }
 
@@ -43,7 +54,7 @@
       // get the URL params and redirect to our server to use Passport to auth/login
       const payload = event.data;
       console.log('payload = ' + payload)
-      const redirectUrl = `http://localhost:4200/accounts/#/demo/oauth2-post-signin${payload}`;
+      const redirectUrl = `/accounts/#/demo/oauth2-post-signin${payload}`;
       window.location = redirectUrl;
     }
   };
@@ -52,6 +63,10 @@
   let previousUrl = null;
 
   const openSignInWindow = (url, name) => {
+    // append redirect url dynamically
+    url = url + '&redirect_uri=' + encodeURI(this.window.origin) + '/accounts/%23/demo/oauth2-callback'
+    console.log('url = ' + url)
+
     // remove any existing event listeners
     window.removeEventListener('message', receiveMessage);
 

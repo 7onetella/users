@@ -6,45 +6,49 @@
       </div>
     </div>
   </div>
+  <div id="apihost" class="hidden_data_field">{{this.model.apihost}}</div>
 </div>
 
 <script>
   $(document).ready(function () {
     let access_token
+    const queryString = window.location.hash.substr(window.location.hash.indexOf('?')+1);
+    console.log('queryString = ' + queryString)
+    const params = new URLSearchParams(queryString);
+    let apihost = $('#apihost').text()
+
     sleep(1000)
-    .then(() => { $('#spinner').hide(); })
+    .then(() => { hideSpinner('spinner') })
     .then(() => {
-      newMessage("Authorization Code Received").appendTo('#cell');
+      newMessage("Authorization Code Received: " + params.get('code')).appendTo('#cell');
       sleep(1000)
       .then(() => { newSpinner('spinner2').appendTo('#cell') })
       .then(() => {
         sleep(1000)
-        .then(() => { $('#spinner2').hide(); })
+        .then(() => { hideSpinner('spinner2') })
         .then(() => {
-          newMessage('Exchanged For Access Token').appendTo('#cell')
-          exchange_for_access_token()
-          .then((response) => {
-            return response.json()
-          })
+          newMessage('Exchanged Authorization Code For Access Token').appendTo('#cell')
+          exchange_for_access_token(apihost)
+          .then((response) => response.json())
           .then((payload) => {
             access_token = payload.access_token
             console.log('access_token = ' + JSON.stringify(payload))
             newSpinner('spinner3').appendTo('#cell')
             sleep(1000)
-            .then(() => { $('#spinner3').hide(); })
+            .then(() => { hideSpinner('spinner3') })
             .then(() => {
-              newMessage('Calling API with Access Token').appendTo('#cell')
+              newMessage('Calling API with Access Token: '+ access_token.substring(0, 50) + '...').appendTo('#cell')
               newSpinner('spinner4').appendTo('#cell')
               sleep(1000)
-              .then(() => { $('#spinner4').hide(); })
+              .then(() => { hideSpinner('spinner4') })
               .then(() => {
-                call_api(access_token)
+                call_api(apihost, access_token)
                 .then((response) => response.json())
                 .then((payload) => {
                   // console.log('payload = ' + JSON.stringify(payload))
                   let profile = payload.data.attributes
                   const firstname = profile.firstname
-                  newMessage(`Profile ${profile.firstname} ${profile.lastname}`).appendTo('#cell')
+                  newMessage(`Profile Retrieved: ${profile.firstname} ${profile.lastname}, ${profile.email}`).appendTo('#cell')
                 })
               })
             })
@@ -55,24 +59,28 @@
   })
 
   function newMessage(s) {
-    return $('<span class="d-block p-2 bg-primary text-white">' + s + '</span>');
+    return $('<span class="d-block p-2 bg-success text-white">' + s + '</span>');
   }
 
   function newSpinner(id) {
     return $('<div id="' + id + '" class="spinner-border text-danger" style="margin-top: 10px;" role="status"><span class="sr-only">Loading...</span></div>')
   }
 
+  function hideSpinner(id) {
+    $('#'+ id).hide();
+  }
+
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  function exchange_for_access_token() {
+  function exchange_for_access_token(apihost) {
     let payload = {
       grant_type: "authorization_code",
       code: "f7cd9875-8386-4d16-97ef-7ae858ebe4c2",
       client_id: "352b6e64-e498-4307-b64d-ec9e5b9da65c",
       client_secret: "9191",
-      redirect_uri: "foo"
+      redirect_uri: "optional_check"
     }
 
     let form_data = new FormData();
@@ -81,15 +89,15 @@
       form_data.append(key, payload[key]);
     }
 
-    return fetch('http://localhost:8080/oauth2/access_token', {
+    return fetch(apihost + '/oauth2/access_token', {
       method: 'POST',
       mode: 'cors',
       body: form_data
     })
   }
 
-  function call_api(access_token) {
-    return fetch('http://localhost:8080/users/a2aee5e6-05a0-438c-9276-4ba406b7bf9e', {
+  function call_api(apihost, access_token) {
+    return fetch(apihost + '/users/a2aee5e6-05a0-438c-9276-4ba406b7bf9e', {
       method: 'GET',
       mode: 'cors',
       headers: {
