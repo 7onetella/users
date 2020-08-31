@@ -1,7 +1,5 @@
-# ui
-
-This README outlines the details of collaborating on this Ember application.
-A short introduction of this app could easily go here.
+# Users
+You can go to github project landing page for details. 
 
 ## Prerequisites
 

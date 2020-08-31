@@ -4,8 +4,7 @@ understand JWT, TOTP and FIDO2 WebAuthn.
 
 # Live Demo Site
 Go to [My Accounts](https://accounts.7onetella.net/accounts/)
-- login: John.Smith@example.com
-- password: users91234
+- register your own accounts please
 
 # Demo
 ![](/assets/auth.gif)
