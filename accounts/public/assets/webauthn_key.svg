@@ -1,0 +1,46 @@
+<svg width="396" height="200" xmlns="http://www.w3.org/2000/svg">
+ <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
+ <g>
+  <title>background</title>
+  <rect fill="#f7f7f7" id="canvas_background" height="202" width="398" y="-1" x="-1"/>
+  <g display="none" overflow="visible" y="0" x="0" height="100%" width="100%" id="canvasGrid">
+   <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%"/>
+  </g>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <rect stroke="#4c4c4c" id="svg_15" height="32" width="49" y="86.98438" x="229" stroke-width="1.5" fill="#4c4c4c"/>
+  <rect stroke="#e5e5e5" rx="8" id="svg_1" height="185.00001" width="283.99999" y="62.98438" x="-31.00002" stroke-width="1.5" fill="#e5e5e5"/>
+  <rect stroke="#4c4c4c" rx="8" id="svg_2" height="74" width="320.99998" y="-14.01562" x="-68.99998" stroke-width="1.5" fill="#4c4c4c"/>
+  <rect stroke="#e5e5e5" rx="8" id="svg_3" height="140.99999" width="318.99996" y="83.98437" x="-88.99999" stroke-width="1.5" fill="#ffffff"/>
+  <rect stroke="#4c4c4c" rx="6" id="svg_4" height="40" width="83" y="105.98438" x="120" stroke-width="1.5" fill="#4c4c4c"/>
+  <text stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_6" y="134.18852" x="147.02426" stroke-width="0" fill="#ffffff">delete</text>
+  <rect stroke="#4c4c4c" rx="6" id="svg_7" height="40" width="41" y="106.98438" x="71" stroke-width="1.5" fill="#4c4c4c"/>
+  <text stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_9" y="110.84241" x="28.05599" stroke-width="0" fill="#ffffff">+</text>
+  <text stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_10" y="137.78023" x="28.05599" stroke-width="0" fill="#ffffff">=</text>
+  <rect stroke="#4c4c4c" rx="4" id="svg_11" height="46" width="110" y="79.98438" x="266" stroke-width="1.5" fill="#4c4c4c"/>
+  <ellipse stroke="#ffffff" ry="5.5" rx="5.5" id="svg_12" cy="102.48438" cx="360.5" stroke-width="1.5" fill="#ffffff"/>
+  <ellipse stroke="#ffd700" ry="13" rx="13" id="svg_14" cy="102.98438" cx="308" stroke-width="0" fill="#ffd700"/>
+  <rect stroke="#ffd700" id="svg_16" height="4" width="12" y="110.98431" x="255" stroke-width="0" fill="#ffd700"/>
+  <rect stroke="#ffd700" id="svg_17" height="4" width="12" y="92.98431" x="255" stroke-width="0" fill="#ffd700"/>
+  <rect stroke="#ffd700" id="svg_18" height="4" width="12" y="98.98431" x="255" stroke-width="0" fill="#ffd700"/>
+  <rect stroke="#ffd700" id="svg_19" height="4" width="12" y="104.98431" x="255" stroke-width="0" fill="#ffd700"/>
+  <rect stroke="#4c4c4c" rx="6" id="svg_20" height="40" width="41" y="106.98438" x="21" stroke-width="1.5" fill="#4c4c4c"/>
+  <rect stroke="#4c4c4c" rx="6" id="svg_21" height="40" width="41" y="106.98438" x="-27" stroke-width="1.5" fill="#4c4c4c"/>
+  <text stroke="#4c4c4c" transform="matrix(0.8717349156060462,0,0,0.5568378567695618,85.51667312959104,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_22" y="101.86313" x="-57.12641" stroke-width="0" fill="#ffffff">_</text>
+  <text stroke="#4c4c4c" transform="matrix(0.5753244392605052,0,0,0.5568378567695618,67.55952273967863,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_23" y="127.0051" x="-53.65011" stroke-width="0" fill="#ffffff">_</text>
+  <rect stroke="#4c4c4c" rx="6" id="svg_24" height="40" width="41" y="153.98438" x="162" stroke-width="1.5" fill="#4c4c4c"/>
+  <rect stroke="#4c4c4c" rx="6" id="svg_25" height="40" width="41" y="153.98438" x="113" stroke-width="1.5" fill="#4c4c4c"/>
+  <rect stroke="#4c4c4c" rx="6" id="svg_26" height="40" width="41" y="153.98438" x="64" stroke-width="1.5" fill="#4c4c4c"/>
+  <rect stroke="#4c4c4c" rx="6" id="svg_27" height="40" width="41" y="153.98438" x="16" stroke-width="1.5" fill="#4c4c4c"/>
+  <rect stroke="#4c4c4c" rx="6" id="svg_28" height="40" width="41" y="153.98438" x="-33" stroke-width="1.5" fill="#4c4c4c"/>
+  <text stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_29" y="195.24759" x="190.7626" stroke-width="0" fill="#ffffff">|</text>
+  <text stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_30" y="222.18541" x="190.7626" stroke-width="0" fill="#ffffff">\</text>
+  <text stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_31" y="193.45173" x="105.03546" stroke-width="0" fill="#ffffff">}</text>
+  <text stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_32" y="220.38956" x="105.03546" stroke-width="0" fill="#ffffff">]</text>
+  <text stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_33" y="193.45173" x="19.30832" stroke-width="0" fill="#ffffff">{</text>
+  <text style="cursor: move;" stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_34" y="220.38956" x="19.30832" stroke-width="0" fill="#ffffff">[</text>
+  <text style="cursor: move;" stroke="#4c4c4c" transform="matrix(0.5715809547429801,0,0,0.5568378567695618,72.00991224617313,62.44431574456394) " xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_35" y="211.41028" x="-69.91789" stroke-width="0" fill="#ffffff">P</text>
+  <rect stroke="#e5e5e5" rx="8" id="svg_37" height="140.99999" width="318.99996" y="-104.01563" x="-92.99999" stroke-width="1.5" fill="#ffffff"/>
+ </g>
+</svg>

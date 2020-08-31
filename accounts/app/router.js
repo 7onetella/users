@@ -26,6 +26,9 @@ Router.map(function() {
   this.route('login-session-expired');
   this.route('oauth2');
   this.route('consent');
+  this.route('oauth-signin');
+  this.route('callback');
+  this.route('oauth-post-signin');
 });
 
 export default Router;

@@ -25,6 +25,11 @@
     margin-left: auto;
     margin-right: auto;
 }
+#webauthn_signindiv {
+    width: 32rem;
+    margin-left: auto;
+    margin-right: auto;
+}
 #signindiv label {
     font-size: 17px;
     font-weight: bold;
@@ -123,6 +128,9 @@ td.clickable {
   content:"Enable";
 }
 
+#webauthn_key {
+  margin-top: 33px;
+}
 #logo_img {
   width: 48px;
   margin-top: 33px;

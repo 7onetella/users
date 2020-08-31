@@ -1,8 +1,9 @@
 <div class="container">
   <div id="logo"><img id="logo_img" src="{{rootURL}}assets/lock.png" class="rounded mx-auto d-block" alt="Lock"></div>
-  <div id="signindiv" class="card">
+  <div id="webauthn_signindiv" class="card">
+    <div id="logo2"><img id="webauthn_key" src="{{rootURL}}assets/webauthn_key.svg" class="rounded mx-auto d-block" alt="FIDO2 USB Key"></div>
     <article class="card-body">
-      <h4 class="card-title text-center mb-4 mt-1">WebAuthn Authentication</h4>
+      <h6 class="card-title text-center mb-4 mt-1">Insert and tap your FIDO2 key when prompted</h6>
       {{#if login_failed}}
         <h6 id="signinalertdiv" class="card-subtitle mb-2 text-danger">{{login_failure_reason}}</h6>
       {{/if}}

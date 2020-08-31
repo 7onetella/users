@@ -1,0 +1,16 @@
+Callback Page
+
+<script>
+  const hashstr = window.location.hash.substr(10);
+  console.log('hashstr = ' + hashstr)
+  // params = hashstr
+  // const params = window.location.search;
+
+  console.log('> hashstr = ' + hashstr)
+  if (window.opener) {
+    // send them to the opening window
+    window.opener.postMessage(hashstr);
+    // close the popup
+    window.close();
+  }
+</script>
