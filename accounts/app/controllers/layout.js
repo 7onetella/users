@@ -8,7 +8,7 @@ export default Controller.extend({
   router: inject(),
   session: inject('session'),
   userIdle: inject('userIdle'),
-  showDebugInfo: true,
+  showDebugInfo: false,
 
   init() {
     this._super(...arguments);
