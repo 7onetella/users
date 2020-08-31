@@ -1,13 +1,28 @@
-<button class="btn btn-link" type="button" onclick="openSignInWindow('/accounts/#/oauth2?' +
-  'client_id=352b6e64-e498-4307-b64d-ec9e5b9da65c'+
-  '&redirect_uri=http%3A%2F%2Flocalhost%3A4200%2Faccounts%2F%23%2Fcallback'+
-  '&scope=read:profile,write:profile'+
-  '&response_type=code'+
-  '&response_mode=query'+
-  '&nonce=sto7zydoa6o',
-  'accounts_oauth2_popup')">
-  Sign In
-</button>
+<div class="container">
+  <div id="signindiv" class="card">
+    <article class="card-body">
+      {{#if login_failed}}
+        <h6 id="signinalertdiv" class="card-subtitle mb-2 text-danger">{{login_failure_reason}}</h6>
+      {{/if}}
+      <form>
+        <div class="form-group">
+          <button class="btn btn-light btn-block" type="button" onclick="openSignInWindow('/accounts/#/oauth2?' +
+            'client_id=352b6e64-e498-4307-b64d-ec9e5b9da65c'+
+            '&redirect_uri=http%3A%2F%2Flocalhost%3A4200%2Faccounts%2F%23%2Fdemo%2Foauth2-callback'+
+            '&scope=read:profile,write:profile'+
+            '&response_type=code'+
+            '&response_mode=query'+
+            '&nonce=sto7zydoa6o',
+            'accounts_oauth2_popup')">
+            <img class="mr-3" id="lock_img" src="{{rootURL}}assets/lock.png" alt="Lock">
+            Sign In With AuthP
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</div>
+
 
 <script>
   // CREDIT: https://dev.to/dinkydani21/how-we-use-a-popup-for-google-and-outlook-oauth-oci
@@ -28,7 +43,7 @@
       // get the URL params and redirect to our server to use Passport to auth/login
       const payload = event.data;
       console.log('payload = ' + payload)
-      const redirectUrl = `http://localhost:4200/accounts/#/oauth-post-signin${payload}`;
+      const redirectUrl = `http://localhost:4200/accounts/#/demo/oauth2-post-signin${payload}`;
       window.location = redirectUrl;
     }
   };
@@ -41,7 +56,7 @@
     window.removeEventListener('message', receiveMessage);
 
     // window features
-    const strWindowFeatures = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
+    const strWindowFeatures = 'toolbar=no, menubar=no, width=500, height=400, top=100, left=100';
 
     if (windowObjectReference === null || windowObjectReference.closed) {
       /* if the pointer to the window object in memory does not exist

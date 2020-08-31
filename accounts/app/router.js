@@ -26,9 +26,13 @@ Router.map(function() {
   this.route('login-session-expired');
   this.route('oauth2');
   this.route('consent');
-  this.route('oauth-signin');
-  this.route('callback');
-  this.route('oauth-post-signin');
+
+  this.route('demo', {path: '/demo'}, function(){
+    this.route('oauth2-signin', {resetNamespace: true});
+    this.route('oauth2-callback', {resetNamespace: true});
+    this.route('oauth2-post-signin', {resetNamespace: true});
+  });
+
 });
 
 export default Router;

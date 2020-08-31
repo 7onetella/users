@@ -1,15 +1,15 @@
 <div class="container">
   <div id="logo"><img id="logo_img" src="{{rootURL}}assets/lock.png" class="rounded mx-auto d-block" alt="Lock"></div>
   <div id="signindiv" class="card">
+    <div id="logo2"><img id="webauthn_key" src="{{rootURL}}assets/totp_authenticator.svg" class="rounded mx-auto d-block" alt="FIDO2 USB Key"></div>
     <article class="card-body">
-      <h4 class="card-title text-center mb-4 mt-1">TOTP Authentication</h4>
       {{#if login_failed}}
         <h6 id="signinalertdiv" class="card-subtitle mb-2 text-danger">{{login_failure_reason}}</h6>
       {{/if}}
       <hr>
       <form>
         <div class="form-group">
-          <label for="email">Authenticator code</label>
+          <label for="email">Enter Authenticator Code</label>
           <div class="input-group">
             <Input @type="text" class="form-control" @value={{this.model.totp}} @id="totp" placeholder="6 digit code" @aria-label="Input group example" @aria-describedby="btnGroupAddon" />
           </div>

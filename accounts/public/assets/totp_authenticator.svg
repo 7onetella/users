@@ -1,0 +1,18 @@
+<svg width="210" height="285" xmlns="http://www.w3.org/2000/svg">
+ <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
+ <g>
+  <title>background</title>
+  <rect fill="none" id="canvas_background" height="287" width="212" y="-1" x="-1"/>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <rect stroke="#0f0f00" rx="20" id="svg_1" height="281.00004" width="206.99999" y="2.5" x="1.5" stroke-width="1.5" fill="#000000"/>
+  <rect stroke="#0f0f00" id="svg_3" height="228.00002" width="178.00001" y="18.5" x="16.49999" stroke-opacity="null" stroke-width="1.5" fill="#ffffff"/>
+  <rect stroke="#0f0f00" id="svg_5" height="16" width="44" y="257.5" x="81.5" fill-opacity="null" stroke-opacity="null" stroke-width="1.5" fill="#ffffff"/>
+  <rect id="svg_6" height="64" width="205" y="43.5" x="321.5" fill-opacity="null" stroke-opacity="null" stroke-width="1.5" stroke="#0f0f00" fill="#ffffff"/>
+  <rect stroke="null" id="svg_7" height="33" width="175.99998" y="19.5" x="17.50001" stroke-width="1.5" fill="#56aaff"/>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="35" id="svg_8" y="131.5" x="41.5" stroke-opacity="null" stroke-width="0" stroke="#0f0f00" fill="#56aaff">456 876</text>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="15" id="svg_10" y="86.5" x="42.5" stroke-opacity="null" stroke-width="0" stroke="#0f0f00" fill="#000000">example.com</text>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="15" id="svg_11" y="158.5" x="42.5" stroke-opacity="null" stroke-width="0" stroke="#0f0f00" fill="#000000">user1</text>
+ </g>
+</svg>
