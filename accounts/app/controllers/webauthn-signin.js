@@ -8,29 +8,27 @@ export default Controller.extend({
   router: inject(),
   session: inject('session'),
   datastore: storageFor('datastore'),
+  web: inject('rest-service'),
 
   actions: {
     authenticate: function() {
       this.set("login_failed", false);
       console.log('contollers/webauthn-signin.js')
 
-      var session_token = this.session.session.content.authenticated.token
-      var webauthnpurl = ENV.APP.JSONAPIAdaptetHost + "/webauthn/login/begin"
+      let BASEURL = ENV.APP.JSONAPIAdaptetHost
+      let auth_token = this.get('datastore.auth_token')
+      let that = this
 
-      var that = this
-      var settings = {
-        url: webauthnpurl,
-        type: 'post',
-        dataType: 'json',
-        async: true,
-        crossDomain: 'true',
-        beforeSend: function (xhr) {
-          xhr.setRequestHeader('Authorization', 'Bearer ' + session_token);
-          xhr.setRequestHeader('AuthToken', that.get('datastore.auth_token'));
-        }
+      if (!auth_token) {
+        that.get('router').transitionTo('login-session-expired');
+        return
       }
 
-      $.ajax(settings).then((credentialRequestOptions) => {
+      this.web.POST(BASEURL+ '/webauthn/login/begin', '', {}, auth_token)
+      .then((response) => response.json(), reason => { console.log(reason) })
+      .then((credentialRequestOptions) => {
+        console.log('> credentialRequestOptions: ' + JSON.stringify(credentialRequestOptions))
+
         credentialRequestOptions.publicKey.challenge = bufferDecode(credentialRequestOptions.publicKey.challenge);
         credentialRequestOptions.publicKey.allowCredentials.forEach(function (listItem) {
           listItem.id = bufferDecode(listItem.id)
@@ -41,68 +39,79 @@ export default Controller.extend({
         })
       })
       .then((assertion) => {
+        console.log('> assertion = ' + JSON.stringify(assertion))
 
-        let authData = assertion.response.authenticatorData;
-        let clientDataJSON = assertion.response.clientDataJSON;
-        let rawId = assertion.rawId;
-        let sig = assertion.response.signature;
-        let userHandle = assertion.response.userHandle;
-
-        settings.url = ENV.APP.JSONAPIAdaptetHost + "/webauthn/login/finish"
-        settings.data = JSON.stringify({
+        let url = BASEURL + "/webauthn/login/finish"
+        let payload = JSON.stringify({
           id: assertion.id,
-          rawId: bufferEncode(rawId),
+          rawId: bufferEncode(assertion.rawId),
           type: assertion.type,
           response: {
-            authenticatorData: bufferEncode(authData),
-            clientDataJSON: bufferEncode(clientDataJSON),
-            signature: bufferEncode(sig),
-            userHandle: bufferEncode(userHandle),
+            authenticatorData: bufferEncode(assertion.response.authenticatorData),
+            clientDataJSON: bufferEncode(assertion.response.clientDataJSON),
+            signature: bufferEncode(assertion.response.signature),
+            userHandle: bufferEncode(assertion.response.userHandle),
           },
         })
 
-        // console.log("  then(assertion) ajax settings = " + JSON.stringify(settings))
-        $.ajax(settings).then((data) => {
+        that.web.POST(url, '', payload, auth_token)
+          .then((response) => {
+              return response.json()
+            }, reason => {
+              console.log('reason' + reason)
+            }
+          )
+          .then((data) => {
           console.log('  data = ' + JSON.stringify(data))
           const authenticator = 'authenticator:jwt';
           const credentials = {
             auth_token: this.get('datastore.auth_token'),
             sec_auth_token: data.sec_auth_token
           }
-          let promise = this.session.authenticate(authenticator, credentials)
 
-          var that = this
-          promise.then(function(){
-            console.log("> authentication successful. redirecting to index page");
-
-            if (that.get('datastore.client_id')) {
-              that.get('router').transitionTo('consent');
-            } else {
-              that.get('router').transitionTo('index');
-            }
-          },function(data) {
-            console.log("> data:" + JSON.stringify(data));
-            if (data.json) {
-              var reason = data.json.reason
-              var message = data.json.message
-              console.log("> reason:" + reason)
-              if (reason === 'invalid_sec_auth_token') {
-                that.set("login_failed", true);
-                that.set("login_failure_reason", message)
+          this.session.authenticate(authenticator, credentials)
+            .then(() => {
+              console.log("> authentication successful. redirecting to index page");
+              if (that.get('datastore.client_id')) {
+                that.get('router').transitionTo('consent');
+              } else {
+                that.get('router').transitionTo('index');
               }
-            }
+            }, data => {
+              console.log("> data:" + JSON.stringify(data));
+              if (data.json) {
+                let reason = data.json.reason
+                let message = data.json.message
+                console.log("> reason:" + reason)
+
+                if (reason === 'login_auth_expired') {
+                  that.get('router').transitionTo('login-session-expired');
+                  that.set("login_failed", true);
+                  that.set("login_failure_reason", message)
+                }
+
+                if (reason === 'invalid_sec_auth_token') {
+                  that.set("login_failed", true);
+                  that.set("login_failure_reason", message)
+                  return
+                }
+              }
           });
 
           return data
         })
+      }, reason => {
+        console.log("> reason:" + reason);
+        // alert(reason);
       })
-      .catch((error) => {
-        console.log("> error:" + JSON.stringify(error));
-        if (error.json) {
-          var message = data.json.message
+      .catch((err) => {
+        console.log("> error:" + JSON.stringify(err));
+        if (err.json) {
+          let message = err.json.message
           that.set("login_failed", true);
           that.set("login_failure_reason", message)
         } else {
+          console.log('error = ' + err)
           that.set("login_failed", true);
           that.set("login_failure_reason", "Error occurred")
         }

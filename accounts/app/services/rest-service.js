@@ -6,16 +6,24 @@ export default Service.extend({
     this._super(...arguments);
   },
 
-  POST(url, session_token, data) {
+  POST(url, access_token, data, auth_token) {
     console.log('> POST url: ' + url)
-    return fetch(url, {
+    let settings = {
       method: 'POST',
       mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session_token
-      },
       body: data
-    });
+    }
+    if (auth_token) {
+      settings.headers = {
+        'Content-Type': 'application/json',
+        'AuthToken': auth_token  // custom header for sending password login auth token
+      }
+    } else {
+      settings.headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + access_token
+      }
+    }
+    return fetch(url, settings);
   }
 });

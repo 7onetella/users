@@ -27,7 +27,7 @@ Router.map(function() {
   this.route('oauth2');
   this.route('consent');
 
-  this.route('demo', {path: '/demo'}, function(){
+  this.route('demo', function(){
     this.route('oauth2-signin', {resetNamespace: true});
     this.route('oauth2-callback', {resetNamespace: true});
     this.route('oauth2-post-signin', {resetNamespace: true});

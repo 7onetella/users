@@ -1,9 +1,10 @@
 <div class="container">
   {{#if this.model.authenticated}}
-    <div id="totpdiv" class="card">
+    <div id="webauthn_signindiv" class="card">
       <div id="logo"><img id="webauthn_key" src="{{rootURL}}assets/webauthn_key.svg" class="rounded mx-auto d-block" alt="FIDO2 USB Key"></div>
       <article class="card-body">
-        <h6 class="card-title text-center mb-4 mt-1">Insert and tap your FIDO2 key when prompted</h6>
+        <h6 class="card-title text-left mb-4 mt-1">Step 1 - Insert your FIDO2 then click Register</h6>
+        <h6 class="card-title text-left mb-4 mt-1">Step 2 - Tap your FIDO2 key when prompted</h6>
         <form>
           <div class="form-group">
             <button type="button" {{action "register" this.model}} class="btn btn-success btn-block">Register Authenticator</button>

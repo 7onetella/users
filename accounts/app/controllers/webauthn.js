@@ -41,8 +41,15 @@ export default Controller.extend({
               clientDataJSON: bufferEncode(clientDataJSON),
             },
           }));
-        }).then(() => {
-          that.router.transitionTo('webauthn-success');
+        }, reason => {
+          console.log('reason = ' + reason)
+          alert('reason =>' + reason)
+          return { ok: false }
+        }).then((response) => {
+          if (response && response.ok) {
+            console.log('response = ' + response.ok)
+            that.router.transitionTo('webauthn-success');
+          }
         }).catch((err) => {
           alert(err)
           return
