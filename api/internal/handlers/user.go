@@ -292,6 +292,18 @@ func DeleteUser(service UserService) gin.HandlerFunc {
 	}
 }
 
+// UpdateUser godoc
+// @Summary Updates user's profile
+// @Description update user by ID
+// @ID update-user-by-string
+// @Accept  json
+// @Produce  json
+// @Param id path string true "User ID"
+// @Param user body model.User true "Updates user"
+// @Success 200 {object} model.User
+// @Failure 500
+// @Router /{id} [patch]
+// @Security ApiKeyAuth
 func UpdateUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
