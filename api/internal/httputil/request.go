@@ -42,20 +42,14 @@ func (rh RequestHanlder) GetPayload(v interface{}) ([]byte, []error) {
 	return payload, nil
 }
 
-func (rh RequestHanlder) CheckUserIDMatchUserFromContext(id string) *SecurityError {
+func (rh RequestHanlder) CheckUserIDMatchUserFromContext(id string) *Error {
 	ctxUser, err := rh.UserFromContext()
 	if err != nil {
-		return &SecurityError{
-			Event: "get user from context",
-			Err:   err,
-		}
+		return New(SecurityError, Unknown)
 	}
 
 	if id != ctxUser.ID {
-		return &SecurityError{
-			Event: "user id check",
-			Err:   errors.New("id from url parameter does not match user id from context"),
-		}
+		return New(SecurityError, ContextUserDoesNotMatchGivenUserID)
 	}
 
 	return nil

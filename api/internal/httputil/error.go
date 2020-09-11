@@ -1,6 +1,9 @@
 package httputil
 
-import "log"
+import (
+	"github.com/7onetella/users/api/internal/model"
+	"log"
+)
 
 type DBOpError struct {
 	Query string
@@ -8,15 +11,6 @@ type DBOpError struct {
 }
 
 func (e *DBOpError) Unwrap() error {
-	return e.Err
-}
-
-type SecurityError struct {
-	Event string
-	Err   error
-}
-
-func (e *SecurityError) Unwrap() error {
 	return e.Err
 }
 
@@ -52,11 +46,19 @@ func (rh RequestHanlder) HandleDBError(dberr *DBOpError) bool {
 	return false
 }
 
-func (rh RequestHanlder) HandleSecurityError(serr *SecurityError) bool {
-	if serr != nil {
+func (rh RequestHanlder) HandleSecurityError(err *model.Error) bool {
+	if err != nil {
 		c := rh.Context
-		LogErr(rh.TransactionIDFromContext(), "security error", serr)
-		c.AbortWithStatus(401)
+		LogErr(rh.TransactionIDFromContext(), err.Message, err)
+		out := model.JSONAPIErrors{
+			Errors: []model.JSONAPIError{
+				{
+					StatusCode: 401,
+					Meta:       err,
+				},
+			},
+		}
+		c.AbortWithStatusJSON(401, out)
 		return true
 	}
 	return false

@@ -1,8 +1,56 @@
+// Package classification Users API.
+//
+// API for secure authentication and oauth2 authorization
+//
+//
+// Terms Of Service:
+//
+// there are no TOS at this moment, use at your own risk we take no responsibility
+//
+//     Schemes: https
+//     Host: accounts.7onetella.net
+//     BasePath: /
+//     Version: 0.1.0
+//     License: MIT http://opensource.org/licenses/MIT
+//     Contact: Seven Tella<7onetella@gmail.com>
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Security:
+//     - api_key:
+//
+//     SecurityDefinitions:
+//     api_key:
+//          type: apiKey
+//          name: Authorization
+//          in: header
+//     oauth2:
+//         type: oauth2
+//         authorizationUrl: /oauth2/access_token
+//         tokenUrl: /oauth2/access_token
+//         in: header
+//         scopes:
+//           'read:profile': allows reading of user profile
+//         flow: accessCode
+//
+//     Extensions:
+//     x-meta-value: value
+//     x-meta-array:
+//       - value1
+//       - value2
+//     x-meta-array-obj:
+//       - name: obj
+//         value: field
+//
+// swagger:meta
 package main
 
 import (
 	"context"
-	_ "github.com/7onetella/users/api/docs"
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/handlers"
 	"github.com/duo-labs/webauthn/webauthn"
@@ -10,33 +58,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/swaggo/files"
-	"github.com/swaggo/gin-swagger"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 )
-
-// @title Users API
-// @version 1.0
-// @description API for totp and webauthn auth with user self mgt api
-
-// @contact.name 7onetella
-// @contact.url https://github.com/7onetella/users
-
-// @license.name MIT
-// @license.url https://opensource.org/licenses/MIT
-
-// @host localhost:8080
-// @BasePath /users
-// @query.collection.format multi
-
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
-
-// @x-extension-openapi {"example": "value on a json format"}
 
 var db *sqlx.DB
 var stage string
@@ -100,8 +126,8 @@ func main() {
 	users.Use(jwt.TokenValidator(userService))
 	{
 		users.GET("/:id", GetUser(userService))
-		users.DELETE("/:id", DeleteUser(userService))
 		users.PATCH("/:id", UpdateUser(userService))
+		users.DELETE("/:id", DeleteUser(userService))
 	}
 	r.POST("/users", Signup(userService))
 
@@ -140,9 +166,6 @@ func main() {
 
 	// ---- Client --------------------------------
 	r.GET("/oauth2/clients/:id", GetClientName(userService))
-
-	// ---- Swagger Documentation ---------------------------------
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	log.Printf("rpid = %s, rporigin = %s \n", _RPID, _RPOrigin)
 

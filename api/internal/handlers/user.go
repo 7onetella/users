@@ -26,7 +26,6 @@ func init() {
 	UserJSONSchema = s
 }
 
-// Signup signs up user
 func Signup(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -235,17 +234,22 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 	}
 }
 
-// GetUser godoc
-// @Summary Returns user's profile
-// @Description get user by ID
-// @ID get-user-by-string
-// @Accept  json
-// @Produce  json
-// @Param id path string true "User ID"
-// @Success 200 {object} model.User
-// @Failure 500
-// @Router /{id} [get]
-// @Security ApiKeyAuth
+// swagger:operation GET /users/{id} get-user-by-id
+//
+// Returns user's profile
+//
+// ---
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: get user profile response
+//     schema:
+//       "$ref": "#/definitions/JSONAPIUser"
+// security:
+//   - api_key: []
+//   - oauth2:
+//	     - 'read:profile'
 func GetUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// user granted access to his/her own account
@@ -292,18 +296,6 @@ func DeleteUser(service UserService) gin.HandlerFunc {
 	}
 }
 
-// UpdateUser godoc
-// @Summary Updates user's profile
-// @Description update user by ID
-// @ID update-user-by-string
-// @Accept  json
-// @Produce  json
-// @Param id path string true "User ID"
-// @Param user body model.User true "Updates user"
-// @Success 200 {object} model.User
-// @Failure 500
-// @Router /{id} [patch]
-// @Security ApiKeyAuth
 func UpdateUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -330,11 +322,12 @@ func UpdateUser(service UserService) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(200, gin.H{
-			"meta": gin.H{
-				"result": "successful",
-			},
-		})
+		c.Status(204)
+		//c.JSON(200, gin.H{
+		//	"meta": gin.H{
+		//		"result": "successful",
+		//	},
+		//})
 	}
 }
 

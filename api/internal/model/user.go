@@ -3,21 +3,85 @@ package model
 import "github.com/duo-labs/webauthn/webauthn"
 
 type User struct {
-	ID                  string                `json:"id"              example:"a2aee5e6-05a0-438c-9276-4ba406b7bf9e"    db:"user_id"               api:"users"`
-	PlatformName        string                `json:"platform_name"   example:"web"                                     db:"platform_name"         api:"attr"`
-	Email               string                `json:"email"           example:"foo.bar@example.com"                     db:"email"                 api:"attr"`
-	Password            string                `json:"password"        example:"users91234"                              db:"passhash"              api:"attr"`
-	FirstName           string                `json:"firstname"       example:"foo"                                     db:"firstname"             api:"attr"`
-	LastName            string                `json:"lastname"        example:"bar"                                     db:"lastname"              api:"attr"`
-	Created             int64                 `json:"created"         example:"1596747095"                              db:"created_date"          api:"attr"`
-	TOTPEnabled         bool                  `json:"totpenabled"     example:"false"                                   db:"totp_enabled"          api:"attr"`
-	TOTPSecretCurrent   string                `json:"-"               example:""                                        db:"totp_secret_current"`
-	TOTPSecretTmp       string                `json:"-"               example:""                                        db:"totp_secret_tmp"`
-	TOTPSecretTmpExp    int64                 `json:"-"               example:""                                        db:"totp_secret_tmp_exp"`
-	WebAuthnEnabled     bool                  `json:"webauthnenabled" example:"false"                                   db:"webauthn_enabled"      api:"attr"`
-	WebAuthnSessionData string                `json:"-"               example:""                                        db:"webauthn_session"`
-	JWTSecret           string                `json:"-"               example:""                                        db:"jwt_secret"`
+	// the id for this user
+	//
+	// required: true
+	// read-only: true
+	// example: a2aee5e6-05a0-438c-9276-4ba406b7bf9e
+	ID           string `json:"id"              db:"user_id"               api:"users"`
+	PlatformName string `json:"-"               db:"platform_name"`
+	// email
+	//
+	// required: true
+	// read-only: true
+	// example: john.smith@example.com
+	Email string `json:"email"           db:"email"                 api:"attr"`
+	// password
+	//
+	// required: true
+	// read-only: true
+	// example: pass1234
+	Password string `json:"password"        db:"passhash"              api:"attr"`
+	// first name
+	//
+	// required: true
+	// read-only: true
+	// example: John
+	FirstName string `json:"firstname"       db:"firstname"             api:"attr"`
+	// last name
+	//
+	// required: true
+	// read-only: true
+	// example: Smith
+	LastName string `json:"lastname"        db:"lastname"              api:"attr"`
+	// created date in unix time
+	//
+	// required: true
+	// read-only: true
+	// example: 1596747095
+	Created int64 `json:"created"           db:"created_date"          api:"attr"`
+	// totp enabled or not
+	//
+	// example: true
+	TOTPEnabled       bool   `json:"totpenabled"       db:"totp_enabled"          api:"attr"`
+	TOTPSecretCurrent string `json:"-"                 db:"totp_secret_current"`
+	TOTPSecretTmp     string `json:"-"                 db:"totp_secret_tmp"`
+	TOTPSecretTmpExp  int64  `json:"-"                 db:"totp_secret_tmp_exp"`
+	// webauthn enabled or not
+	//
+	// example: true
+	WebAuthnEnabled     bool                  `json:"webauthnenabled"   db:"webauthn_enabled"      api:"attr"`
+	WebAuthnSessionData string                `json:"-"                 db:"webauthn_session"`
+	JWTSecret           string                `json:"-"                 db:"jwt_secret"`
 	Credentials         []webauthn.Credential `json:"-"`
+}
+
+// UserProfile represents the user for this application
+//
+// A user profile is very narrow representation of user
+//
+// swagger:model UserProfile
+type UserProfile struct {
+	// the id for this user
+	//
+	// read-only: true
+	// example: a2aee5e6-05a0-438c-9276-4ba406b7bf9e
+	ID string `json:"id"              db:"user_id"               api:"users"`
+	// the email
+	//
+	// read-only: true
+	// example: john.smith@example.com
+	Email string `json:"email"           db:"email"                 api:"attr"`
+	// the first name
+	//
+	// read-only: true
+	// example: John
+	FirstName string `json:"firstname"       db:"firstname"             api:"attr"`
+	// the last name
+	//
+	// read-only: true
+	// example: Smith
+	LastName string `json:"lastname"        db:"lastname"              api:"attr"`
 }
 
 func (u User) WebAuthnID() []byte {
