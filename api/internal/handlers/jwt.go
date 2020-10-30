@@ -3,23 +3,59 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	. "github.com/7onetella/users/api/internal/dbutil"
-	. "github.com/7onetella/users/api/internal/httputil"
-	"github.com/dgrijalva/jwt-go"
 	"log"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	. "github.com/7onetella/users/api/internal/dbutil"
+	. "github.com/7onetella/users/api/internal/httputil"
+	"github.com/dgrijalva/jwt-go"
+
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
+// Credentials represents user credentials
+//
+// swagger:model Credentials
 type Credentials struct {
-	Username           string `json:"username"`
-	Password           string `json:"password"`
-	TOTP               string `json:"totp"`
-	PrimaryAuthToken   string `json:"auth_token"`
-	SecondaryAuthToken string `json:"sec_auth_token"`
+	// username
+	//
+	// required: true
+	Username string `json:"username"`
+	// password
+	//
+	// required: true
+	Password string `json:"password"`
+
+	// sent during password authentication
+	SigninSessionToken string `json:"auth_token"`
+
+	// totp required for TOTP authentication
+	TOTP string `json:"totp"`
+
+	// sent during webauthn authentication
+	WebauthnAuthToken string `json:"sec_auth_token"`
+}
+
+// TOTPCredentials represents user totp credentials
+//
+// swagger:model TOTPCredentials
+type TOTPCredentials struct {
+	SigninSessionToken string `json:"signin_session_token"`
+	// sent during webauthn authentication
+	// totp required for TOTP authentication
+	TOTP string `json:"totp"`
+}
+
+// WebauthnCredentials represents user webauthn credentials
+//
+// swagger:model WebauthnCredentials
+type WebauthnCredentials struct {
+	SigninSessionToken string `json:"signin_session_token"`
+	// sent during password authentication
+	SecondaryAuthToken string `json:"webauthn_session_token"`
 }
 
 type AuthToken struct {

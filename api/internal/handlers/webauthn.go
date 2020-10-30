@@ -146,8 +146,8 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
 
-		authToken := c.GetHeader("AuthToken")
-		eventID, _ := Base64Decode(authToken)
+		signInSessionAuthToken := c.GetHeader("AuthToken")
+		eventID, _ := Base64Decode(signInSessionAuthToken)
 		user, dberr := service.FindUserByAuthEventID(eventID)
 		if rh.HandleDBError(dberr) {
 			return
@@ -183,7 +183,7 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 
 		c.JSON(200, gin.H{
 			"result":         true,
-			"auth_token":     authToken,
+			"auth_token":     signInSessionAuthToken,
 			"sec_auth_token": Base64Encode(secAuthEvent.ID),
 		})
 	}

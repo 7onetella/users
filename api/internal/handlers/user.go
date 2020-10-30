@@ -2,6 +2,10 @@ package handlers
 
 import (
 	"errors"
+	"log"
+	"net/http"
+	"time"
+
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
 	. "github.com/7onetella/users/api/internal/jsonutil"
@@ -11,9 +15,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/mfcochauxlaberge/jsonapi"
 	"github.com/xlzd/gotp"
-	"log"
-	"net/http"
-	"time"
 )
 
 var UserJSONSchema *jsonapi.Schema
@@ -132,9 +133,9 @@ func (ah AuthEventHandler) FinishSecondAuth(userID, eventName, message string) {
 	})
 }
 
-func (ah AuthEventHandler) IsSecondaryAuthTokenValidForUer(userID, secAuthToken string) bool {
+func (ah AuthEventHandler) IsWebAuthnAuthTokenValidForUer(userID, webauthnAuthToken string) bool {
 	userService := ah.UserService
-	eventID, _ := crypto.Base64Decode(secAuthToken)
+	eventID, _ := crypto.Base64Decode(webauthnAuthToken)
 	user, dberr := userService.FindUserByAuthEventID(eventID)
 	if dberr != nil {
 		return false
@@ -143,7 +144,26 @@ func (ah AuthEventHandler) IsSecondaryAuthTokenValidForUer(userID, secAuthToken 
 	return userID == user.ID
 }
 
-// Signin signs in user
+// swagger:operation POST /jwt_auth/signin signin
+//
+// ---
+// summary: "Signin user"
+// tags:
+//   - signin
+// parameters:
+//   - in: "body"
+//     name: "body"
+//     description: "User credentials"
+//     required: true
+//     schema:
+//       "$ref": "#/definitions/Credentials"
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: delete user profile response
+// security:
+//   - api_key: []
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -153,14 +173,32 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		rh.WriteCORSHeader()
 
 		cred := Credentials{}
-		c.ShouldBind(&cred)
+		err := c.ShouldBind(&cred)
+		if err != nil {
+			log.Printf("err = %v", err)
+			auth.AccessDenied("", "binding_error", "Binding Error")
+			return
+		}
+
+		log.Printf("cred = %#v", cred)
 
 		var user User
 		var dberr *DBOpError
 
-		if len(cred.PrimaryAuthToken) > 0 {
-			eventID, _ := crypto.Base64Decode(cred.PrimaryAuthToken)
-			e, _ := userService.GetAuthEvent(eventID)
+		// if 2fa and password signin was already completed
+		if len(cred.SigninSessionToken) > 0 {
+			eventID, err := crypto.Base64Decode(cred.SigninSessionToken)
+			log.Printf("event id = %s", eventID)
+			if err != nil {
+				auth.AccessDenied("", "error_decoding_auth_token", "Error decoding auth_token")
+				return
+			}
+			e, dberr := userService.GetAuthEvent(eventID)
+			if dberr != nil {
+				log.Printf("error while getting auth event: %v", dberr)
+				auth.ErrorOccurred("err_get_auth_event", "Error getting auth event")
+				return
+			}
 			// if it took more than 5 mins after initial pass login
 			if (time.Now().Unix() - e.Timestamp) > 300 {
 				auth.AccessDenied(e.UserID, "login_auth_expired", "Your login session timed out")
@@ -191,11 +229,11 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 
 	Check2FA:
 		if user.WebAuthnEnabled {
-			if len(cred.SecondaryAuthToken) == 0 {
+			if len(cred.WebauthnAuthToken) == 0 {
 				auth.SendPrimaryAuthToken(user.ID, "login_webauthn_requested", "WebAuthn Auth Required")
 				return
 			}
-			if !auth.IsSecondaryAuthTokenValidForUer(user.ID, cred.SecondaryAuthToken) {
+			if !auth.IsWebAuthnAuthTokenValidForUer(user.ID, cred.WebauthnAuthToken) {
 				auth.AccessDenied(user.ID, "invalid_sec_auth_token", "Authentication failed")
 				return
 			}
@@ -215,6 +253,13 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		}
 
 	GrantAccess:
+		// safe guard for empty json payload
+		if len(user.ID) == 0 {
+			log.Printf("user = %#v", user)
+			auth.AccessDenied(user.ID, "user_id_invalid", "invalid user")
+			return
+		}
+
 		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, ttl)
 		if err != nil {
 			log.Println("encoding error")
@@ -234,11 +279,12 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 	}
 }
 
-// swagger:operation GET /users/{id} get-user-by-id
-//
-// Returns user's profile
+// swagger:operation GET /users/{id} profile
 //
 // ---
+// summary: "Get user profile"
+// tags:
+//   - profile
 // produces:
 //   - application/json
 // responses:
@@ -276,6 +322,19 @@ func GetUser(service UserService) gin.HandlerFunc {
 	}
 }
 
+// swagger:operation DELETE /users/{id} profile
+//
+// ---
+// summary: "Delete user profile"
+// tags:
+//   - profile
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: delete user profile response
+// security:
+//   - api_key: []
 func DeleteUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)

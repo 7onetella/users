@@ -45,6 +45,13 @@
 //     x-meta-array-obj:
 //       - name: obj
 //         value: field
+//     x-tagGroups:
+//       - name: "User"
+//         tags:
+//           - profile
+//       - name: "Sign-In"
+//         tags:
+//           - signin
 //
 // swagger:meta
 package main

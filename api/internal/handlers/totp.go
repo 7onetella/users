@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"encoding/base64"
+	"log"
+	"time"
+
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
 	. "github.com/7onetella/users/api/internal/model"
 	"github.com/gin-gonic/gin"
 	"github.com/xlzd/gotp"
-	"log"
 	"rsc.io/qr"
-	"time"
 )
 
 func NewTOTPRaw(userService UserService) gin.HandlerFunc {
@@ -71,6 +72,8 @@ func NewTOTPJson(userService UserService) gin.HandlerFunc {
 		w := c.Writer
 		w.Header().Add("Content-Type", "image/png")
 		payload := base64.StdEncoding.EncodeToString(qrBytes)
+		// header used for validating totp in testing
+		c.Header("x-totp", totp.Now())
 		c.JSON(200, gin.H{
 			"payload": payload,
 		})
@@ -83,13 +86,13 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 		rh.WriteCORSHeader()
 		user, _ := rh.UserFromContext()
 
-		var cred Credentials
+		var cred TOTPCredentials
 		c.ShouldBindJSON(&cred)
 		log.Printf("cred json = %#v", cred)
 
 		totp := gotp.NewDefaultTOTP(user.TOTPSecretTmp)
 
-		log.Printf(":token = %s", cred.TOTP)
+		log.Printf("totp = %s", cred.TOTP)
 		now := int(time.Now().Unix())
 
 		log.Printf("timestamp = %d", now)
@@ -116,7 +119,7 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, gin.H{
-			"status": "valid",
+			"status": "totp enabled",
 		})
 	}
 }
