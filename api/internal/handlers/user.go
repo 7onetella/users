@@ -67,39 +67,74 @@ type AuthEventHandler struct {
 	UserService    UserService
 }
 
-func (ah AuthEventHandler) ErrorOccurred(eventName, message string) {
-	rh := ah.RequestHanlder
-	c := rh.Context
-	userService := ah.UserService
+func (ah AuthEventHandler) Handle(err error, code int, userID string, category Category, reason Reason) bool {
+	if err != nil {
+		rh := ah.RequestHanlder
+		c := rh.Context
+		userService := ah.UserService
 
-	event := rh.NewAuthEvent("", eventName)
-	c.AbortWithStatusJSON(401, gin.H{
-		"reason":  event.Event,
-		"message": message,
-	})
-	dberr := userService.RecordAuthEvent(event)
-	if dberr != nil {
-		LogErr(rh.TransactionIDFromContext(), "db error", dberr.Err)
+		e := New(category, reason)
+		c.AbortWithStatusJSON(code, e)
+
+		event := rh.NewAuthEvent(userID, e.Message)
+
+		dberr := userService.RecordAuthEvent(event)
+		if dberr != nil {
+			LogErr(rh.TransactionIDFromContext(), "db error", dberr.Err)
+		}
+		return true
 	}
+	return false
 }
 
-func (ah AuthEventHandler) AccessDenied(userID, eventName, message string) {
-	rh := ah.RequestHanlder
-	c := rh.Context
-	userService := ah.UserService
+func (ah AuthEventHandler) Context() *gin.Context {
+	return ah.RequestHanlder.Context
+}
 
+func (ah AuthEventHandler) DenyAccessForAnonymous(category Category, reason Reason) {
+	e := New(category, reason)
+	ah.abort(401, e.ErrorCodeHuman, e.Message)
+	ah.RecordEvent("", e.ErrorCodeHuman)
+}
+
+func (ah AuthEventHandler) DenyAccessForUser(userID string, category Category, reason Reason) {
+	e := New(category, reason)
+	ah.abort(401, e.ErrorCodeHuman, e.Message)
+	ah.RecordEvent(userID, e.ErrorCodeHuman)
+}
+
+func (ah AuthEventHandler) ExtractEventID(s string) (string, error) {
+	decoded, err := crypto.Base64Decode(s)
+	if err != nil {
+		return "", err
+	}
+	return decoded, nil
+}
+
+func (ah AuthEventHandler) IsSigninSessionStillValid(timestamp int64, limit time.Duration) bool {
+	return (time.Now().Unix() - timestamp) > int64(limit.Seconds())
+}
+
+func (ah AuthEventHandler) abort(statusCode int, event, message string) {
+	c := ah.Context()
+	h := gin.H{
+		"reason":  event,
+		"message": message,
+	}
+
+	c.AbortWithStatusJSON(statusCode, h)
+}
+
+func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
+	rh := ah.RequestHanlder
 	event := rh.NewAuthEvent(userID, eventName)
-	c.AbortWithStatusJSON(401, gin.H{
-		"reason":  event.Event,
-		"message": message,
-	})
-	dberr := userService.RecordAuthEvent(event)
+	dberr := ah.UserService.RecordAuthEvent(event)
 	if dberr != nil {
 		LogErr(rh.TransactionIDFromContext(), "db error", dberr.Err)
 	}
 }
 
-func (ah AuthEventHandler) SendPrimaryAuthToken(userID, eventName, message string) {
+func (ah AuthEventHandler) SendSigninSessionToken(userID, eventName, message string) {
 	rh := ah.RequestHanlder
 	c := rh.Context
 	userService := ah.UserService
@@ -144,6 +179,30 @@ func (ah AuthEventHandler) IsWebAuthnAuthTokenValidForUer(userID, webauthnAuthTo
 	return userID == user.ID
 }
 
+// Reason is the last 3 digits of the error code.
+type AuthType int
+
+const (
+	// Success indicates no error occurred.
+	PasswordAuth AuthType = iota
+	TOTPAuth
+	WebauthnAuth
+	UnknownAuth
+)
+
+func getAuthType(c Credentials) AuthType {
+	if c.IsUsernamePresent() {
+		return PasswordAuth
+	}
+	if c.IsTOTPCodePresent() {
+		return TOTPAuth
+	}
+	if c.IsWebauthnTokenPresent() {
+		return WebauthnAuth
+	}
+	return UnknownAuth
+}
+
 // swagger:operation POST /jwt_auth/signin signin
 //
 // ---
@@ -175,99 +234,99 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		cred := Credentials{}
 		err := c.ShouldBind(&cred)
 		if err != nil {
-			log.Printf("err = %v", err)
-			auth.AccessDenied("", "binding_error", "Binding Error")
+			auth.DenyAccessForAnonymous(JSONError, Unmarshalling)
 			return
 		}
 
 		log.Printf("cred = %#v", cred)
 
 		var user User
-		var dberr *DBOpError
+
+		//switch getAuthType(cred) {
+		//case PasswordAuth:
+		//	break
+		//case TOTPAuth:
+		//
+		//}
 
 		// if 2fa and password signin was already completed
-		if len(cred.SigninSessionToken) > 0 {
-			eventID, err := crypto.Base64Decode(cred.SigninSessionToken)
-			log.Printf("event id = %s", eventID)
+		if cred.IsSigninSessionTokenPresent() {
+			eventID, err := auth.ExtractEventID(cred.SigninSessionToken)
 			if err != nil {
-				auth.AccessDenied("", "error_decoding_auth_token", "Error decoding auth_token")
+				auth.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
 				return
 			}
 			e, dberr := userService.GetAuthEvent(eventID)
 			if dberr != nil {
-				log.Printf("error while getting auth event: %v", dberr)
-				auth.ErrorOccurred("err_get_auth_event", "Error getting auth event")
+				auth.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
 				return
 			}
-			// if it took more than 5 mins after initial pass login
-			if (time.Now().Unix() - e.Timestamp) > 300 {
-				auth.AccessDenied(e.UserID, "login_auth_expired", "Your login session timed out")
+			if auth.IsSigninSessionStillValid(e.Timestamp, time.Minute*5) {
+				auth.DenyAccessForUser(e.UserID, AuthenticationError, SigninSessionExpired)
 				return
 			}
-			user, dberr = userService.Get(e.UserID)
+			userFromDB, dberr := userService.Get(e.UserID)
 			if dberr != nil {
-				log.Printf("error while authenticating: %v", dberr)
-				auth.ErrorOccurred("invalid_auth_token", "Authentication failed")
+				auth.DenyAccessForUser(e.UserID, DatabaseError, QueryingFailed)
 				return
 			}
-			goto Check2FA
+			user = userFromDB
+			goto CheckIf2FARequired
 		}
 
-		if len(cred.Username) > 0 {
-			user, dberr = userService.FindByEmail(cred.Username)
+		if cred.IsUsernamePresent() {
+			userFromDB, dberr := auth.UserService.FindByEmail(cred.Username)
 			if dberr != nil {
-				log.Printf("error while authenticating: %v", dberr)
-				auth.ErrorOccurred("server_error", "Authentication failed")
+				auth.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
 				return
 			}
 
-			if user.Password != cred.Password {
-				auth.AccessDenied(user.ID, "login_password_invalid", "Check login name or password")
+			if userFromDB.Password != cred.Password {
+				auth.DenyAccessForUser(user.ID, AuthenticationError, UsernameOrPasswordDoesNotMatch)
 				return
 			}
+			user = userFromDB
 		}
 
-	Check2FA:
+	CheckIf2FARequired:
 		if user.WebAuthnEnabled {
-			if len(cred.WebauthnAuthToken) == 0 {
-				auth.SendPrimaryAuthToken(user.ID, "login_webauthn_requested", "WebAuthn Auth Required")
+			if !cred.IsWebauthnTokenPresent() {
+				auth.SendSigninSessionToken(user.ID, "login_webauthn_requested", "WebAuthn Auth Required")
 				return
 			}
 			if !auth.IsWebAuthnAuthTokenValidForUer(user.ID, cred.WebauthnAuthToken) {
-				auth.AccessDenied(user.ID, "invalid_sec_auth_token", "Authentication failed")
+				auth.DenyAccessForUser(user.ID, AuthenticationError, WebauthnAuthFailure)
 				return
 			}
 			goto GrantAccess
 		}
 
 		if user.TOTPEnabled {
-			if len(cred.TOTP) == 0 {
-				auth.SendPrimaryAuthToken(user.ID, "login_totp_requested", "TOTP required")
+			if !cred.IsTOTPCodePresent() {
+				auth.SendSigninSessionToken(user.ID, "login_totp_requested", "TOTP required")
 				return
 			}
 			if !IsTOTPValid(user, cred.TOTP) {
-				auth.AccessDenied(user.ID, "login_totp_invalid", "Your code is invalid")
+				auth.DenyAccessForUser(user.ID, AuthenticationError, TOTPAuthFailure)
 				return
 			}
 			goto GrantAccess
 		}
 
 	GrantAccess:
-		// safe guard for empty json payload
+		// guard against empty json payload
 		if len(user.ID) == 0 {
 			log.Printf("user = %#v", user)
-			auth.AccessDenied(user.ID, "user_id_invalid", "invalid user")
+			auth.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
 			return
 		}
 
 		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, ttl)
 		if err != nil {
 			log.Println("encoding error")
-			c.AbortWithError(http.StatusInternalServerError, err)
+			auth.DenyAccessForUser(user.ID, AuthenticationError, JWTEncodingFailure)
 			return
 		}
-
-		log.Println("Signin successful")
 
 		token := AuthToken{
 			Token:      tokenString,
@@ -275,7 +334,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		}
 		c.JSON(200, token)
 
-		userService.RecordAuthEvent(NewAuthEvent(user.ID, "login_successful", c.ClientIP(), c.ClientIP(), c.Request.UserAgent()))
+		auth.RecordEvent(user.ID, "login_successful")
 	}
 }
 

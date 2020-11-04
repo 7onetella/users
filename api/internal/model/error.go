@@ -17,9 +17,10 @@ type JSONAPIError struct {
 }
 
 type Error struct {
-	ErrorCode int    `json:"code"    example:"1100"`
-	Message   string `json:"message" example:"Database query failed"`
-	Err       error  `json:"-"`
+	ErrorCode      int    `json:"code"    example:"1100"`
+	ErrorCodeHuman string `json:"reason"  example:"database_query_failed"`
+	Message        string `json:"message" example:"Database query failed. Check with your administrator."`
+	Err            error  `json:"-"`
 }
 
 // Credit goes to cloudflare https://github.com/cloudflare/cfssl Error
@@ -40,6 +41,8 @@ const (
 	SecurityError // 2XXX
 
 	JSONError // 3XXX
+
+	AuthenticationError // 4xxx
 )
 
 // DatabaseError reasons
@@ -69,9 +72,29 @@ const (
 	Unmarshalling
 )
 
+// AuthenticationError reasons
+const (
+	// SessionTokenDecodingFailed indicates base64 decoding failure
+	SigninSessionTokenDecodingFailed Reason = 100 * (iota + 1) //41XX
+
+	SigninSessionExpired
+
+	UsernameOrPasswordDoesNotMatch
+
+	WebauthnAuthFailure
+
+	TOTPAuthFailure
+
+	UserUnknown
+
+	JWTEncodingFailure
+)
+
 func New(category Category, reason Reason) *Error {
 	errorCode := int(category) + int(reason)
 	var msg string
+	var errCodeHuman string
+
 	switch category {
 	case DatabaseError:
 		switch reason {
@@ -99,8 +122,35 @@ func New(category Category, reason Reason) *Error {
 			msg = "Error occurred during marshalling"
 		case Unmarshalling:
 			msg = "Error occurred during unmarshalling"
+			errCodeHuman = "error_unmarshalling"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category JSONError.",
+				reason))
+		}
+
+	case AuthenticationError:
+		switch reason {
+		case SigninSessionTokenDecodingFailed:
+			msg = "Error decoding auth_token"
+		case SigninSessionExpired:
+			msg = "Your login session timed out"
+			errCodeHuman = "login_auth_expired"
+		case UsernameOrPasswordDoesNotMatch:
+			msg = "Check login name or password"
+			errCodeHuman = "login_password_invalid"
+		case WebauthnAuthFailure:
+			msg = "Webauthn authentication failed"
+			errCodeHuman = "invalid_sec_auth_token"
+		case TOTPAuthFailure:
+			msg = "Your code is invalid"
+			errCodeHuman = "login_totp_invalid"
+		case UserUnknown:
+			msg = "User is unknown"
+			errCodeHuman = "login_user_unknown"
+		case JWTEncodingFailure:
+			msg = "Problem with encoding jwt token"
+		default:
+			panic(fmt.Sprintf("Unsupported error reason %d under category AuthenticationError.",
 				reason))
 		}
 
@@ -108,5 +158,5 @@ func New(category Category, reason Reason) *Error {
 		panic(fmt.Sprintf("Unsupported error type: %d.",
 			category))
 	}
-	return &Error{ErrorCode: errorCode, Message: msg}
+	return &Error{ErrorCode: errorCode, ErrorCodeHuman: errCodeHuman, Message: msg}
 }

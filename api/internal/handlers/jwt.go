@@ -68,6 +68,22 @@ type JWTAuth struct {
 	TTL      time.Duration
 }
 
+func (c Credentials) IsSigninSessionTokenPresent() bool {
+	return len(c.SigninSessionToken) > 0
+}
+
+func (c Credentials) IsUsernamePresent() bool {
+	return len(c.Username) > 0
+}
+
+func (c Credentials) IsTOTPCodePresent() bool {
+	return len(c.TOTP) > 0
+}
+
+func (c Credentials) IsWebauthnTokenPresent() bool {
+	return len(c.WebauthnAuthToken) > 0
+}
+
 // PreflightOptionsHandler handles preflight OPTIONS
 func PreflightOptions() gin.HandlerFunc {
 	return func(c *gin.Context) {
