@@ -205,17 +205,20 @@ func getAuthType(c Credentials) AuthType {
 
 // swagger:operation POST /jwt_auth/signin signin
 //
+// Signs in user with MFA support.
+//
+// Signs in user with optional MFA support. TOTP and WebAuthn can be enabled to add stronger method of authentication.
 // ---
-// summary: "Signin user"
+// summary: "Signin User"
 // tags:
 //   - signin
 // parameters:
 //   - in: "body"
 //     name: "body"
-//     description: "User credentials"
+//     description: "User Credentials"
 //     required: true
 //     schema:
-//       "$ref": "#/definitions/Credentials"
+//       "$ref": "#/definitions/CredentialsBase"
 // produces:
 //   - application/json
 // responses:

@@ -16,10 +16,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Credentials represents user credentials
+// CredentialsBase represents user credentials type
 //
-// swagger:model Credentials
+// swagger:model
+type CredentialsBase struct {
+	//
+	// discriminator: true
+	Type string `json:"type"`
+}
+
+// This struct combines all the attributes from PasswordCredentials, TOTPCredentials and WebauthnCredentials.
+// These three are used for generating swagger documentation. This struct is the real struct used internally during
+// authentication.
 type Credentials struct {
+	// this field
+	Type string `json:"type"`
+
+	Username string `json:"username"`
+
+	Password string `json:"password"`
+
+	SigninSessionToken string `json:"signin_session_token"`
+
+	TOTP string `json:"totp"`
+
+	WebauthnAuthToken string `json:"webauthn_session_token"`
+}
+
+// password_credentials represents user password credentials
+//
+// swagger:model password_credentials
+type PasswordCredentials struct {
+	// swagger:allOf com.7onetella.PasswordCredentials
+	CredentialsBase
 	// username
 	//
 	// required: true
@@ -28,34 +57,38 @@ type Credentials struct {
 	//
 	// required: true
 	Password string `json:"password"`
-
-	// sent during password authentication
-	SigninSessionToken string `json:"signin_session_token"`
-
-	// totp required for TOTP authentication
-	TOTP string `json:"totp"`
-
-	// sent during webauthn authentication
-	WebauthnAuthToken string `json:"webauthn_session_token"`
 }
 
-// TOTPCredentials represents user totp credentials
+// totp_credentials represents user totp credentials
 //
-// swagger:model TOTPCredentials
+// swagger:model totp_credentials
 type TOTPCredentials struct {
+	// swagger:allOf com.7onetella.TOTPCredentials
+	CredentialsBase
+	// token received after successful password authentication
+	//
+	// required: true
 	SigninSessionToken string `json:"signin_session_token"`
-	// sent during webauthn authentication
-	// totp required for TOTP authentication
+	// totp code from authenticator device
+	//
+	// required: true
 	TOTP string `json:"totp"`
 }
 
-// WebauthnCredentials represents user webauthn credentials
+// webauthn_credentials represents user webauthn credentials
 //
-// swagger:model WebauthnCredentials
+// swagger:model webauthn_credentials
 type WebauthnCredentials struct {
+	// swagger:allOf com.7onetella.WebauthnCredentials
+	CredentialsBase
+	// token received after successful password authentication
+	//
+	// required: true
 	SigninSessionToken string `json:"signin_session_token"`
-	// sent during password authentication
-	SecondaryAuthToken string `json:"webauthn_session_token"`
+	// token received after successful webauthn authentication
+	//
+	// required: true
+	WebauthnAuthToken string `json:"webauthn_session_token"`
 }
 
 type AuthToken struct {
