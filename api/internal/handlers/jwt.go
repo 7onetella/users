@@ -52,10 +52,12 @@ type PasswordCredentials struct {
 	// username
 	//
 	// required: true
+	// example: john.smith@example.com
 	Username string `json:"username"`
 	// password
 	//
 	// required: true
+	// example: password1234
 	Password string `json:"password"`
 }
 
@@ -68,10 +70,12 @@ type TOTPCredentials struct {
 	// token received after successful password authentication
 	//
 	// required: true
+	// example: MzM4OGNkMWEtNmQyNC00MDQ1LWJmYzctMWJlMzM3ZTk1NDQ5
 	SigninSessionToken string `json:"signin_session_token"`
 	// totp code from authenticator device
 	//
 	// required: true
+	// example: 327621
 	TOTP string `json:"totp"`
 }
 
@@ -84,10 +88,12 @@ type WebauthnCredentials struct {
 	// token received after successful password authentication
 	//
 	// required: true
+	// example: MzM4OGNkMWEtNmQyNC00MDQ1LWJmYzctMWJlMzM3ZTk1NDQ5
 	SigninSessionToken string `json:"signin_session_token"`
 	// token received after successful webauthn authentication
 	//
 	// required: true
+	// example: ZDkyZjJkNWMtNGU2Ny00ZGRmLWI2ZGQtOTExNTcyYzIwNWFk
 	WebauthnAuthToken string `json:"webauthn_session_token"`
 }
 

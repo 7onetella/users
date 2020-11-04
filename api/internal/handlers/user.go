@@ -223,9 +223,9 @@ func getAuthType(c Credentials) AuthType {
 //   - application/json
 // responses:
 //   '200':
-//     description: delete user profile response
-// security:
-//   - api_key: []
+//     description: access granted. response payload contains jwt token.
+//   '401':
+//     description: access denied.
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
