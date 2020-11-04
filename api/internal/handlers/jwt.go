@@ -36,7 +36,7 @@ type Credentials struct {
 	TOTP string `json:"totp"`
 
 	// sent during webauthn authentication
-	WebauthnAuthToken string `json:"sec_auth_token"`
+	WebauthnAuthToken string `json:"webauthn_session_token"`
 }
 
 // TOTPCredentials represents user totp credentials

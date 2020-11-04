@@ -66,7 +66,7 @@ export default Controller.extend({
           const authenticator = 'authenticator:jwt';
           const credentials = {
             signin_session_token: this.get('datastore.signin_session_token'),
-            sec_auth_token: data.sec_auth_token
+            webauthn_session_token: data.webauthn_session_token
           }
 
           this.session.authenticate(authenticator, credentials)
@@ -90,7 +90,7 @@ export default Controller.extend({
                   that.set("login_failure_reason", message)
                 }
 
-                if (reason === 'invalid_sec_auth_token') {
+                if (reason === 'invalid_webauthn_session_token') {
                   that.set("login_failed", true);
                   that.set("login_failure_reason", message)
                   return

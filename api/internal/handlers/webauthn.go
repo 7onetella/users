@@ -182,9 +182,9 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		service.RecordAuthEvent(secAuthEvent)
 
 		c.JSON(200, gin.H{
-			"result":               true,
-			"signin_session_token": signInSessionAuthToken,
-			"sec_auth_token":       Base64Encode(secAuthEvent.ID),
+			"result":                 true,
+			"signin_session_token":   signInSessionAuthToken,
+			"webauthn_session_token": Base64Encode(secAuthEvent.ID),
 		})
 	}
 }

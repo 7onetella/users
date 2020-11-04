@@ -140,7 +140,7 @@ func New(category Category, reason Reason) *Error {
 			errCodeHuman = "login_password_invalid"
 		case WebauthnAuthFailure:
 			msg = "Webauthn authentication failed"
-			errCodeHuman = "invalid_sec_auth_token"
+			errCodeHuman = "invalid_webauthn_session_token"
 		case TOTPAuthFailure:
 			msg = "Your code is invalid"
 			errCodeHuman = "login_totp_invalid"
