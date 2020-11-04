@@ -16,15 +16,15 @@ export default Controller.extend({
       console.log('contollers/webauthn-signin.js')
 
       let BASEURL = ENV.APP.JSONAPIAdaptetHost
-      let auth_token = this.get('datastore.auth_token')
+      let signin_session_token = this.get('datastore.signin_session_token')
       let that = this
 
-      if (!auth_token) {
+      if (!signin_session_token) {
         that.get('router').transitionTo('login-session-expired');
         return
       }
 
-      this.web.POST(BASEURL+ '/webauthn/login/begin', '', {}, auth_token)
+      this.web.POST(BASEURL+ '/webauthn/login/begin', '', {}, signin_session_token)
       .then((response) => response.json(), reason => { console.log(reason) })
       .then((credentialRequestOptions) => {
         console.log('> credentialRequestOptions: ' + JSON.stringify(credentialRequestOptions))
@@ -54,7 +54,7 @@ export default Controller.extend({
           },
         })
 
-        that.web.POST(url, '', payload, auth_token)
+        that.web.POST(url, '', payload, signin_session_token)
           .then((response) => {
               return response.json()
             }, reason => {
@@ -65,7 +65,7 @@ export default Controller.extend({
           console.log('  data = ' + JSON.stringify(data))
           const authenticator = 'authenticator:jwt';
           const credentials = {
-            auth_token: this.get('datastore.auth_token'),
+            signin_session_token: this.get('datastore.signin_session_token'),
             sec_auth_token: data.sec_auth_token
           }
 

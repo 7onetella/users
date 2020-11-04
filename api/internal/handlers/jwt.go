@@ -30,7 +30,7 @@ type Credentials struct {
 	Password string `json:"password"`
 
 	// sent during password authentication
-	SigninSessionToken string `json:"auth_token"`
+	SigninSessionToken string `json:"signin_session_token"`
 
 	// totp required for TOTP authentication
 	TOTP string `json:"totp"`

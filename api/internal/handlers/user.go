@@ -143,9 +143,9 @@ func (ah AuthEventHandler) SendSigninSessionToken(userID, eventName, message str
 	userService.RecordAuthEvent(event)
 
 	c.AbortWithStatusJSON(401, gin.H{
-		"reason":     event.Event,
-		"message":    message,
-		"auth_token": crypto.Base64Encode(event.ID),
+		"reason":               event.Event,
+		"message":              message,
+		"signin_session_token": crypto.Base64Encode(event.ID),
 	})
 }
 
@@ -161,10 +161,10 @@ func (ah AuthEventHandler) FinishSecondAuth(userID, eventName, message string) {
 	userService.RecordAuthEvent(secEvent)
 
 	c.AbortWithStatusJSON(401, gin.H{
-		"reason":         event.Event,
-		"message":        message,
-		"auth_token":     crypto.Base64Encode(event.ID),
-		"sec_auth_token": crypto.Base64Encode(secEvent.ID),
+		"reason":               event.Event,
+		"message":              message,
+		"signin_session_token": crypto.Base64Encode(event.ID),
+		"sec_auth_token":       crypto.Base64Encode(secEvent.ID),
 	})
 }
 

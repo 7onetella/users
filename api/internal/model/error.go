@@ -131,7 +131,7 @@ func New(category Category, reason Reason) *Error {
 	case AuthenticationError:
 		switch reason {
 		case SigninSessionTokenDecodingFailed:
-			msg = "Error decoding auth_token"
+			msg = "Error decoding signin_session_token"
 		case SigninSessionExpired:
 			msg = "Your login session timed out"
 			errCodeHuman = "login_auth_expired"

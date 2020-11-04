@@ -15,7 +15,7 @@ export default Controller.extend({
 
       const authenticator = 'authenticator:jwt';
       const credentials = {
-        auth_token: this.get('datastore.auth_token'),
+        signin_session_token: this.get('datastore.signin_session_token'),
         totp: data.totp
       }
       let promise = this.session.authenticate(authenticator, credentials)

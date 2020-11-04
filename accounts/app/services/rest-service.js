@@ -6,17 +6,17 @@ export default Service.extend({
     this._super(...arguments);
   },
 
-  POST(url, access_token, data, auth_token) {
+  POST(url, access_token, data, signin_session_token) {
     console.log('> POST url: ' + url)
     let settings = {
       method: 'POST',
       mode: 'cors',
       body: data
     }
-    if (auth_token) {
+    if (signin_session_token) {
       settings.headers = {
         'Content-Type': 'application/json',
-        'AuthToken': auth_token  // custom header for sending password login auth token
+        'AuthToken': signin_session_token  // custom header for sending password login auth token
       }
     } else {
       settings.headers = {
