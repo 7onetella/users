@@ -97,9 +97,16 @@ type WebauthnCredentials struct {
 	WebauthnAuthToken string `json:"webauthn_session_token"`
 }
 
+// This is JWT Auth Token
+//
+// swagger:model authToken
 type AuthToken struct {
-	Token      string `json:"token"`
-	Expiration int64  `json:"exp"`
+	// jwt token
+	// required: true
+	Token string `json:"token"`
+	// token expiration date
+	// required: true
+	Expiration int64 `json:"exp"`
 }
 
 type JWTAuth struct {

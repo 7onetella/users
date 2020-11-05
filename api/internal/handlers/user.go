@@ -223,7 +223,10 @@ func getAuthType(c Credentials) AuthType {
 //   - application/json
 // responses:
 //   '200':
-//     description: access granted. response payload contains jwt token.
+//     description: access granted
+//     schema:
+//       type: object
+//       "$ref": "#/definitions/authToken"
 //   '401':
 //     description: access denied.
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
