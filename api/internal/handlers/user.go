@@ -92,14 +92,16 @@ func (ah AuthEventHandler) Context() *gin.Context {
 }
 
 func (ah AuthEventHandler) DenyAccessForAnonymous(category Category, reason Reason) {
+	c := ah.Context()
 	e := New(category, reason)
-	ah.abort(401, e.ErrorCodeHuman, e.Message)
+	c.AbortWithStatusJSON(401, e)
 	ah.RecordEvent("", e.ErrorCodeHuman)
 }
 
 func (ah AuthEventHandler) DenyAccessForUser(userID string, category Category, reason Reason) {
+	c := ah.Context()
 	e := New(category, reason)
-	ah.abort(401, e.ErrorCodeHuman, e.Message)
+	c.AbortWithStatusJSON(401, e)
 	ah.RecordEvent(userID, e.ErrorCodeHuman)
 }
 
@@ -115,16 +117,6 @@ func (ah AuthEventHandler) IsSigninSessionStillValid(timestamp int64, limit time
 	return (time.Now().Unix() - timestamp) > int64(limit.Seconds())
 }
 
-func (ah AuthEventHandler) abort(statusCode int, event, message string) {
-	c := ah.Context()
-	h := gin.H{
-		"reason":  event,
-		"message": message,
-	}
-
-	c.AbortWithStatusJSON(statusCode, h)
-}
-
 func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
 	rh := ah.RequestHanlder
 	event := rh.NewAuthEvent(userID, eventName)
@@ -134,19 +126,21 @@ func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
 	}
 }
 
-func (ah AuthEventHandler) SendSigninSessionToken(userID, eventName, message string) {
+func (ah AuthEventHandler) AccessDeniedMissingData(userID string, category Category, reason Reason) {
 	rh := ah.RequestHanlder
 	c := rh.Context
 	userService := ah.UserService
 
-	event := rh.NewAuthEvent(userID, eventName)
+	e := New(category, reason)
+	event := rh.NewAuthEvent(userID, e.ErrorCodeHuman)
 	userService.RecordAuthEvent(event)
 
-	c.AbortWithStatusJSON(401, gin.H{
-		"reason":               event.Event,
-		"message":              message,
-		"signin_session_token": crypto.Base64Encode(event.ID),
-	})
+	mde := MissingDataError{
+		Error:              *e,
+		SigninSessionToken: crypto.Base64Encode(event.ID),
+	}
+
+	c.AbortWithStatusJSON(422, mde)
 }
 
 func (ah AuthEventHandler) FinishSecondAuth(userID, eventName, message string) {
@@ -226,9 +220,17 @@ func getAuthType(c Credentials) AuthType {
 //     description: access granted
 //     schema:
 //       type: object
-//       "$ref": "#/definitions/authToken"
+//       "$ref": "#/definitions/AuthToken"
 //   '401':
-//     description: access denied.
+//     description: access denied
+//     schema:
+//       type: object
+//       "$ref": "#/definitions/AuthError"
+//   '422':
+//     description: missing data
+//     schema:
+//       type: object
+//       "$ref": "#/definitions/MissingDataError"
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -297,7 +299,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 	CheckIf2FARequired:
 		if user.WebAuthnEnabled {
 			if !cred.IsWebauthnTokenPresent() {
-				auth.SendSigninSessionToken(user.ID, "login_webauthn_requested", "WebAuthn Auth Required")
+				auth.AccessDeniedMissingData(user.ID, AuthenticationError, WebAuthnRequired)
 				return
 			}
 			if !auth.IsWebAuthnAuthTokenValidForUer(user.ID, cred.WebauthnAuthToken) {
@@ -309,7 +311,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 
 		if user.TOTPEnabled {
 			if !cred.IsTOTPCodePresent() {
-				auth.SendSigninSessionToken(user.ID, "login_totp_requested", "TOTP required")
+				auth.AccessDeniedMissingData(user.ID, AuthenticationError, TOTPRequired)
 				return
 			}
 			if !IsTOTPValid(user, cred.TOTP) {

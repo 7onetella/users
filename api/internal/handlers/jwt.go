@@ -99,13 +99,15 @@ type WebauthnCredentials struct {
 
 // This is JWT Auth Token
 //
-// swagger:model authToken
+// swagger:model AuthToken
 type AuthToken struct {
 	// jwt token
 	// required: true
+	// example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiI3b25ldGVsbGEiLCJleHAiOjE2MDQ1NTYyMjcsImlhdCI6MTYwNDU1MjYyNywiaXNzIjoiN29uZXRlbGxhIiwic3ViIjoiMDA1ZDBiYzMtN2NmYi00NzkxLTg0ZDktZjFkN2IzMmJiM2YxIn0.kY5BpagojMbkn0T2vnEXYeQ_bRMriDmW6iEG3D7GQQI
 	Token string `json:"token"`
 	// token expiration date
 	// required: true
+	// example: 1604556227
 	Expiration int64 `json:"exp"`
 }
 

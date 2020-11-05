@@ -9,18 +9,37 @@ type JSONAPIErrors struct {
 }
 
 type JSONAPIError struct {
-	StatusCode int `json:"status,omitempty" example:"401"`
+	StatusCode int `json:"status,omitempty"`
 	//Code       string `json:"code,omitempty"`
 	//Title      string `json:"title,omitempty"`
 	//Detail     string `json:"detail,omitempty"`
 	Meta *Error `json:"meta,omitempty"`
 }
 
+// This is JWT Auth Token
+//
+// swagger:model AuthError
 type Error struct {
-	ErrorCode      int    `json:"code"    example:"1100"`
-	ErrorCodeHuman string `json:"reason"  example:"database_query_failed"`
-	Message        string `json:"message" example:"Database query failed. Check with your administrator."`
-	Err            error  `json:"-"`
+	// error code for machine
+	// example: 1100
+	ErrorCode int `json:"code"`
+	// error code for human
+	// example: database_query_failed
+	ErrorCodeHuman string `json:"reason"`
+	// message to display for end user
+	// example: Database query failed. Check with your administrator
+	Message string `json:"message"`
+	Err     error  `json:"-"`
+}
+
+// This is JWT Auth Token
+//
+// swagger:model MissingDataError
+type MissingDataError struct {
+	Error
+	// token sent after successful password signin
+	// example: MzM4OGNkMWEtNmQyNC00MDQ1LWJmYzctMWJlMzM3ZTk1NDQ5
+	SigninSessionToken string `json:"signin_session_token"`
 }
 
 // Credit goes to cloudflare https://github.com/cloudflare/cfssl Error
@@ -88,6 +107,10 @@ const (
 	UserUnknown
 
 	JWTEncodingFailure
+
+	TOTPRequired
+
+	WebAuthnRequired
 )
 
 func New(category Category, reason Reason) *Error {
@@ -149,6 +172,12 @@ func New(category Category, reason Reason) *Error {
 			errCodeHuman = "login_user_unknown"
 		case JWTEncodingFailure:
 			msg = "Problem with encoding jwt token"
+		case TOTPRequired:
+			msg = "TOTP required"
+			errCodeHuman = "login_totp_requested"
+		case WebAuthnRequired:
+			msg = "WebAuthn Auth Required"
+			errCodeHuman = "login_webauthn_requested"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category AuthenticationError.",
 				reason))
