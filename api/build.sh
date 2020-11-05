@@ -19,6 +19,8 @@ cp -r ../accounts/dist/* ./accounts/
 PATH=$PATH:.:~/bin
 
 echo generate binddata.go file
+swagger generate spec -m > accounts/swagger.json
+cp redoc/redoc.html accounts
 go-bindata-assetfs accounts/...
 
 # get gox for cross compilation

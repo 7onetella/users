@@ -9,6 +9,9 @@ Go to [My Accounts](https://accounts.7onetella.net/accounts/)
 # Demo
 ![](/assets/auth.gif)
 
+# API documentation
+[Redoc](https://accounts.7onetella.net/accounts/redoc.html)
+
 # Work In Progress
 There is a lot to be done in order to make the authentication even more secure. I will be doing some internal clean up
 of code in near future.
