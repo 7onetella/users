@@ -27,6 +27,30 @@ func init() {
 	UserJSONSchema = s
 }
 
+// swagger:operation POST /users signup
+//
+//
+// User signup using JSON:API document format as input
+// ---
+// summary: "Signup User"
+// tags:
+//   - account
+// parameters:
+//   - in: "body"
+//     name: "body"
+//     description: "User JSON:API Document"
+//     required: true
+//     schema:
+//       "$ref": "#/definitions/JSONAPIUserSignup"
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: user created
+//     schema:
+//       type: object
+//       "$ref": "#/definitions/JSONAPIUserSignupResponse"
+// security: []
 func Signup(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -205,7 +229,7 @@ func getAuthType(c Credentials) AuthType {
 // ---
 // summary: "Signin User"
 // tags:
-//   - signin
+//   - account
 // parameters:
 //   - in: "body"
 //     name: "body"
@@ -231,6 +255,7 @@ func getAuthType(c Credentials) AuthType {
 //     schema:
 //       type: object
 //       "$ref": "#/definitions/MissingDataError"
+// security: []
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -358,7 +383,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 //   '200':
 //     description: get user profile response
 //     schema:
-//       "$ref": "#/definitions/JSONAPIUser"
+//       "$ref": "#/definitions/JSONAPIUserSignupResponse"
 // security:
 //   - api_key: []
 //   - oauth2:

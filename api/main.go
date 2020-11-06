@@ -48,10 +48,8 @@
 //     x-tagGroups:
 //       - name: "User"
 //         tags:
+//           - account
 //           - profile
-//       - name: "Sign-In"
-//         tags:
-//           - signin
 //
 // swagger:meta
 package main
