@@ -371,7 +371,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 	}
 }
 
-// swagger:operation GET /users/{id} profile
+// swagger:operation GET /users/{id} getuser
 //
 // ---
 // summary: "Get user profile"
@@ -385,7 +385,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 //     schema:
 //       "$ref": "#/definitions/JSONAPIUserSignupResponse"
 // security:
-//   - api_key: []
+//   - bearer_token: []
 //   - oauth2:
 //	     - 'read:profile'
 func GetUser(service UserService) gin.HandlerFunc {
@@ -414,7 +414,7 @@ func GetUser(service UserService) gin.HandlerFunc {
 	}
 }
 
-// swagger:operation DELETE /users/{id} profile
+// swagger:operation DELETE /users/{id} deleteuser
 //
 // ---
 // summary: "Delete user profile"
@@ -426,7 +426,7 @@ func GetUser(service UserService) gin.HandlerFunc {
 //   '200':
 //     description: delete user profile response
 // security:
-//   - api_key: []
+//   - bearer_token: []
 func DeleteUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -447,6 +447,28 @@ func DeleteUser(service UserService) gin.HandlerFunc {
 	}
 }
 
+// swagger:operation PATCH /users/{id} updateuser
+//
+// ---
+// summary: "Updates user profile"
+// tags:
+//   - profile
+// parameters:
+//   - in: "body"
+//     name: "body"
+//     description: "User JSON:API Document"
+//     required: true
+//     schema:
+//       "$ref": "#/definitions/JSONAPIUserSignup"
+// produces:
+//   - application/json
+// responses:
+//   '204':
+//     description: user updated
+// security:
+//   - bearer_token: []
+//   - oauth2:
+//	     - 'write:profile'
 func UpdateUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -474,11 +496,6 @@ func UpdateUser(service UserService) gin.HandlerFunc {
 		}
 
 		c.Status(204)
-		//c.JSON(200, gin.H{
-		//	"meta": gin.H{
-		//		"result": "successful",
-		//	},
-		//})
 	}
 }
 

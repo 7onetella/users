@@ -21,10 +21,10 @@
 //     - application/json
 //
 //     Security:
-//     - api_key:
+//     - bearer_token:
 //
 //     SecurityDefinitions:
-//     api_key:
+//     bearer_token:
 //          type: apiKey
 //          name: Authorization
 //          in: header
@@ -35,6 +35,7 @@
 //         in: header
 //         scopes:
 //           'read:profile': allows reading of user profile
+//           'write:profile': allows writing of user profile
 //         flow: accessCode
 //
 //     Extensions:
