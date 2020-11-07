@@ -11,6 +11,27 @@ import (
 	"time"
 )
 
+// swagger:operation POST /oauth2/authorize oauth2authorize
+//
+// ---
+// summary: "OAuth2 Authorize"
+// tags:
+//   - oauth2
+// parameters:
+//   - in: "body"
+//     name: "body"
+//     description: "Authorization Request"
+//     required: true
+//     schema:
+//       "$ref": "#/definitions/AuthorizationRequest"
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: replying with authorization code
+//     schema:
+//       type: object
+//       "$ref": "#/definitions/AuthorizationResponse"
 func OAuth2Authorize(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -62,12 +83,14 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 
 		log.Printf("payload = \n%#v\n", ar)
 
-		c.JSON(200, gin.H{
-			"code":         code,
-			"redirect_uri": ar.RedirectURI,
-			"nonce":        ar.Nonce,
-			"state":        ar.State,
-		})
+		response := oauth2.AuthorizationResponse{
+			Code:        code,
+			RedirectURI: ar.RedirectURI,
+			Nonce:       ar.Nonce,
+			State:       ar.State,
+		}
+
+		c.JSON(200, response)
 	}
 }
 

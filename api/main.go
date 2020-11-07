@@ -52,6 +52,7 @@
 //           - account
 //           - profile
 //           - totp
+//           - oauth2
 // swagger:meta
 package main
 

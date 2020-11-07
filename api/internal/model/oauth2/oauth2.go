@@ -1,13 +1,44 @@
 package oauth2
 
+// Authorization Request
+//
+// Foo
+//
+// swagger:model AuthorizationRequest
 type AuthorizationRequest struct {
-	ClientID     string `json:"client_id"`
-	RedirectURI  string `json:"redirect_uri"`
-	Scope        string `json:"scope"`
+	// required: true
+	// example: 352b6e64-e498-4307-b64d-ec9e5b9da65c
+	ClientID string `json:"client_id"`
+	// required: true
+	// example: http://accounts.example.com/oauth2-callback
+	RedirectURI string `json:"redirect_uri"`
+	// required: true
+	// example: read:profile,write:profile
+	Scope string `json:"scope"`
+	// required: true
+	// example: code
 	ResponseType string `json:"response_type"`
+	// required: true
+	// example: query
 	ResponseMode string `json:"response_mode"`
-	Nonce        string `json:"nonce"`
-	State        string `json:"state"`
+	// example: sto7zydoa6o
+	Nonce string `json:"nonce"`
+	State string `json:"state"`
+}
+
+// Authorization Response
+//
+// Foo
+//
+// swagger:model AuthorizationResponse
+type AuthorizationResponse struct {
+	// example:5c001023-a3f4-4c68-b39b-07f040bbeed4
+	Code string `json:"code"`
+	// example: http://accounts.example.com/oauth2-callback
+	RedirectURI string `json:"redirect_uri"`
+	// example: sto7zydoa6o
+	Nonce string `json:"nonce"`
+	State string `json:"state"`
 }
 
 type Client struct {
