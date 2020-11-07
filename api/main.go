@@ -51,7 +51,7 @@
 //         tags:
 //           - account
 //           - profile
-//
+//           - totp
 // swagger:meta
 package main
 

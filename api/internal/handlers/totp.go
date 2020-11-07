@@ -13,6 +13,22 @@ import (
 	"rsc.io/qr"
 )
 
+// swagger:operation GET /totp/qr-code-raw qrcoderaw
+//
+// ---
+// summary: "Generate new QR code image PNG"
+// tags:
+//   - totp
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: QR code image in PNG format
+//     content:
+//       image/png:
+//         schema:
+//           type: string
+//           format: binary
 func NewTOTPRaw(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -44,6 +60,23 @@ func NewTOTPRaw(userService UserService) gin.HandlerFunc {
 	}
 }
 
+// swagger:operation GET /totp/qr-code-json qrcodejson
+//
+// ---
+// summary: "Generate new QR code image JSON"
+// tags:
+//   - totp
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: QR code image in encoded in JSON format
+//     schema:
+//       type: object
+//       properties:
+//         payload:
+//           type: string
+//           description: PNG image encoded in base64
 func NewTOTPJson(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -80,6 +113,44 @@ func NewTOTPJson(userService UserService) gin.HandlerFunc {
 	}
 }
 
+// swagger:operation POST /totp/confirm confirm
+//
+// ---
+// summary: "Confirm QR Code"
+// tags:
+//   - totp
+// parameters:
+//   - in: body
+//     name: totp
+//     description: TOTP code
+//     schema:
+//       type: object
+//       required:
+//         - totp
+//       properties:
+//         totp:
+//           type: string
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: confirmation successful
+//     schema:
+//       type: object
+//       properties:
+//         status:
+//           type: string
+//           description: confirmation status
+//           example: totp enabled
+//   '401':
+//     description: confirmation successful
+//     schema:
+//       type: object
+//       properties:
+//         status:
+//           type: string
+//           description: confirmation status
+//           example: invalid
 func ConfirmToken(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
