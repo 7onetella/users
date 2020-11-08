@@ -41,6 +41,24 @@ type AuthorizationResponse struct {
 	State string `json:"state"`
 }
 
+// Access Token Response
+//
+// Foo
+//
+// swagger:model AccessTokenResponse
+type AccessTokenResponse struct {
+	// example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiI3b25ldGVsbGEiLCJleHAiOjE2MDQ4MjQwODEsImlhdCI6MTYwNDgyMDQ4MSwiaXNzIjoiN29uZXRlbGxhIiwic3ViIjoiNjNjMzJkMTAtYzA2ZC00NmQ4LWI5ZTUtNGU0ZDhlZDk3MzJlIn0.NFnO9s_hujiqDHFbH7RvLoIeseIzGs0VU05whMq0x7U
+	AccessToken string `json:"access_token"`
+	// example: bearer
+	TokenType string `json:"token_type"`
+	// example: 3600
+	ExpiresIn string `json:"expires_in"`
+	// example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiI3b25ldGVsbGEiLCJleHAiOjE2MDQ4MjQwODEsImlhdCI6MTYwNDgyMDQ4MSwiaXNzIjoiN29uZXRlbGxhIiwic3ViIjoiNjNjMzJkMTAtYzA2ZC00NmQ4LWI5ZTUtNGU0ZDhlZDk3MzJlIn0.NFnO9s_hujiqDHFbH7RvLoIeseIzGs0VU05whMq0x7U
+	RefreshToken string `json:"refresh_token"`
+	// example: read:profile,write:profile
+	Scope string `json:"scope"`
+}
+
 type Client struct {
 	ID     string `db:"client_id" json:"client_id"`
 	Name   string `db:"name"      json:"name"`

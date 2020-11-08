@@ -94,6 +94,46 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 	}
 }
 
+// swagger:operation POST /oauth2/access_token oauth2accesstoken
+//
+// ---
+// summary: "OAuth2 Access Token"
+// consumes:
+//   - application/x-www-form-urlencoded
+// tags:
+//   - oauth2
+// parameters:
+//   - in: "body"
+//     name: "body"
+//     description: "Exchange code for access token"
+//     required: true
+//     schema:
+//       type: object
+//       properties:
+//         grant_type:
+//           type: string
+//           require: true
+//           example: authorization_code
+//         code:
+//           type: string
+//           example: f7cd9875-8386-4d16-97ef-7ae858ebe4c2
+//         client_id:
+//           type: string
+//           example: 352b6e64-e498-4307-b64d-ec9e5b9da65c
+//         client_secret:
+//           type: string
+//           example: 1234567
+//         redirect_uri:
+//           type: string
+//           example: http://www.example.com/oauth2/redirect
+// produces:
+//   - application/json
+// responses:
+//   '200':
+//     description: replying with access token
+//     schema:
+//       type: object
+//       "$ref": "#/definitions/AccessTokenResponse"
 func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
