@@ -5,3 +5,5 @@ authp
 docs/*
 api_linux_amd64
 accounts
+.watchmanconfig
+trigger.json

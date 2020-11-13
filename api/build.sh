@@ -20,7 +20,8 @@ PATH=$PATH:.:~/bin
 
 echo generate binddata.go file
 swagger generate spec -m > accounts/swagger.json
-cp redoc/redoc.html accounts
+cp -r redoc/redoc.html accounts
+cp -r redoc/*.png accounts/assets/
 go-bindata-assetfs accounts/...
 
 # get gox for cross compilation

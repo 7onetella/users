@@ -1,0 +1,5 @@
+info:
+  x-logo:
+    url: "https://accounts.7onetella.net/accounts/assets/webauthn_key.svg"
+    backgroundColor: "#FFFFFF"
+    altText: "WebAuthn"

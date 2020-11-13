@@ -32,3 +32,22 @@ of code in near future.
 - [JWT](http://github.com/dgrijalva/jwt-go)
 - [Gin](http://github.com/gin-gonic/gin)
 - [SQLX](http://github.com/jmoiron/sqlx)
+
+ ### Introduction
+ The design of User API is around web apps. However, there is nothing that prevents anyone from leveraging
+ oauth2 with User API in native apps.
+
+ ### Context
+ Security is the most important thing in apps. Password auth is insecure as compared to TOTP or WebAuthn.
+ We want to give users option of enabling additional authentication mechanism.
+
+ ### Forces that impact the design
+ * Avoid using cookies to store auth related tokens that represent successful authentication
+ * Give consideration for javascript client authentication library
+ * Javascript client library support lacks WebAuthn
+
+ ### Design Decision
+ Cookies are not necessary bad but cookies are sent every time browser contacts the server.
+ The decision to send auth token should be delegated to javascript auth client library.
+ User API does not send auth related cookies. JWT Token is sent in response JSON payload instead.
+

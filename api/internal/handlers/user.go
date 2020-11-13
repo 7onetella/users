@@ -223,11 +223,40 @@ func getAuthType(c Credentials) AuthType {
 
 // swagger:operation POST /jwt_auth/signin signin
 //
-// Signs in user with MFA support.
-//
-// Signs in user with optional MFA support. TOTP and WebAuthn can be enabled to add stronger method of authentication.
 // ---
-// summary: "Signin User"
+// summary: Signin User
+// description: |
+//
+//   Here is the list of authentication types
+//
+//   |      1st Factor             |          2nd Factor       |     Security                      |
+//   |-----------------------------|---------------------------|-----------------------------------|
+//   |      Password               |             None          | Weak - password can be guessed    |
+//   |      Password               |             TOTP          | Medium - prone to phishing attack |
+//   |      Password               |             WebAuthn      | Strong                            |
+//
+//   **Password Only**
+//
+//   Successful password authentication call to this endpoint sends back http status code `200` with JWT auth token.
+//
+//   **Password + TOTP**
+//
+//   This is two factor authentication. User's security settings must have TOTP enabled in order for this second
+//   factor authentication to be presented to the user after a successful password authentication.
+//   Successful password auth call to this endpoint results in the server sending back http status code `422` with
+//   `signin_session_token` which represents successful password authentication. The client at that point is
+//   expected to send TOTP with received `signin_session_token`. This endpoint will validate both data. Once valid the
+//   endpoint will send back http status code `200` with JWT auth token.
+//
+//   <img src="/accounts/assets/totp_flow.png" alt="TOTP Flow">
+//
+//   **Password + WebAuthn**
+//
+//   This is two factor authentication. User's security settings must have WebAuthn enabled in order for this second
+//   factor authentication to be presented to the user after a successful password authentication.
+//
+//   <img src="/accounts/assets/webauthn_flow.png" alt="WebAuthn Flow">
+//
 // tags:
 //   - account
 // parameters:
@@ -256,6 +285,9 @@ func getAuthType(c Credentials) AuthType {
 //       type: object
 //       "$ref": "#/definitions/MissingDataError"
 // security: []
+// x-codeSamples:
+//   - lang: javascript
+//     source: console.log('Hello World');
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 

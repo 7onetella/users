@@ -1,0 +1,6 @@
+https://sequencediagram.org/
+
+Client->Server:username & password
+Client<--Server:422 & signin_session_token
+Client->Server:sign_session_token & totp
+Client<--Server:200 & jwt token

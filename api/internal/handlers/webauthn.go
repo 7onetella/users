@@ -115,9 +115,7 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		user.Credentials = credentials
 
 		// generate PublicKeyCredentialCreationOptions, session data
-		options, sessionData, err := web.BeginLogin(
-			user,
-		)
+		options, sessionData, err := web.BeginLogin(user)
 		if rh.HandleError(err) {
 			return
 		}
