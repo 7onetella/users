@@ -221,7 +221,7 @@ func getAuthType(c Credentials) AuthType {
 	return UnknownAuth
 }
 
-// swagger:operation POST /jwt_auth/signin signin
+// swagger:operation POST /signin signin
 //
 // ---
 // summary: Signin User
@@ -253,7 +253,10 @@ func getAuthType(c Credentials) AuthType {
 //   **Password + WebAuthn**
 //
 //   This is two factor authentication. User's security settings must have WebAuthn enabled in order for this second
-//   factor authentication to be presented to the user after a successful password authentication.
+//   factor authentication to be presented to the user after a successful password authentication. Testing the WebAuthn
+//   is a lot more involved. The webauthn endpoint is tested using the browser with webauthn client javascript calls
+//   that are embedded in UI. Professional API testing tool can be used if it calls browser API natively. This part of
+//   API endpoint is mentioned for the sake of completeness.
 //
 //   <img src="/accounts/assets/webauthn_flow.png" alt="WebAuthn Flow">
 //
@@ -278,16 +281,43 @@ func getAuthType(c Credentials) AuthType {
 //     description: access denied
 //     schema:
 //       type: object
-//       "$ref": "#/definitions/AuthError"
+//       properties:
+//         code:
+//           type: integer
+//           description: error code
+//           example: 4300
+//         message:
+//           type: string
+//           description: error message
+//           example: Check login name or password
 //   '422':
 //     description: missing data
 //     schema:
 //       type: object
-//       "$ref": "#/definitions/MissingDataError"
+//       properties:
+//         code:
+//           type: integer
+//           description: error code
+//           example: 4800
+//         message:
+//           type: string
+//           description: error message
+//           example: TOTP required
+//         signin_session_token:
+//           type: string
+//           description: signin session token
+//           example: MzM4OGNkMWEtNmQyNC00MDQ1LWJmYzctMWJlMzM3ZTk1NDQ5
 // security: []
 // x-codeSamples:
-//   - lang: javascript
-//     source: console.log('Hello World');
+//   - lang: curl
+//     source: |
+//       curl -X POST \
+//       https://accounts.7onetella.net/signin \
+//       -H 'Content-Type: application/json' \
+//       -d '{
+//	       "username": "user_1604820478030@example.com",
+//	       "password": "password"
+//       }'
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 

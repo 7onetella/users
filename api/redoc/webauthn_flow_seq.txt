@@ -1,15 +1,15 @@
 https://sequencediagram.org/
 
 participant Client
-participant /jwt_auth/signin
+participant /signin
 participant /webauthn/login/begin
 participant /webauthn/login/finish
 
-Client->/jwt_auth/signin:username & password
-Client<--/jwt_auth/signin:422 & signin_session_token
+Client->/signin:username & password
+Client<--/signin:422 & signin_session_token
 Client->/webauthn/login/begin:signin_session_token
 Client<--/webauthn/login/begin:200 & credentialRequestOptions
 Client->/webauthn/login/finish:AuthenticatorAssertionResponse & signin_session_token
 Client<--/webauthn/login/finish:200 & webauthn_session_token
-Client->/jwt_auth/signin:signin_session_token & webauthn_session_token
-Client<--/jwt_auth/signin:200 & JWT token
+Client->/signin:signin_session_token & webauthn_session_token
+Client<--/signin:200 & JWT token

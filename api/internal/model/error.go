@@ -21,13 +21,10 @@ type JSONAPIError struct {
 // swagger:model AuthError
 type Error struct {
 	// error code for machine
-	// example: 1100
 	ErrorCode int `json:"code"`
 	// error code for human
-	// example: database_query_failed
 	ErrorCodeHuman string `json:"reason"`
 	// message to display for end user
-	// example: Database query failed. Check with your administrator
 	Message string `json:"message"`
 	Err     error  `json:"-"`
 }
