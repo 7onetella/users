@@ -12,6 +12,8 @@ import (
 	"net/http"
 )
 
+const SigninSessionTokenHeader = "SignSessionToken"
+
 func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -93,8 +95,8 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
 
-		authToken := c.GetHeader("AuthToken")
-		eventID, _ := Base64Decode(authToken)
+		signinSessionToken := c.GetHeader(SigninSessionTokenHeader)
+		eventID, _ := Base64Decode(signinSessionToken)
 		log.Printf("event id = %s", eventID)
 		user, dberr := service.FindUserByAuthEventID(eventID)
 		if rh.HandleDBError(dberr) {
@@ -144,8 +146,8 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
 
-		signInSessionAuthToken := c.GetHeader("AuthToken")
-		eventID, _ := Base64Decode(signInSessionAuthToken)
+		signInSessionToken := c.GetHeader(SigninSessionTokenHeader)
+		eventID, _ := Base64Decode(signInSessionToken)
 		user, dberr := service.FindUserByAuthEventID(eventID)
 		if rh.HandleDBError(dberr) {
 			return
@@ -181,7 +183,7 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 
 		c.JSON(200, gin.H{
 			"result":                 true,
-			"signin_session_token":   signInSessionAuthToken,
+			"signin_session_token":   signInSessionToken,
 			"webauthn_session_token": Base64Encode(secAuthEvent.ID),
 		})
 	}

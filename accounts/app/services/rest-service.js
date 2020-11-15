@@ -16,7 +16,7 @@ export default Service.extend({
     if (signin_session_token) {
       settings.headers = {
         'Content-Type': 'application/json',
-        'AuthToken': signin_session_token  // custom header for sending password login auth token
+        'SignInSessionToken': signin_session_token  // custom header for sending password login auth token
       }
     } else {
       settings.headers = {

@@ -25,7 +25,7 @@ module.exports = function(environment) {
 
   ENV['ember-simple-auth-token'] = {
     serverTokenEndpoint: '/signin',
-    serverTokenRefreshEndpoint: '//refresh',
+    serverTokenRefreshEndpoint: '/refresh',
     tokenPropertyName: 'token', // Key in server response that contains the access token
     headers: {}, // Headers to add to the
     // tokenExpirationInvalidateSession: true, // Enables session invalidation on token expiration
@@ -52,7 +52,7 @@ module.exports = function(environment) {
     // ENV.APP.LOG_VIEW_LOOKUPS = true;
 
     ENV['ember-simple-auth-token'].serverTokenEndpoint = 'http://localhost:8080/signin'
-    ENV['ember-simple-auth-token'].serverTokenRefreshEndpoint = 'http://localhost:8080//refresh'
+    ENV['ember-simple-auth-token'].serverTokenRefreshEndpoint = 'http://localhost:8080/refresh'
     ENV.APP.JSONAPIAdaptetHost = 'http://localhost:8080';
   }
 

@@ -186,9 +186,9 @@ func (ah AuthEventHandler) FinishSecondAuth(userID, eventName, message string) {
 	})
 }
 
-func (ah AuthEventHandler) IsWebAuthnAuthTokenValidForUer(userID, webauthnAuthToken string) bool {
+func (ah AuthEventHandler) IsWebAuthnSessionTokenValidForUer(userID, webAuthnSessionToken string) bool {
 	userService := ah.UserService
-	eventID, _ := crypto.Base64Decode(webauthnAuthToken)
+	eventID, _ := crypto.Base64Decode(webAuthnSessionToken)
 	user, dberr := userService.FindUserByAuthEventID(eventID)
 	if dberr != nil {
 		return false
@@ -253,10 +253,13 @@ func getAuthType(c Credentials) AuthType {
 //   **Password + WebAuthn**
 //
 //   This is two factor authentication. User's security settings must have WebAuthn enabled in order for this second
-//   factor authentication to be presented to the user after a successful password authentication. Testing the WebAuthn
-//   is a lot more involved. The webauthn endpoint is tested using the browser with webauthn client javascript calls
-//   that are embedded in UI. Professional API testing tool can be used if it calls browser API natively. This part of
-//   API endpoint is mentioned for the sake of completeness.
+//   factor authentication to be presented to the user after a successful password authentication. Calling WebAuthn
+//   endpoint requires working with browser's <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API">**WebAuthn API**</a>
+//   That brings a bit of challenge to automated testing. Testing tool can not simply pass in some value to this restful
+//   service endpoint. The tool needs to call browser's WebAuthn API to have the browser initiate a communication
+//   with the user's physical authenticator device. Although it is theoretically possible to emulate the physical authenticator
+//   using <a href="https://github.com/github/SoftU2F/">**software**</a>, there isn't a software authenticator that is suitable
+//   for fully automated testing. Therefore, testing of WebAuthn flow will remain as manual.
 //
 //   <img src="/accounts/assets/webauthn_flow.png" alt="WebAuthn Flow">
 //
@@ -276,7 +279,7 @@ func getAuthType(c Credentials) AuthType {
 //     description: access granted
 //     schema:
 //       type: object
-//       "$ref": "#/definitions/AuthToken"
+//       "$ref": "#/definitions/JWTToken"
 //   '401':
 //     description: access denied
 //     schema:
@@ -309,14 +312,23 @@ func getAuthType(c Credentials) AuthType {
 //           example: MzM4OGNkMWEtNmQyNC00MDQ1LWJmYzctMWJlMzM3ZTk1NDQ5
 // security: []
 // x-codeSamples:
-//   - lang: curl
+//   - lang: curl-password
 //     source: |
 //       curl -X POST \
 //       https://accounts.7onetella.net/signin \
 //       -H 'Content-Type: application/json' \
 //       -d '{
-//	       "username": "user_1604820478030@example.com",
-//	       "password": "password"
+//	       "username": "john.smith@example.com",
+//	       "password": "password1234"
+//       }'
+//   - lang: curl-totp
+//     source: |
+//       curl -X POST \
+//       https://accounts.7onetella.net/signin \
+//       -H 'Content-Type: application/json' \
+//       -d '{
+//         "signin_session_token": "YjcxYmE0MjQtMGY1MS00ZDI0LTk4NDAtYjhiM2IwNzY5ZDNk",
+//         "totp": "592918"
 //       }'
 func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -389,7 +401,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 				auth.AccessDeniedMissingData(user.ID, AuthenticationError, WebAuthnRequired)
 				return
 			}
-			if !auth.IsWebAuthnAuthTokenValidForUer(user.ID, cred.WebauthnAuthToken) {
+			if !auth.IsWebAuthnSessionTokenValidForUer(user.ID, cred.WebAuthnSessionToken) {
 				auth.DenyAccessForUser(user.ID, AuthenticationError, WebauthnAuthFailure)
 				return
 			}
@@ -423,7 +435,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 			return
 		}
 
-		token := AuthToken{
+		token := JWTToken{
 			Token:      tokenString,
 			Expiration: expTime.Unix(),
 		}

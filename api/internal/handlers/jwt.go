@@ -40,7 +40,7 @@ type Credentials struct {
 
 	TOTP string `json:"totp"`
 
-	WebauthnAuthToken string `json:"webauthn_session_token"`
+	WebAuthnSessionToken string `json:"webauthn_session_token"`
 }
 
 // password_credentials represents user password credentials
@@ -94,13 +94,13 @@ type WebauthnCredentials struct {
 	//
 	// required: true
 	// example: ZDkyZjJkNWMtNGU2Ny00ZGRmLWI2ZGQtOTExNTcyYzIwNWFk
-	WebauthnAuthToken string `json:"webauthn_session_token"`
+	WebauthnSessionToken string `json:"webauthn_session_token"`
 }
 
 // This is JWT Auth Token
 //
-// swagger:model AuthToken
-type AuthToken struct {
+// swagger:model JWTToken
+type JWTToken struct {
 	// jwt token
 	// required: true
 	// example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiI3b25ldGVsbGEiLCJleHAiOjE2MDQ1NTYyMjcsImlhdCI6MTYwNDU1MjYyNywiaXNzIjoiN29uZXRlbGxhIiwic3ViIjoiMDA1ZDBiYzMtN2NmYi00NzkxLTg0ZDktZjFkN2IzMmJiM2YxIn0.kY5BpagojMbkn0T2vnEXYeQ_bRMriDmW6iEG3D7GQQI
@@ -129,7 +129,7 @@ func (c Credentials) IsTOTPCodePresent() bool {
 }
 
 func (c Credentials) IsWebauthnTokenPresent() bool {
-	return len(c.WebauthnAuthToken) > 0
+	return len(c.WebAuthnSessionToken) > 0
 }
 
 // PreflightOptionsHandler handles preflight OPTIONS
@@ -139,7 +139,7 @@ func PreflightOptions() gin.HandlerFunc {
 			w := c.Writer
 			w.Header().Add("Access-Control-Allow-Origin", "*")
 			w.Header().Add("Access-Control-Allow-Methods", "GET, OPTIONS, HEAD, POST, PUT, PATCH, DELETE")
-			w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, AuthToken")
+			w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, SigninSessionToken")
 			w.WriteHeader(http.StatusAccepted)
 			c.Abort()
 			return
@@ -239,7 +239,7 @@ func (a JWTAuth) RefreshToken(service UserService) gin.HandlerFunc {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
 
-		var rt AuthToken
+		var rt JWTToken
 		c.ShouldBindJSON(&rt)
 
 		terms := strings.Split(rt.Token, ".")
@@ -268,7 +268,7 @@ func (a JWTAuth) RefreshToken(service UserService) gin.HandlerFunc {
 
 		log.Println("Token refresh successful")
 
-		refreshToken := AuthToken{
+		refreshToken := JWTToken{
 			Token:      tokenString,
 			Expiration: expTime.Unix(),
 		}
