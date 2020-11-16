@@ -1,9 +1,5 @@
 package oauth2
 
-// Authorization Request
-//
-// Foo
-//
 // swagger:model AuthorizationRequest
 type AuthorizationRequest struct {
 	// required: true
@@ -26,10 +22,6 @@ type AuthorizationRequest struct {
 	State string `json:"state"`
 }
 
-// Authorization Response
-//
-// Foo
-//
 // swagger:model AuthorizationResponse
 type AuthorizationResponse struct {
 	// example:5c001023-a3f4-4c68-b39b-07f040bbeed4
@@ -47,14 +39,18 @@ type AuthorizationResponse struct {
 //
 // swagger:model AccessTokenResponse
 type AccessTokenResponse struct {
+	// required: true
 	// example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiI3b25ldGVsbGEiLCJleHAiOjE2MDQ4MjQwODEsImlhdCI6MTYwNDgyMDQ4MSwiaXNzIjoiN29uZXRlbGxhIiwic3ViIjoiNjNjMzJkMTAtYzA2ZC00NmQ4LWI5ZTUtNGU0ZDhlZDk3MzJlIn0.NFnO9s_hujiqDHFbH7RvLoIeseIzGs0VU05whMq0x7U
 	AccessToken string `json:"access_token"`
+	// required: true
 	// example: bearer
 	TokenType string `json:"token_type"`
 	// example: 3600
+	// required: true
 	ExpiresIn string `json:"expires_in"`
 	// example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiI3b25ldGVsbGEiLCJleHAiOjE2MDQ4MjQwODEsImlhdCI6MTYwNDgyMDQ4MSwiaXNzIjoiN29uZXRlbGxhIiwic3ViIjoiNjNjMzJkMTAtYzA2ZC00NmQ4LWI5ZTUtNGU0ZDhlZDk3MzJlIn0.NFnO9s_hujiqDHFbH7RvLoIeseIzGs0VU05whMq0x7U
 	RefreshToken string `json:"refresh_token"`
+	// required: true
 	// example: read:profile,write:profile
 	Scope string `json:"scope"`
 }

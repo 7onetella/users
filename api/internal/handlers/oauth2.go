@@ -15,6 +15,11 @@ import (
 //
 // ---
 // summary: "OAuth2 Authorize"
+// description: |
+//   Handles OAuth2 authorization. Only grant type of `code` has been implemented.
+//   Refer to <a href="https://oauth.net/2/">**OAuth2**</a> documentation for details. The OAuth2 `client` signup is
+//   missing from UI as well as the User API endpoints. The OAuth2 `client` signup will be added in the future.
+//   User is expected to be logged in when this call is made.
 // tags:
 //   - oauth2
 // parameters:
@@ -28,7 +33,7 @@ import (
 //   - application/json
 // responses:
 //   '200':
-//     description: replying with authorization code
+//     description: authorization code response
 //     schema:
 //       type: object
 //       "$ref": "#/definitions/AuthorizationResponse"
@@ -97,7 +102,20 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 // swagger:operation POST /oauth2/access_token oauth2accesstoken
 //
 // ---
-// summary: "OAuth2 Access Token"
+// summary: OAuth2 Access Token
+// description: |
+//   Exchange code for access token. Access token is in JWT format. The payload looks like the following when it's decoded.
+//   ```
+//    {
+//      "jti":   jti,
+//      "iss":   issuer,
+//      "sub":   user,
+//      "aud":   client,
+//      "iat":   1596747095,
+//      "exp":   1596747095,
+//      "scope": scope
+//	  }
+//   ```
 // consumes:
 //   - application/x-www-form-urlencoded
 // tags:
@@ -105,7 +123,7 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 // parameters:
 //   - in: "body"
 //     name: "body"
-//     description: "Exchange code for access token"
+//     description: HTML form containing the following OAuth2 fields
 //     required: true
 //     schema:
 //       type: object
@@ -130,10 +148,11 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 //   - application/json
 // responses:
 //   '200':
-//     description: replying with access token
+//     description: OAuth2 access token response
 //     schema:
 //       type: object
 //       "$ref": "#/definitions/AccessTokenResponse"
+// security: []
 func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
