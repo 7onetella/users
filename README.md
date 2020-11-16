@@ -53,7 +53,7 @@ of code in near future.
 
 ## Table of Content
 
-* [What is Lorem Ipsum](#wiki-What is Lorem Ipsum)
+* [What is Lorem Ipsum](#-what-is-lorem-ipsum)
 * [Where does  it come from](#wiki-Where does  it come from)
 * [Why do we use it](#wiki-Why do we use it)
 * [Where can I get some](#wiki-Where can I get some)
