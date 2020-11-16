@@ -13,22 +13,7 @@ import (
 	"rsc.io/qr"
 )
 
-// swagger:operation GET /totp/qr-code-raw qrcoderaw
-//
-// ---
-// summary: "Generate new QR code image PNG"
-// tags:
-//   - totp
-// produces:
-//   - application/json
-// responses:
-//   '200':
-//     description: QR code image in PNG format
-//     content:
-//       image/png:
-//         schema:
-//           type: string
-//           format: binary
+// Hiding endpoint to not to confuse developer reading the API
 func NewTOTPRaw(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -63,14 +48,19 @@ func NewTOTPRaw(userService UserService) gin.HandlerFunc {
 // swagger:operation GET /totp/qr-code-json qrcodejson
 //
 // ---
-// summary: "Generate new QR code image JSON"
+// summary: "New TOTP QR code"
+// description: |
+//   New TOTP QR code image is generated in PNG format. The image is then encoded in BASE64 and returned back to the client
+//   in JSON response. The new TOTP QR code won't be associated with the user's account unless `/totp/confirm` endpoint is provided with
+//   the TOTP code from the authenticator device. Refer to <a href="/accounts/redoc.html#operation/confirm">**Confirm TOTP QR Code**</a>
+//   documentation for details.
 // tags:
 //   - totp
 // produces:
 //   - application/json
 // responses:
 //   '200':
-//     description: QR code image in encoded in JSON format
+//     description: QR code image PNG encoded in base64
 //     schema:
 //       type: object
 //       properties:
@@ -116,7 +106,13 @@ func NewTOTPJson(userService UserService) gin.HandlerFunc {
 // swagger:operation POST /totp/confirm confirm
 //
 // ---
-// summary: "Confirm QR Code"
+// summary: Confirm TOTP QR Code
+// description: |
+//   Confirming QR code is part of enabling TOTP process. User will be shown QR code on screen and will be asked to scan the QR
+//   code using his/her authenticator. Entering the TOTP code shown on the authenticator confirms that the device's time
+//   is in sync. Entering also confirms that TOTP calculation algorithm on both authenticator and server work as expected.
+//   Foregoing confirmation means user's TOTP can be rejected during authentication. This also ensures that user does
+//   have access to an working authenticator.
 // tags:
 //   - totp
 // parameters:
@@ -130,6 +126,7 @@ func NewTOTPJson(userService UserService) gin.HandlerFunc {
 //       properties:
 //         totp:
 //           type: string
+//           example: 467292
 // produces:
 //   - application/json
 // responses:
@@ -142,15 +139,15 @@ func NewTOTPJson(userService UserService) gin.HandlerFunc {
 //           type: string
 //           description: confirmation status
 //           example: totp enabled
-//   '401':
-//     description: confirmation successful
+//   '400':
+//     description: confirmation failed
 //     schema:
 //       type: object
 //       properties:
 //         status:
 //           type: string
 //           description: confirmation status
-//           example: invalid
+//           example: totp invalid
 func ConfirmToken(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -169,8 +166,8 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 		log.Printf("timestamp = %d", now)
 		verified := totp.Verify(cred.TOTP, now)
 		if !verified {
-			c.JSON(401, gin.H{
-				"status": "invalid",
+			c.JSON(400, gin.H{
+				"status": "totp invalid",
 			})
 			c.Abort()
 			return
@@ -183,8 +180,8 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 		log.Printf("user from context = \n%#v", user)
 		dberr := service.UpdateTOTP(user)
 		if rh.HandleDBError(dberr) {
-			c.JSON(401, gin.H{
-				"status": "invalid",
+			c.JSON(400, gin.H{
+				"status": "totp invalid",
 			})
 			c.Abort()
 			return

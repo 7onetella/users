@@ -29,10 +29,10 @@ func init() {
 
 // swagger:operation POST /users signup
 //
-//
-// User signup using JSON:API document format as input
 // ---
-// summary: "Signup User"
+// summary: Signup
+// description: |
+//   User signup using JSON:API document format as input
 // tags:
 //   - account
 // parameters:
@@ -224,7 +224,7 @@ func getAuthType(c Credentials) AuthType {
 // swagger:operation POST /signin signin
 //
 // ---
-// summary: Signin User
+// summary: Signin
 // description: |
 //
 //   Here is the list of authentication types
@@ -455,7 +455,7 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 //   - application/json
 // responses:
 //   '200':
-//     description: get user profile response
+//     description: user profile
 //     schema:
 //       "$ref": "#/definitions/JSONAPIUserSignupResponse"
 // security:
@@ -491,14 +491,14 @@ func GetUser(service UserService) gin.HandlerFunc {
 // swagger:operation DELETE /users/{id} deleteuser
 //
 // ---
-// summary: "Delete user profile"
+// summary: Delete user profile
 // tags:
 //   - profile
 // produces:
 //   - application/json
 // responses:
 //   '200':
-//     description: delete user profile response
+//     description: user profile deleted
 // security:
 //   - bearer_token: []
 func DeleteUser(service UserService) gin.HandlerFunc {
@@ -524,7 +524,7 @@ func DeleteUser(service UserService) gin.HandlerFunc {
 // swagger:operation PATCH /users/{id} updateuser
 //
 // ---
-// summary: "Updates user profile"
+// summary: Updates user profile
 // tags:
 //   - profile
 // parameters:
@@ -538,7 +538,7 @@ func DeleteUser(service UserService) gin.HandlerFunc {
 //   - application/json
 // responses:
 //   '204':
-//     description: user updated
+//     description: user profile updated
 // security:
 //   - bearer_token: []
 //   - oauth2:
