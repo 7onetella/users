@@ -1,37 +1,34 @@
 # Purpose
-There is a need for good secure authentication. I have decided to implement an authentication server to be able to
-understand JWT, TOTP and FIDO2 WebAuthn. 
+There is a need for good secure authentication. This project is a very light implementation of authentication server.
+Three different types of authentication methods have been implemented. 
+
+|      1st Factor             |          2nd Factor       |     Security                      |
+|-----------------------------|---------------------------|-----------------------------------|
+|      Password               |             None          | Weak - password can be guessed    |
+|      Password               |             TOTP          | Medium - prone to phishing attack |
+|      Password               |             WebAuthn      | Strong                            |
+
+[U2F Key](https://en.wikipedia.org/wiki/Universal_2nd_Factor) with WebAuthn protocol improves web security. It is possible to
+go password-less. However, it will be awhile before mass adoption takes place.
+  
+# Screen Capture
+![](/assets/auth.gif)
 
 # Live Demo Site
 Go to [Demo Site](https://accounts.7onetella.net/accounts/)
 - register your own accounts please
 
-# Screen Capture
-![](/assets/auth.gif)
-
 # API documentation
 [Go Here](https://accounts.7onetella.net/accounts/redoc.html)
 
-# Work In Progress
-There is a lot to be done in order to make the authentication even more secure. I will be doing some internal clean up
-of code in near future.
-
 # Future enhancement
-- [x] Add OAuth2 support
-- [x] Add Swagger documentation
+- [x] ~~Add OAuth2 support~~
+- [x] ~~Add Swagger documentation~~
 - [ ] Add source IP check against previously recorded source IPs
 - [ ] Add backoff period when password auth or totp auth fails three times in a row
 - [ ] Add browser agent check against previously recorded browser agents
 
-## Table of Content
-
-* [Introduction](#-introduction)
-* [Acknowledgement](#-acknowledgement)
-
-## <a name="Introduction"/> Introduction
-Placeholder for introduction
-
-## <a name="Acknowledgement"/> Acknowledgement
+# Acknowledgement
 - [Duo WebAuthn](https://github.com/duo-labs/webauthn)
 - [Bootstrap 4](https://github.com/twbs/bootstrap)
 - [EmberJS](https://github.com/emberjs/ember.js)
