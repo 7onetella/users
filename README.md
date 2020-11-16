@@ -1,6 +1,6 @@
 # Purpose
 There is a need for good secure authentication. This project is a very light implementation of authentication server.
-Three different types of authentication methods have been implemented. 
+Three different types of authentication method have been implemented. 
 
 |      1st Factor             |          2nd Factor       |     Security                      |
 |-----------------------------|---------------------------|-----------------------------------|
@@ -8,7 +8,7 @@ Three different types of authentication methods have been implemented.
 |      Password               |             TOTP          | Medium - prone to phishing attack |
 |      Password               |             WebAuthn      | Strong                            |
 
-[U2F Key](https://en.wikipedia.org/wiki/Universal_2nd_Factor) with WebAuthn protocol improves web security. It is possible to
+[U2F](https://en.wikipedia.org/wiki/Universal_2nd_Factor) key with WebAuthn protocol improves web security. It is possible to
 go password-less. However, it will be awhile before mass adoption takes place.
   
 # Screen Capture
@@ -16,7 +16,8 @@ go password-less. However, it will be awhile before mass adoption takes place.
 
 # Live Demo Site
 Go to [Demo Site](https://accounts.7onetella.net/accounts/)
-- register your own accounts please
+
+\* **register your own accounts please**
 
 # API documentation
 [Go Here](https://accounts.7onetella.net/accounts/redoc.html)
