@@ -59,6 +59,10 @@ const (
 	JSONError // 3XXX
 
 	AuthenticationError // 4xxx
+
+	ServerError // 5xxx
+
+	TOTPError // 6xxx
 )
 
 // DatabaseError reasons
@@ -67,6 +71,8 @@ const (
 	QueryingFailed Reason = 100 * (iota + 1) //11XX
 
 	Unknown
+
+	PersistingFailed
 )
 
 // None is a non-specified error.
@@ -110,6 +116,18 @@ const (
 	WebAuthnRequired
 )
 
+// ServerError reasons
+const (
+	QRCodeFailure Reason = 100 * (iota + 1) // 51XX
+)
+
+// TOTPError reasons
+const (
+	InvalidTOTP Reason = 100 * (iota + 1) // 61XX
+
+	ProblemEncodingQRCode
+)
+
 func New(category Category, reason Reason) *Error {
 	errorCode := int(category) + int(reason)
 	var msg string
@@ -120,6 +138,8 @@ func New(category Category, reason Reason) *Error {
 		switch reason {
 		case QueryingFailed:
 			msg = "Database query failed"
+		case PersistingFailed:
+			msg = "Writing to database failed"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category DatabaseError.",
 				reason))
@@ -177,6 +197,26 @@ func New(category Category, reason Reason) *Error {
 			errCodeHuman = "login_webauthn_requested"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category AuthenticationError.",
+				reason))
+		}
+
+	case ServerError:
+		switch reason {
+		case QRCodeFailure:
+			msg = "Error generating QR code image"
+		default:
+			panic(fmt.Sprintf("Unsupported error reason %d under category ServerError.",
+				reason))
+		}
+
+	case TOTPError:
+		switch reason {
+		case InvalidTOTP:
+			msg = "TOTP is invalid"
+		case ProblemEncodingQRCode:
+			msg = "There was an error while encoding QR Code"
+		default:
+			panic(fmt.Sprintf("Unsupported error reason %d under category TOTPError.",
 				reason))
 		}
 

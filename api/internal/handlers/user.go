@@ -104,7 +104,7 @@ func (ah AuthEventHandler) Handle(err error, code int, userID string, category C
 
 		dberr := userService.RecordAuthEvent(event)
 		if dberr != nil {
-			LogErr(rh.TransactionIDFromContext(), "db error", dberr.Err)
+			LogErr(rh.TX(), "db error", dberr.Err)
 		}
 		return true
 	}
@@ -146,7 +146,7 @@ func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
 	event := rh.NewAuthEvent(userID, eventName)
 	dberr := ah.UserService.RecordAuthEvent(event)
 	if dberr != nil {
-		LogErr(rh.TransactionIDFromContext(), "db error", dberr.Err)
+		LogErr(rh.TX(), "db error", dberr.Err)
 	}
 }
 

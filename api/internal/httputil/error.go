@@ -14,6 +14,10 @@ func (e *DBOpError) Unwrap() error {
 	return e.Err
 }
 
+func (e *DBOpError) Log(tx string) {
+	log.Printf("%s sql.excute.errored: %#v, sql: %s", tx, e.Err, e.Query)
+}
+
 func (rh RequestHanlder) HandleError(errs ...error) bool {
 	c := rh.Context
 
@@ -25,7 +29,7 @@ func (rh RequestHanlder) HandleError(errs ...error) bool {
 	for i, _ := range errs {
 		err := errs[i]
 		if err != nil {
-			LogErr(rh.TransactionIDFromContext(), "errs[i]", err)
+			LogErr(rh.TX(), "errs[i]", err)
 			errFound = true
 		}
 	}
@@ -39,7 +43,7 @@ func (rh RequestHanlder) HandleError(errs ...error) bool {
 func (rh RequestHanlder) HandleDBError(dberr *DBOpError) bool {
 	if dberr != nil {
 		c := rh.Context
-		LogDBErr(rh.TransactionIDFromContext(), dberr.Query, "db error", dberr.Err)
+		LogDBErr(rh.TX(), dberr.Query, "db error", dberr.Err)
 		c.AbortWithStatus(500)
 		return true
 	}
@@ -49,7 +53,7 @@ func (rh RequestHanlder) HandleDBError(dberr *DBOpError) bool {
 func (rh RequestHanlder) HandleSecurityError(err *model.Error) bool {
 	if err != nil {
 		c := rh.Context
-		LogErr(rh.TransactionIDFromContext(), err.Message, err)
+		LogErr(rh.TX(), err.Message, err)
 		out := model.JSONAPIErrors{
 			Errors: []model.JSONAPIError{
 				{

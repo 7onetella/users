@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/base64"
 	"log"
+	"net/http"
 	"time"
 
 	. "github.com/7onetella/users/api/internal/dbutil"
@@ -14,33 +15,39 @@ import (
 )
 
 // Hiding endpoint to not to confuse developer reading the API
-func NewTOTPRaw(userService UserService) gin.HandlerFunc {
+func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
+		auth := AuthEventHandler{rh, userService}
 		user, err := rh.UserFromContext()
 		if err != nil {
-			c.AbortWithError(500, err)
+			auth.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
 			return
 		}
 		rh.WriteCORSHeader()
 
 		secret := gotp.RandomSecret(16)
 		totp := gotp.NewDefaultTOTP(secret)
-		url := totp.ProvisioningUri(user.Email, "7onetella")
-		log.Println("url = " + url)
+		url := totp.ProvisioningUri(user.Email, totpIssuerName)
 
 		user.TOTPSecretTmp = secret
 		user.TOTPSecretTmpExp = CurrentTimeInSeconds() + 60*5
-		userService.UpdateTOTPTmp(user)
+		dberr := userService.UpdateTOTPTmp(user)
+		if dberr != nil {
+			dberr.Log(rh.TX())
+			c.AbortWithStatusJSON(http.StatusBadRequest, New(DatabaseError, PersistingFailed))
+			return
+		}
 
 		qrBytes, err := QR(url)
 		if err != nil {
-			c.AbortWithError(500, err)
+			LogErr(rh.TX(), "error encoding qr code", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(TOTPError, ProblemEncodingQRCode))
 			return
 		}
 
 		w := c.Writer
-		w.Header().Add("Content-Type", "image/png")
+		w.Header().Add(ContentType, ImagePNG)
 		w.Write(qrBytes)
 	}
 }
@@ -67,36 +74,49 @@ func NewTOTPRaw(userService UserService) gin.HandlerFunc {
 //         payload:
 //           type: string
 //           description: PNG image encoded in base64
-func NewTOTPJson(userService UserService) gin.HandlerFunc {
+//   '401':
+//     description: problem with retrieving user from authorization header
+//   '500':
+//     description: server error
+func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
+		auth := AuthEventHandler{rh, userService}
 
 		user, err := rh.UserFromContext()
-		if rh.HandleError(err) {
+		if err != nil {
+			auth.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
 			return
 		}
 
-		secret := gotp.RandomSecret(16)
-		totp := gotp.NewDefaultTOTP(secret)
-		url := totp.ProvisioningUri(user.Email, "7onetella")
-		log.Println("url = " + url)
+		secret := gotp.RandomSecret(32)
+		totp := gotp.NewTOTP(secret, 6, 30, nil)
+		url := totp.ProvisioningUri(user.Email, totpIssuerName)
 
+		// persist the totp secret and expiration time of 5 minutes
 		user.TOTPSecretTmp = secret
 		user.TOTPSecretTmpExp = CurrentTimeInSeconds() + 60*5
-		userService.UpdateTOTPTmp(user)
+		dberr := userService.UpdateTOTPTmp(user)
+		if dberr != nil {
+			dberr.Log(rh.TX())
+			c.AbortWithStatusJSON(http.StatusBadRequest, New(DatabaseError, PersistingFailed))
+			return
+		}
 
 		qrBytes, err := QR(url)
 		if err != nil {
-			c.AbortWithError(500, err)
+			LogErr(rh.TX(), "error encoding qr code", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(TOTPError, ProblemEncodingQRCode))
 			return
 		}
 
 		w := c.Writer
-		w.Header().Add("Content-Type", "image/png")
+		w.Header().Add(ContentType, ImagePNG)
 		payload := base64.StdEncoding.EncodeToString(qrBytes)
 		// header used for validating totp in testing
-		c.Header("x-totp", totp.Now())
+		// only authorized users can access their own x-totp header
+		c.Header(XTOTP, totp.Now())
 		c.JSON(200, gin.H{
 			"payload": payload,
 		})
@@ -152,24 +172,22 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
-		user, _ := rh.UserFromContext()
+		auth := AuthEventHandler{rh, service}
+		user, err := rh.UserFromContext()
+		if err != nil {
+			auth.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
+			return
+		}
 
 		var cred TOTPCredentials
 		c.ShouldBindJSON(&cred)
-		log.Printf("cred json = %#v", cred)
 
 		totp := gotp.NewDefaultTOTP(user.TOTPSecretTmp)
-
-		log.Printf("totp = %s", cred.TOTP)
 		now := int(time.Now().Unix())
 
-		log.Printf("timestamp = %d", now)
 		verified := totp.Verify(cred.TOTP, now)
 		if !verified {
-			c.JSON(400, gin.H{
-				"status": "totp invalid",
-			})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusBadRequest, New(TOTPError, InvalidTOTP))
 			return
 		}
 
@@ -177,13 +195,11 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 		user.TOTPSecretCurrent = user.TOTPSecretTmp
 		user.TOTPSecretTmp = ""
 		user.TOTPSecretTmpExp = 0
-		log.Printf("user from context = \n%#v", user)
+		//log.Printf("user from context = \n%#v", user)
 		dberr := service.UpdateTOTP(user)
-		if rh.HandleDBError(dberr) {
-			c.JSON(400, gin.H{
-				"status": "totp invalid",
-			})
-			c.Abort()
+		if dberr != nil {
+			dberr.Log(rh.TX())
+			c.AbortWithStatusJSON(http.StatusBadRequest, New(TOTPError, InvalidTOTP))
 			return
 		}
 		c.JSON(200, gin.H{

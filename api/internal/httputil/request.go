@@ -27,7 +27,8 @@ func (rh RequestHanlder) UserFromContext() (User, error) {
 	return user, nil
 }
 
-func (rh RequestHanlder) TransactionIDFromContext() string {
+// TX returns request transaction id
+func (rh RequestHanlder) TX() string {
 	c := rh.Context
 	return c.Request.Context().Value("tid").(string)
 }
