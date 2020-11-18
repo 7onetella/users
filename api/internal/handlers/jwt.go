@@ -234,7 +234,7 @@ func ExtractClaimsFromPayload(s string) (*CustomClaims, error) {
 }
 
 // SigninHandlerFunc signs in user
-func (a JWTAuth) RefreshToken(service UserService) gin.HandlerFunc {
+func (a JWTAuth) RefreshToken(service UserService, issuer string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Println("Token Refresh Started")
 		rh := NewRequestHandler(c)
@@ -265,7 +265,7 @@ func (a JWTAuth) RefreshToken(service UserService) gin.HandlerFunc {
 		}
 
 		userID := claims.Subject
-		tokenString, expTime, err := EncodeToken(userID, jwtSecret, 120)
+		tokenString, expTime, err := EncodeToken(userID, jwtSecret, issuer, 120)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return

@@ -306,7 +306,7 @@ func (ah AuthEventHandler) IsWebAuthnSessionTokenValidForUer(userID, webAuthnSes
 //         "signin_session_token": "YjcxYmE0MjQtMGY1MS00ZDI0LTk4NDAtYjhiM2IwNzY5ZDNk",
 //         "totp": "592918"
 //       }'
-func Signin(userService UserService, ttl time.Duration) gin.HandlerFunc {
+func Signin(userService UserService, ttl time.Duration, issuer string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		rh := NewRequestHandler(c)
@@ -397,7 +397,7 @@ func Signin(userService UserService, ttl time.Duration) gin.HandlerFunc {
 			return
 		}
 
-		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, ttl)
+		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, issuer, ttl)
 		if err != nil {
 			log.Println("encoding error")
 			auth.DenyAccessForUser(user.ID, AuthenticationError, JWTEncodingFailure)

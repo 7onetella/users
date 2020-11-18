@@ -78,13 +78,14 @@ func DecodeTokenAsCustomClaims(tokenString, secret string) (CustomClaims, error)
 }
 
 // EncodeID signs id
-func EncodeToken(userID, secret string, ttl time.Duration) (string, time.Time, error) {
+func EncodeToken(userID, secret, issuer string, ttl time.Duration) (string, time.Time, error) {
 	expTime := time.Now().Add(ttl * time.Second)
 
+	// iss and aud are the same in the case of first party only authentication
 	claim := jwt.MapClaims{
-		"iss": "7onetella",
+		"iss": issuer,
 		"sub": userID,
-		"aud": "7onetella",
+		"aud": issuer,
 		"iat": time.Now().Unix(),
 		"exp": expTime.Unix(),
 	}

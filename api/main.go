@@ -77,7 +77,7 @@ var port string
 var _RPID string
 var _RPOrigin string
 var connStr string
-var totpIssuerName string
+var issuerName string
 
 func init() {
 	stage = GetEnvWithDefault("STAGE", "localhost")
@@ -86,11 +86,11 @@ func init() {
 
 	_RPID = GetEnvWithDefault("RPID", "localhost")
 
+	issuerName = _RPID
+
 	_RPOrigin = GetEnvWithDefault("RPORIGIN", "http://localhost:4200")
 
 	connStr = GetEnvWithDefault("DB_CONNSTR", "host=tmt-vm11.7onetella.net user=dev password=dev114 dbname=devdb sslmode=disable")
-
-	totpIssuerName = GetEnvWithDefault("TOTP_ISSUER", "7onetella")
 
 	newdb, err := sqlx.Connect("postgres", connStr)
 	if err != nil {
@@ -145,13 +145,13 @@ func main() {
 	totp := r.Group("/totp")
 	totp.Use(jwt.TokenValidator(userService))
 	{
-		totp.GET("/qr-code-raw", NewTOTPRaw(userService, totpIssuerName))
-		totp.GET("/qr-code-json", NewTOTPJson(userService, totpIssuerName))
+		totp.GET("/qr-code-raw", NewTOTPRaw(userService, issuerName))
+		totp.GET("/qr-code-json", NewTOTPJson(userService, issuerName))
 		totp.POST("/confirm", ConfirmToken(userService))
 	}
 
-	r.POST("/signin", Signin(userService, jwt.TTL))
-	r.POST("/refresh", jwt.RefreshToken(userService))
+	r.POST("/signin", Signin(userService, jwt.TTL, issuerName))
+	r.POST("/refresh", jwt.RefreshToken(userService, issuerName))
 
 	webauthentication := r.Group("/webauthn")
 	webauthentication.Use(jwt.TokenValidator(userService))
