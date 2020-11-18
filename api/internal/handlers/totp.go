@@ -77,7 +77,7 @@ func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc 
 //   '401':
 //     description: problem with retrieving user from authorization header
 //   '500':
-//     description: server error
+//     description: internal server error
 func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -100,7 +100,7 @@ func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc
 		dberr := userService.UpdateTOTPTmp(user)
 		if dberr != nil {
 			dberr.Log(rh.TX())
-			c.AbortWithStatusJSON(http.StatusBadRequest, New(DatabaseError, PersistingFailed))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, PersistingFailed))
 			return
 		}
 
@@ -117,7 +117,7 @@ func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc
 		// header used for validating totp in testing
 		// only authorized users can access their own x-totp header
 		c.Header(XTOTP, totp.Now())
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"payload": payload,
 		})
 	}
@@ -168,6 +168,10 @@ func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc
 //           type: string
 //           description: confirmation status
 //           example: totp invalid
+//   '401':
+//     description: problem with retrieving user from authorization header
+//   '500':
+//     description: internal server error
 func ConfirmToken(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rh := NewRequestHandler(c)
@@ -195,14 +199,14 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 		user.TOTPSecretCurrent = user.TOTPSecretTmp
 		user.TOTPSecretTmp = ""
 		user.TOTPSecretTmpExp = 0
-		//log.Printf("user from context = \n%#v", user)
+
 		dberr := service.UpdateTOTP(user)
 		if dberr != nil {
 			dberr.Log(rh.TX())
-			c.AbortWithStatusJSON(http.StatusBadRequest, New(TOTPError, InvalidTOTP))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, PersistingFailed))
 			return
 		}
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"status": "totp enabled",
 		})
 	}
