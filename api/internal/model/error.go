@@ -9,10 +9,6 @@ type JSONAPIErrors struct {
 }
 
 type JSONAPIError struct {
-	StatusCode int `json:"status,omitempty"`
-	//Code       string `json:"code,omitempty"`
-	//Title      string `json:"title,omitempty"`
-	//Detail     string `json:"detail,omitempty"`
 	Meta *Error `json:"meta,omitempty"`
 }
 

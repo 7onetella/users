@@ -278,13 +278,6 @@ func (a JWTAuth) RefreshToken(service UserService) gin.HandlerFunc {
 			Expiration: expTime.Unix(),
 		}
 
-		c.JSON(200, refreshToken)
-		//data, err := json.Marshal(&refreshToken)
-		//if err != nil {
-		//	c.AbortWithError(500, err)
-		//	return
-		//}
-		//w.Write(data)
-
+		c.JSON(http.StatusOK, refreshToken)
 	}
 }

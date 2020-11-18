@@ -439,7 +439,8 @@ func GetUser(service UserService) gin.HandlerFunc {
 
 		id := c.Param("id")
 		serr := rh.CheckUserIDMatchUserFromContext(id)
-		if rh.HandleSecurityError(serr) {
+		if serr != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, rh.WrapAsJSONAPIErrors(serr))
 			return
 		}
 
@@ -477,7 +478,8 @@ func DeleteUser(service UserService) gin.HandlerFunc {
 
 		id := c.Param("id")
 		serr := rh.CheckUserIDMatchUserFromContext(id)
-		if rh.HandleSecurityError(serr) {
+		if serr != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, rh.WrapAsJSONAPIErrors(serr))
 			return
 		}
 
@@ -519,7 +521,8 @@ func UpdateUser(service UserService) gin.HandlerFunc {
 
 		id := c.Param("id")
 		serr := rh.CheckUserIDMatchUserFromContext(id)
-		if rh.HandleSecurityError(serr) {
+		if serr != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, rh.WrapAsJSONAPIErrors(serr))
 			return
 		}
 

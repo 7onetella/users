@@ -26,7 +26,7 @@ func (rh RequestHandler) HandleError(errs ...error) bool {
 	}
 
 	errFound := false
-	for i, _ := range errs {
+	for i := range errs {
 		err := errs[i]
 		if err != nil {
 			LogErr(rh.TX(), "errs[i]", err)
@@ -50,22 +50,19 @@ func (rh RequestHandler) HandleDBError(dberr *DBOpError) bool {
 	return false
 }
 
-func (rh RequestHandler) HandleSecurityError(err *model.Error) bool {
-	if err != nil {
-		c := rh.Context
-		LogErr(rh.TX(), err.Message, err)
-		out := model.JSONAPIErrors{
-			Errors: []model.JSONAPIError{
-				{
-					StatusCode: 401,
-					Meta:       err,
-				},
-			},
-		}
-		c.AbortWithStatusJSON(401, out)
-		return true
+func (rh RequestHandler) WrapAsJSONAPIErrors(err *model.Error) model.JSONAPIErrors {
+	if err == nil {
+		return model.JSONAPIErrors{}
 	}
-	return false
+
+	out := model.JSONAPIErrors{
+		Errors: []model.JSONAPIError{
+			{
+				Meta: err,
+			},
+		},
+	}
+	return out
 }
 
 func LogErr(txid string, message string, opserr interface{}) {
