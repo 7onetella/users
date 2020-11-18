@@ -150,7 +150,7 @@ func main() {
 		totp.POST("/confirm", ConfirmToken(userService))
 	}
 
-	r.POST("/signin", Signin(userService, jwt.ClaimKey, jwt.TTL))
+	r.POST("/signin", Signin(userService, jwt.TTL))
 	r.POST("/refresh", jwt.RefreshToken(userService))
 
 	webauthn := r.Group("/webauthn")

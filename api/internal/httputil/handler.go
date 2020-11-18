@@ -5,13 +5,13 @@ import (
 )
 
 // txid, logging, cors header, payload
-type RequestHanlder struct {
+type RequestHandler struct {
 	Context *gin.Context
 	Errors  []error
 }
 
-func NewRequestHandler(c *gin.Context) RequestHanlder {
-	return RequestHanlder{
+func NewRequestHandler(c *gin.Context) RequestHandler {
+	return RequestHandler{
 		c,
 		[]error{},
 	}

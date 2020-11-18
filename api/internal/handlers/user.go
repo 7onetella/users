@@ -87,13 +87,13 @@ func Signup(userService UserService) gin.HandlerFunc {
 }
 
 type AuthEventHandler struct {
-	RequestHanlder RequestHanlder
+	RequestHandler RequestHandler
 	UserService    UserService
 }
 
 func (ah AuthEventHandler) Handle(err error, code int, userID string, category Category, reason Reason) bool {
 	if err != nil {
-		rh := ah.RequestHanlder
+		rh := ah.RequestHandler
 		c := rh.Context
 		userService := ah.UserService
 
@@ -112,7 +112,7 @@ func (ah AuthEventHandler) Handle(err error, code int, userID string, category C
 }
 
 func (ah AuthEventHandler) Context() *gin.Context {
-	return ah.RequestHanlder.Context
+	return ah.RequestHandler.Context
 }
 
 func (ah AuthEventHandler) DenyAccessForAnonymous(category Category, reason Reason) {
@@ -142,7 +142,7 @@ func (ah AuthEventHandler) IsSigninSessionStillValid(timestamp int64, limit time
 }
 
 func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
-	rh := ah.RequestHanlder
+	rh := ah.RequestHandler
 	event := rh.NewAuthEvent(userID, eventName)
 	dberr := ah.UserService.RecordAuthEvent(event)
 	if dberr != nil {
@@ -151,7 +151,7 @@ func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
 }
 
 func (ah AuthEventHandler) AccessDeniedMissingData(userID string, category Category, reason Reason) {
-	rh := ah.RequestHanlder
+	rh := ah.RequestHandler
 	c := rh.Context
 	userService := ah.UserService
 
@@ -168,7 +168,7 @@ func (ah AuthEventHandler) AccessDeniedMissingData(userID string, category Categ
 }
 
 func (ah AuthEventHandler) FinishSecondAuth(userID, eventName, message string) {
-	rh := ah.RequestHanlder
+	rh := ah.RequestHandler
 	c := rh.Context
 	userService := ah.UserService
 
@@ -195,30 +195,6 @@ func (ah AuthEventHandler) IsWebAuthnSessionTokenValidForUer(userID, webAuthnSes
 	}
 
 	return userID == user.ID
-}
-
-// Reason is the last 3 digits of the error code.
-type AuthType int
-
-const (
-	// Success indicates no error occurred.
-	PasswordAuth AuthType = iota
-	TOTPAuth
-	WebauthnAuth
-	UnknownAuth
-)
-
-func getAuthType(c Credentials) AuthType {
-	if c.IsUsernamePresent() {
-		return PasswordAuth
-	}
-	if c.IsTOTPCodePresent() {
-		return TOTPAuth
-	}
-	if c.IsWebauthnTokenPresent() {
-		return WebauthnAuth
-	}
-	return UnknownAuth
 }
 
 // swagger:operation POST /signin signin
@@ -330,7 +306,7 @@ func getAuthType(c Credentials) AuthType {
 //         "signin_session_token": "YjcxYmE0MjQtMGY1MS00ZDI0LTk4NDAtYjhiM2IwNzY5ZDNk",
 //         "totp": "592918"
 //       }'
-func Signin(userService UserService, claimKey string, ttl time.Duration) gin.HandlerFunc {
+func Signin(userService UserService, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		rh := NewRequestHandler(c)
@@ -348,13 +324,6 @@ func Signin(userService UserService, claimKey string, ttl time.Duration) gin.Han
 		log.Printf("cred = %#v", cred)
 
 		var user User
-
-		//switch getAuthType(cred) {
-		//case PasswordAuth:
-		//	break
-		//case TOTPAuth:
-		//
-		//}
 
 		// if 2fa and password signin was already completed
 		if cred.IsSigninSessionTokenPresent() {
@@ -574,7 +543,7 @@ func UpdateUser(service UserService) gin.HandlerFunc {
 }
 
 func UnmarshalUser(payload []byte, schema *jsonapi.Schema) (User, error) {
-	doc, err := jsonapi.UnmarshalDocument([]byte(payload), schema)
+	doc, err := jsonapi.UnmarshalDocument(payload, schema)
 	if err != nil {
 		return User{}, err
 	}
@@ -601,25 +570,4 @@ func MarshalUser(uri string, schema *jsonapi.Schema, user User) (string, error) 
 	//user.ID = ID
 	doc := NewJSONDoc(user)
 	return MarshalDoc(uri, schema, doc)
-}
-
-func ListUsers(service UserService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
-		rh.WriteCORSHeader()
-
-		users, dberr := service.List()
-		if rh.HandleDBError(dberr) {
-			return
-		}
-
-		doc := NewCollectionDoc(users)
-
-		rh.SetContentTypeJSON()
-		out, err := MarshalDoc(c.Request.URL.RequestURI(), UserJSONSchema, doc)
-		if rh.HandleError(err) {
-			return
-		}
-		c.String(http.StatusOK, out)
-	}
 }

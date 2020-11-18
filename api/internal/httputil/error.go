@@ -18,7 +18,7 @@ func (e *DBOpError) Log(tx string) {
 	log.Printf("%s sql.excute.errored: %#v, sql: %s", tx, e.Err, e.Query)
 }
 
-func (rh RequestHanlder) HandleError(errs ...error) bool {
+func (rh RequestHandler) HandleError(errs ...error) bool {
 	c := rh.Context
 
 	if errs == nil || len(errs) == 0 {
@@ -40,7 +40,7 @@ func (rh RequestHanlder) HandleError(errs ...error) bool {
 	return false
 }
 
-func (rh RequestHanlder) HandleDBError(dberr *DBOpError) bool {
+func (rh RequestHandler) HandleDBError(dberr *DBOpError) bool {
 	if dberr != nil {
 		c := rh.Context
 		LogDBErr(rh.TX(), dberr.Query, "db error", dberr.Err)
@@ -50,7 +50,7 @@ func (rh RequestHanlder) HandleDBError(dberr *DBOpError) bool {
 	return false
 }
 
-func (rh RequestHanlder) HandleSecurityError(err *model.Error) bool {
+func (rh RequestHandler) HandleSecurityError(err *model.Error) bool {
 	if err != nil {
 		c := rh.Context
 		LogErr(rh.TX(), err.Message, err)

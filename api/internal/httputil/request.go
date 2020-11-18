@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func (rh RequestHanlder) GetBody() ([]byte, error) {
+func (rh RequestHandler) GetBody() ([]byte, error) {
 	c := rh.Context
 	payload, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -17,7 +17,7 @@ func (rh RequestHanlder) GetBody() ([]byte, error) {
 	return payload, err
 }
 
-func (rh RequestHanlder) UserFromContext() (User, error) {
+func (rh RequestHandler) UserFromContext() (User, error) {
 	c := rh.Context
 	ctx := c.Request.Context()
 	user, ok := ctx.Value("user").(User)
@@ -28,12 +28,12 @@ func (rh RequestHanlder) UserFromContext() (User, error) {
 }
 
 // TX returns request transaction id
-func (rh RequestHanlder) TX() string {
+func (rh RequestHandler) TX() string {
 	c := rh.Context
 	return c.Request.Context().Value("tid").(string)
 }
 
-func (rh RequestHanlder) GetPayload(v interface{}) ([]byte, []error) {
+func (rh RequestHandler) GetPayload(v interface{}) ([]byte, []error) {
 
 	payload, err := rh.GetBody()
 	if err != nil {
@@ -43,7 +43,7 @@ func (rh RequestHanlder) GetPayload(v interface{}) ([]byte, []error) {
 	return payload, nil
 }
 
-func (rh RequestHanlder) CheckUserIDMatchUserFromContext(id string) *Error {
+func (rh RequestHandler) CheckUserIDMatchUserFromContext(id string) *Error {
 	ctxUser, err := rh.UserFromContext()
 	if err != nil {
 		return New(SecurityError, Unknown)
