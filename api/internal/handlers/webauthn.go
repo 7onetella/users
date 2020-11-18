@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
-	"github.com/7onetella/users/api/internal/model"
+	. "github.com/7onetella/users/api/internal/model"
 	. "github.com/7onetella/users/api/pkg/crypto"
 	"github.com/duo-labs/webauthn/webauthn"
 	"github.com/gin-gonic/gin"
@@ -21,7 +21,7 @@ func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerF
 
 		user, err := rh.UserFromContext()
 		if err != nil {
-			c.AbortWithError(500, err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(AuthenticationError, UserUnknown))
 			return
 		}
 
@@ -79,7 +79,7 @@ func FinishRegistration(service UserService, web *webauthn.WebAuthn) gin.Handler
 			return
 		}
 
-		service.SaveUserCredential(model.NewUserCredential(user.ID, string(marshaledCredential)))
+		service.SaveUserCredential(NewUserCredential(user.ID, string(marshaledCredential)))
 
 		user.WebAuthnEnabled = true
 		// clean up the session data after successful registration
@@ -104,14 +104,18 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		}
 		log.Printf("user = %#v", user)
 
-		userCreds, dberr := service.FindUserCredentialByUserID(user.ID)
+		userCredentials, dberr := service.FindUserCredentialByUserID(user.ID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
-		credentials := []webauthn.Credential{}
-		for _, cred := range userCreds {
+		var credentials []webauthn.Credential
+		for _, cred := range userCredentials {
 			credential := webauthn.Credential{}
-			json.Unmarshal([]byte(cred.Credential), &credential)
+			err := json.Unmarshal([]byte(cred.Credential), &credential)
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONError, Unmarshalling))
+				return
+			}
 			credentials = append(credentials, credential)
 		}
 		user.Credentials = credentials
@@ -160,28 +164,31 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 			return
 		}
 
-		userCreds, dberr := service.FindUserCredentialByUserID(user.ID)
+		userCredentials, dberr := service.FindUserCredentialByUserID(user.ID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
-		credentials := []webauthn.Credential{}
-		for _, cred := range userCreds {
+		var credentials []webauthn.Credential
+		for _, cred := range userCredentials {
 			credential := webauthn.Credential{}
-			json.Unmarshal([]byte(cred.Credential), &credential)
+			err = json.Unmarshal([]byte(cred.Credential), &credential)
+			if err != nil {
+				c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONError, Unmarshalling))
+				return
+			}
 			credentials = append(credentials, credential)
 		}
 		user.Credentials = credentials
 
-		// TODO: perform additional check
 		_, err = web.FinishLogin(user, sessionData, c.Request)
 		if rh.HandleError(err) {
 			return
 		}
 
-		secAuthEvent := model.NewAuthEvent(user.ID, "sec_auth_success", "", "", "")
+		secAuthEvent := NewAuthEvent(user.ID, "sec_auth_success", "", "", "")
 		service.RecordAuthEvent(secAuthEvent)
 
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"result":                 true,
 			"signin_session_token":   signInSessionToken,
 			"webauthn_session_token": Base64Encode(secAuthEvent.ID),
