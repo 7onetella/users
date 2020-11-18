@@ -48,7 +48,10 @@ func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc 
 
 		w := c.Writer
 		w.Header().Add(ContentType, ImagePNG)
-		w.Write(qrBytes)
+		_, err = w.Write(qrBytes)
+		if err != nil {
+			LogErr(rh.TX(), "error writing image bytes", err)
+		}
 	}
 }
 
@@ -184,7 +187,11 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 		}
 
 		var cred TOTPCredentials
-		c.ShouldBindJSON(&cred)
+		err = c.ShouldBindJSON(&cred)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONError, Marshalling))
+			return
+		}
 
 		totp := gotp.NewDefaultTOTP(user.TOTPSecretTmp)
 		now := int(time.Now().Unix())
