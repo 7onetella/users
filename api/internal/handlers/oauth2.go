@@ -3,6 +3,7 @@ package handlers
 import (
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
+	. "github.com/7onetella/users/api/internal/model"
 	"github.com/7onetella/users/api/internal/model/oauth2"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -42,13 +43,16 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 		rh := NewRequestHandler(c)
 		user, err := rh.UserFromContext()
 		if err != nil {
-			c.AbortWithError(500, err)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, New(AuthenticationError, UserUnknown))
 			return
 		}
 		rh.WriteCORSHeader()
 
 		ar := oauth2.AuthorizationRequest{}
-		c.BindJSON(&ar)
+		err = c.BindJSON(&ar)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONError, Unmarshalling))
+		}
 
 		// does client exist?
 		clientExists, dberr := service.DoesClientExist(ar.ClientID)
@@ -74,13 +78,13 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 		}
 
 		// NamedExec permission for the user
-		dberr = service.UpdatePermissions(oauth2.UserGrants{user.ID, ar.ClientID, ar.Scope})
+		dberr = service.UpdatePermissions(oauth2.UserGrants{UserID: user.ID, ClientID: ar.ClientID, Scope: ar.Scope})
 		if rh.HandleDBError(dberr) {
 			return
 		}
 
 		code := uuid.New().String()
-		authorizationCode := oauth2.AuthorizationCode{code, ar.ClientID, time.Now().Unix(), user.ID}
+		authorizationCode := oauth2.AuthorizationCode{Code: code, ClientID: ar.ClientID, CreatedAt: time.Now().Unix(), UserID: user.ID}
 		dberr = service.StoreAuthorizationRequestCode(authorizationCode)
 		if rh.HandleDBError(dberr) {
 			return
@@ -253,7 +257,8 @@ func GetClientName(service UserService) gin.HandlerFunc {
 
 		client, dberr := service.GetClient(clientID)
 		if dberr != nil {
-			c.AbortWithError(http.StatusInternalServerError, dberr.Err)
+			dberr.Log(rh.TX())
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, QueryingFailed))
 			return
 		}
 
@@ -264,6 +269,8 @@ func GetClientName(service UserService) gin.HandlerFunc {
 }
 
 func DoesRedirectURIMatch(redirectURI string) bool {
+	// doing this to suppress ide warning
+	log.Println(redirectURI)
 	return true
 }
 
@@ -274,6 +281,8 @@ func OAuth2Scope(service UserService) gin.HandlerFunc {
 
 		scope := c.Param("scope")
 
+		// ping to suppress ide warning
+		_ = service.Ping()
 		c.Header("Cache-Control", "no-store")
 		c.Header("Pragma", "no-cache")
 		c.JSON(200, gin.H{

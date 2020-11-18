@@ -9,6 +9,7 @@ import (
 
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/httputil"
+	. "github.com/7onetella/users/api/internal/model"
 	"github.com/dgrijalva/jwt-go"
 
 	"net/http"
@@ -152,7 +153,7 @@ func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := ParseAuthTokenFromAuthorizationHeader(c.Request)
 		if err != nil {
-			c.AbortWithError(http.StatusUnauthorized, err)
+			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
 		log.Printf("Authentication: Bearer %s", tokenString)
@@ -160,7 +161,7 @@ func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 		payloadRaw := terms[1]
 		jwtSecret, dberr := GetJWTSecretForUser(payloadRaw, service)
 		if dberr != nil {
-			c.AbortWithError(http.StatusUnauthorized, err)
+			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
 
@@ -177,7 +178,7 @@ func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 			accessToken, dberr := service.GetAccessToken(claims.Id)
 			if dberr != nil {
 				log.Printf("token not found")
-				c.AbortWithError(http.StatusUnauthorized, dberr.Err)
+				_ = c.AbortWithError(http.StatusUnauthorized, dberr.Err)
 				return
 			}
 			if accessToken.Token != tokenString {
@@ -195,8 +196,8 @@ func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 		userID := claims.Subject
 		req := c.Request
 		user, operr := service.Get(userID)
-		if err != nil {
-			c.AbortWithError(http.StatusUnauthorized, operr.Err)
+		if operr != nil {
+			_ = c.AbortWithError(http.StatusUnauthorized, operr.Err)
 			return
 		}
 		ctx := context.WithValue(req.Context(), "user", user)
@@ -240,13 +241,17 @@ func (a JWTAuth) RefreshToken(service UserService) gin.HandlerFunc {
 		rh.WriteCORSHeader()
 
 		var rt JWTToken
-		c.ShouldBindJSON(&rt)
+		err := c.ShouldBindJSON(&rt)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, New(JSONError, Unmarshalling))
+			return
+		}
 
 		terms := strings.Split(rt.Token, ".")
 		payloadRaw := terms[1]
 		jwtSecret, dberr := GetJWTSecretForUser(payloadRaw, service)
 		if dberr != nil {
-			c.AbortWithError(http.StatusUnauthorized, dberr.Err)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, New(DatabaseError, QueryingFailed))
 			return
 		}
 

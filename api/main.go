@@ -153,11 +153,11 @@ func main() {
 	r.POST("/signin", Signin(userService, jwt.TTL))
 	r.POST("/refresh", jwt.RefreshToken(userService))
 
-	webauthn := r.Group("/webauthn")
-	webauthn.Use(jwt.TokenValidator(userService))
+	webauthentication := r.Group("/webauthn")
+	webauthentication.Use(jwt.TokenValidator(userService))
 	{
-		webauthn.POST("/register/begin", BeginRegistration(userService, web))
-		webauthn.POST("/register/finish", FinishRegistration(userService, web))
+		webauthentication.POST("/register/begin", BeginRegistration(userService, web))
+		webauthentication.POST("/register/finish", FinishRegistration(userService, web))
 	}
 	r.POST("/webauthn/login/begin", BeginLogin(userService, web))
 	r.POST("/webauthn/login/finish", FinishLogin(userService, web))
@@ -178,10 +178,10 @@ func main() {
 
 	switch stage {
 	case "localhost":
-		r.Run(port)
+		log.Println(r.Run(port))
 	case "live":
 		certFile, keyFile := GetCertAndKey()
-		r.RunTLS(port, certFile, keyFile)
+		log.Println(r.RunTLS(port, certFile, keyFile))
 	default:
 	}
 
@@ -212,7 +212,7 @@ func GetCertAndKey() (string, string) {
 	return dir + "/" + stage + "-crt.pem", dir + "/" + stage + "-key.pem"
 }
 
-// GetEnvWithDefault attemps to retrieve from env. default calculated based on stage if env value empty.
+// GetEnvWithDefault attempts to retrieve from env. default calculated based on stage if env value empty.
 func GetEnvWithDefault(env, defaultV string) string {
 	v := os.Getenv(env)
 	if v == "" {
