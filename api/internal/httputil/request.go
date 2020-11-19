@@ -5,7 +5,14 @@ import (
 	. "github.com/7onetella/users/api/internal/model"
 	"io/ioutil"
 	"log"
+	"net/http"
 )
+
+func (rh RequestHandler) NewAuthEvent(userID, event string) AuthEvent {
+	c := rh.Context
+
+	return NewAuthEvent(userID, event, c.ClientIP(), c.ClientIP(), c.Request.UserAgent())
+}
 
 func (rh RequestHandler) GetBody() ([]byte, error) {
 	c := rh.Context
@@ -13,7 +20,6 @@ func (rh RequestHandler) GetBody() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println("payload = %s", string(payload))
 	return payload, err
 }
 
@@ -54,4 +60,70 @@ func (rh RequestHandler) CheckUserIDMatchUserFromContext(id string) *Error {
 	}
 
 	return nil
+}
+
+func (rh RequestHandler) WrapAsJSONAPIErrors(err *Error) JSONAPIErrors {
+	if err == nil {
+		return JSONAPIErrors{}
+	}
+
+	out := JSONAPIErrors{
+		Errors: []JSONAPIError{
+			{
+				Meta: err,
+			},
+		},
+	}
+	return out
+}
+
+func (rh RequestHandler) HandleDBError(dberr *DBOpError) bool {
+	if dberr != nil {
+		c := rh.Context
+		LogDBErr(rh.TX(), dberr.Query, "db error", dberr.Err)
+		c.AbortWithStatus(500)
+		return true
+	}
+	return false
+}
+
+func (rh RequestHandler) HandleError(errs ...error) bool {
+	c := rh.Context
+
+	if errs == nil || len(errs) == 0 {
+		return false
+	}
+
+	errFound := false
+	for i := range errs {
+		err := errs[i]
+		if err != nil {
+			LogErr(rh.TX(), "errs[i]", err)
+			errFound = true
+		}
+	}
+	if errFound {
+		c.AbortWithStatus(500)
+		return true
+	}
+	return false
+}
+
+func (rh RequestHandler) Log(message string) {
+	log.Printf("%s %s", rh.TX(), message)
+}
+
+func (rh RequestHandler) Logf(format, message string) {
+	log.Printf("%s "+format, rh.TX(), message)
+}
+
+func (rh RequestHandler) LogError(e *Error) {
+	// f7fc7487-9b92-4f27-8d4f-83ca96bbb6b9 {"code":3200,"reason":"","message":"Unable to marshall json"}
+	log.Printf("%s error=%s", rh.TX(), e)
+}
+
+func (rh RequestHandler) AbortWithStatusInternalServerError(category Category, reason Reason, err error) {
+	e := Wrap(category, reason, err)
+	rh.LogError(e)
+	rh.Context.AbortWithStatusJSON(http.StatusInternalServerError, e)
 }

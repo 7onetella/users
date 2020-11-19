@@ -26,17 +26,19 @@ func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerF
 		}
 
 		// generate PublicKeyCredentialCreationOptions, session data
-		options, sessionData, err := web.BeginRegistration(
-			user,
-		)
-		if rh.HandleError(err) {
+		options, sessionData, err := web.BeginRegistration(user)
+		if err != nil {
+			LogErr(rh.TX(), "error registering user", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(AuthenticationError, WebauthnRegistrationFailure))
 			return
 		}
 
 		marshaledData, err := json.Marshal(sessionData)
-		if rh.HandleError(err) {
+		if err != nil {
+			rh.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling, err)
 			return
 		}
+
 		user.WebAuthnSessionData = string(marshaledData)
 		dberr := service.SaveWebauthnSession(user)
 		if rh.HandleDBError(dberr) {
@@ -45,7 +47,9 @@ func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerF
 
 		rh.SetContentTypeJSON()
 		out, err := json.Marshal(options)
-		if rh.HandleError(err) {
+		if err != nil {
+			LogErr(rh.TX(), "error marshalling PublicKeyCredentialCreationOptions", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Marshalling))
 			return
 		}
 		c.String(http.StatusOK, string(out))
@@ -113,7 +117,7 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 			credential := webauthn.Credential{}
 			err := json.Unmarshal([]byte(cred.Credential), &credential)
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONError, Unmarshalling))
+				c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Unmarshalling))
 				return
 			}
 			credentials = append(credentials, credential)
@@ -173,7 +177,7 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 			credential := webauthn.Credential{}
 			err = json.Unmarshal([]byte(cred.Credential), &credential)
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONError, Unmarshalling))
+				c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Unmarshalling))
 				return
 			}
 			credentials = append(credentials, credential)

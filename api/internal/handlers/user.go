@@ -61,8 +61,10 @@ func Signup(userService UserService) gin.HandlerFunc {
 			return
 		}
 
+		//rh.Logf("user.signup.info payload=%s", string(payload))
 		user, err := UnmarshalUser(payload, UserJSONSchema)
-		if rh.HandleError(err) {
+		if err != nil {
+			rh.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling, err)
 			return
 		}
 
@@ -78,7 +80,8 @@ func Signup(userService UserService) gin.HandlerFunc {
 
 		rh.SetContentTypeJSON()
 		out, err := MarshalUser(c.Request.URL.RequestURI(), UserJSONSchema, user)
-		if rh.HandleError(err) {
+		if err != nil {
+			rh.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling, err)
 			return
 		}
 		c.String(http.StatusOK, out)
@@ -205,11 +208,11 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		cred := Credentials{}
 		err := c.ShouldBind(&cred)
 		if err != nil {
-			auth.DenyAccessForAnonymous(JSONError, Unmarshalling)
+			auth.DenyAccessForAnonymous(Wrap(JSONAPISpecError, Unmarshalling, err))
 			return
 		}
 
-		log.Printf("cred = %#v", cred)
+		//log.Printf("cred = %#v", cred)
 
 		var user User
 
@@ -217,21 +220,21 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		if cred.IsSigninSessionTokenPresent() {
 			eventID, err := auth.ExtractEventID(cred.SigninSessionToken)
 			if err != nil {
-				auth.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
+				auth.DenyAccessForAnonymous(Wrap(AuthenticationError, SigninSessionTokenDecodingFailed, err))
 				return
 			}
 			e, dberr := userService.GetAuthEvent(eventID)
 			if dberr != nil {
-				auth.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
+				auth.DenyAccessForAnonymous(Wrap(DatabaseError, QueryingFailed, dberr))
 				return
 			}
 			if auth.IsSigninSessionStillValid(e.Timestamp, time.Minute*5) {
-				auth.DenyAccessForUser(e.UserID, AuthenticationError, SigninSessionExpired)
+				auth.DenyAccessForUser(e.UserID, New(AuthenticationError, SigninSessionExpired))
 				return
 			}
 			userFromDB, dberr := userService.Get(e.UserID)
 			if dberr != nil {
-				auth.DenyAccessForUser(e.UserID, DatabaseError, QueryingFailed)
+				auth.DenyAccessForUser(e.UserID, Wrap(DatabaseError, QueryingFailed, err))
 				return
 			}
 			user = userFromDB
@@ -241,12 +244,12 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		if cred.IsUsernamePresent() {
 			userFromDB, dberr := userService.FindByEmail(cred.Username)
 			if dberr != nil {
-				auth.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
+				auth.DenyAccessForAnonymous(Wrap(DatabaseError, QueryingFailed, dberr))
 				return
 			}
 
 			if userFromDB.Password != cred.Password {
-				auth.DenyAccessForUser(user.ID, AuthenticationError, UsernameOrPasswordDoesNotMatch)
+				auth.DenyAccessForUser(user.ID, New(AuthenticationError, UsernameOrPasswordDoesNotMatch))
 				return
 			}
 			user = userFromDB
@@ -255,11 +258,11 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 	CheckIf2FARequired:
 		if user.WebAuthnEnabled {
 			if !cred.IsWebauthnTokenPresent() {
-				auth.AccessDeniedMissingData(user.ID, AuthenticationError, WebAuthnRequired)
+				auth.AccessDeniedMissingData(user.ID, New(AuthenticationError, WebAuthnRequired))
 				return
 			}
 			if !auth.IsWebAuthnSessionTokenValidForUer(user.ID, cred.WebAuthnSessionToken) {
-				auth.DenyAccessForUser(user.ID, AuthenticationError, WebauthnAuthFailure)
+				auth.DenyAccessForUser(user.ID, New(AuthenticationError, WebauthnAuthFailure))
 				return
 			}
 			goto GrantAccess
@@ -267,11 +270,11 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 
 		if user.TOTPEnabled {
 			if !cred.IsTOTPCodePresent() {
-				auth.AccessDeniedMissingData(user.ID, AuthenticationError, TOTPRequired)
+				auth.AccessDeniedMissingData(user.ID, New(AuthenticationError, TOTPRequired))
 				return
 			}
 			if !IsTOTPValid(user, cred.TOTP) {
-				auth.DenyAccessForUser(user.ID, AuthenticationError, TOTPAuthFailure)
+				auth.DenyAccessForUser(user.ID, New(AuthenticationError, TOTPAuthFailure))
 				return
 			}
 			goto GrantAccess
@@ -281,14 +284,13 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		// guard against empty json payload
 		if len(user.ID) == 0 {
 			log.Printf("user = %#v", user)
-			auth.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
+			auth.DenyAccessForAnonymous(New(AuthenticationError, UserUnknown))
 			return
 		}
 
 		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, issuer, ttl)
 		if err != nil {
-			log.Println("encoding error")
-			auth.DenyAccessForUser(user.ID, AuthenticationError, JWTEncodingFailure)
+			auth.DenyAccessForUser(user.ID, Wrap(AuthenticationError, JWTEncodingFailure, err))
 			return
 		}
 
@@ -339,9 +341,12 @@ func GetUser(service UserService) gin.HandlerFunc {
 
 		rh.SetContentTypeJSON()
 		out, err := MarshalUser(c.Request.URL.RequestURI(), UserJSONSchema, user)
-		if rh.HandleError(err) {
+		if err != nil {
+			LogErr(rh.TX(), "error marshalling user", err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Marshalling))
 			return
 		}
+
 		c.String(http.StatusOK, out)
 	}
 }

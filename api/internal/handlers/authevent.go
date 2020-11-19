@@ -19,17 +19,17 @@ func (ah AuthEventHandler) Context() *gin.Context {
 	return ah.RequestHandler.Context
 }
 
-func (ah AuthEventHandler) DenyAccessForAnonymous(category Category, reason Reason) {
+func (ah AuthEventHandler) DenyAccessForAnonymous(e *Error) {
 	c := ah.Context()
-	e := New(category, reason)
 	c.AbortWithStatusJSON(401, e)
+	ah.RequestHandler.LogError(e)
 	ah.RecordEvent("", e.ErrorCodeHuman)
 }
 
-func (ah AuthEventHandler) DenyAccessForUser(userID string, category Category, reason Reason) {
+func (ah AuthEventHandler) DenyAccessForUser(userID string, e *Error) {
 	c := ah.Context()
-	e := New(category, reason)
 	c.AbortWithStatusJSON(401, e)
+	ah.RequestHandler.LogError(e)
 	ah.RecordEvent(userID, e.ErrorCodeHuman)
 }
 
@@ -54,12 +54,12 @@ func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
 	}
 }
 
-func (ah AuthEventHandler) AccessDeniedMissingData(userID string, category Category, reason Reason) {
+func (ah AuthEventHandler) AccessDeniedMissingData(userID string, e *Error) {
 	rh := ah.RequestHandler
 	c := rh.Context
 	userService := ah.UserService
 
-	e := New(category, reason)
+	//e := New(category, reason)
 	event := rh.NewAuthEvent(userID, e.ErrorCodeHuman)
 	userService.RecordAuthEvent(event)
 

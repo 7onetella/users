@@ -51,7 +51,7 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 		ar := oauth2.AuthorizationRequest{}
 		err = c.BindJSON(&ar)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONError, Unmarshalling))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Unmarshalling))
 		}
 
 		// does client exist?

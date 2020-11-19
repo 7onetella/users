@@ -151,12 +151,14 @@ func PreflightOptions() gin.HandlerFunc {
 
 func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		//rh := NewRequestHandler(c)
+
 		tokenString, err := ParseAuthTokenFromAuthorizationHeader(c.Request)
 		if err != nil {
 			_ = c.AbortWithError(http.StatusUnauthorized, err)
 			return
 		}
-		log.Printf("Authentication: Bearer %s", tokenString)
+		//rh.Logf("Authentication: Bearer %s", tokenString)
 		terms := strings.Split(tokenString, ".")
 		payloadRaw := terms[1]
 		jwtSecret, dberr := GetJWTSecretForUser(payloadRaw, service)
@@ -207,12 +209,10 @@ func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 }
 
 func GetJWTSecretForUser(payloadRaw string, userService UserService) (string, *DBOpError) {
-	log.Printf("payload = %s", payloadRaw)
 	claims, err := ExtractClaimsFromPayload(payloadRaw)
 	if err != nil {
 		log.Printf("jmap err = %v", err)
 	}
-	log.Printf("jmap = %#v", claims)
 	claimedUser, dberr := userService.Get(claims.Subject)
 	if dberr != nil {
 		log.Print(err)
@@ -236,14 +236,14 @@ func ExtractClaimsFromPayload(s string) (*CustomClaims, error) {
 // SigninHandlerFunc signs in user
 func (a JWTAuth) RefreshToken(service UserService, issuer string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("Token Refresh Started")
+		//log.Println("Token Refresh Started")
 		rh := NewRequestHandler(c)
 		rh.WriteCORSHeader()
 
 		var rt JWTToken
 		err := c.ShouldBindJSON(&rt)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, New(JSONError, Unmarshalling))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, New(JSONAPISpecError, Unmarshalling))
 			return
 		}
 
@@ -255,7 +255,7 @@ func (a JWTAuth) RefreshToken(service UserService, issuer string) gin.HandlerFun
 			return
 		}
 
-		log.Println("token =", rt.Token)
+		//log.Println("token =", rt.Token)
 
 		claims, err := DecodeTokenAsCustomClaims(rt.Token, jwtSecret)
 		if err != nil {
@@ -271,7 +271,7 @@ func (a JWTAuth) RefreshToken(service UserService, issuer string) gin.HandlerFun
 			return
 		}
 
-		log.Println("Token refresh successful")
+		//log.Println("Token refresh successful")
 
 		refreshToken := JWTToken{
 			Token:      tokenString,

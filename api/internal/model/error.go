@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -11,6 +12,8 @@ type JSONAPIErrors struct {
 type JSONAPIError struct {
 	Meta *Error `json:"meta,omitempty"`
 }
+
+// CREDIT goes to cloudflare https://github.com/cloudflare/cfssl Error
 
 // This is JWT Auth Token
 //
@@ -35,8 +38,6 @@ type MissingDataError struct {
 	SigninSessionToken string `json:"signin_session_token"`
 }
 
-// Credit goes to cloudflare https://github.com/cloudflare/cfssl Error
-
 // Category is the most significant digit of the error code.
 type Category int
 
@@ -52,7 +53,7 @@ const (
 
 	SecurityError // 2XXX
 
-	JSONError // 3XXX
+	JSONAPISpecError // 3XXX
 
 	AuthenticationError // 4xxx
 
@@ -110,6 +111,8 @@ const (
 	TOTPRequired
 
 	WebAuthnRequired
+
+	WebauthnRegistrationFailure
 )
 
 // ServerError reasons
@@ -152,7 +155,7 @@ func New(category Category, reason Reason) *Error {
 				reason))
 		}
 
-	case JSONError:
+	case JSONAPISpecError:
 		switch reason {
 		case Marshalling:
 			msg = "Error occurred during marshalling"
@@ -160,7 +163,7 @@ func New(category Category, reason Reason) *Error {
 			msg = "Error occurred during unmarshalling"
 			errCodeHuman = "error_unmarshalling"
 		default:
-			panic(fmt.Sprintf("Unsupported error reason %d under category JSONError.",
+			panic(fmt.Sprintf("Unsupported error reason %d under category JSONAPISpecError.",
 				reason))
 		}
 
@@ -191,6 +194,8 @@ func New(category Category, reason Reason) *Error {
 		case WebAuthnRequired:
 			msg = "WebAuthn Auth Required"
 			errCodeHuman = "login_webauthn_requested"
+		case WebauthnRegistrationFailure:
+			msg = "Failed to register user's U2F key"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category AuthenticationError.",
 				reason))
@@ -221,4 +226,32 @@ func New(category Category, reason Reason) *Error {
 			category))
 	}
 	return &Error{ErrorCode: errorCode, ErrorCodeHuman: errCodeHuman, Message: msg}
+}
+
+// The error interface implementation, which formats to a JSON object string.
+func (e *Error) Error() string {
+	marshaled, err := json.Marshal(e)
+	if err != nil {
+		panic(err)
+	}
+	return string(marshaled)
+
+}
+
+// Wrap returns an error that contains the given error and an error code derived from
+// the given category, reason and the error. Currently, to avoid confusion, it is not
+// allowed to create an error of category Success
+func Wrap(category Category, reason Reason, err error) *Error {
+	errorCode := int(category) + int(reason)
+	if err == nil {
+		panic("Wrap needs a supplied error to initialize.")
+	}
+
+	// do not double wrap a error
+	switch err.(type) {
+	case *Error:
+		panic("Unable to wrap a wrapped error.")
+	}
+
+	return &Error{ErrorCode: errorCode, Message: err.Error()}
 }

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/base64"
-	"log"
 	"net/http"
 	"time"
 
@@ -21,7 +20,7 @@ func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc 
 		auth := AuthEventHandler{rh, userService}
 		user, err := rh.UserFromContext()
 		if err != nil {
-			auth.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
+			auth.DenyAccessForAnonymous(Wrap(AuthenticationError, SigninSessionTokenDecodingFailed, err))
 			return
 		}
 		rh.WriteCORSHeader()
@@ -89,7 +88,7 @@ func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc
 
 		user, err := rh.UserFromContext()
 		if err != nil {
-			auth.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
+			auth.DenyAccessForAnonymous(Wrap(AuthenticationError, UserUnknown, err))
 			return
 		}
 
@@ -182,14 +181,14 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 		auth := AuthEventHandler{rh, service}
 		user, err := rh.UserFromContext()
 		if err != nil {
-			auth.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
+			auth.DenyAccessForAnonymous(Wrap(AuthenticationError, UserUnknown, err))
 			return
 		}
 
 		var cred TOTPCredentials
 		err = c.ShouldBindJSON(&cred)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONError, Marshalling))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Marshalling))
 			return
 		}
 
@@ -221,9 +220,9 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 
 func IsTOTPValid(user User, token string) bool {
 	totp := gotp.NewDefaultTOTP(user.TOTPSecretCurrent)
-	log.Printf(":token = %s", token)
+	//log.Printf(":token = %s", token)
 	now := int(time.Now().Unix())
-	log.Printf("timestamp = %d", now)
+	//log.Printf("timestamp = %d", now)
 	return totp.Verify(token, now)
 }
 

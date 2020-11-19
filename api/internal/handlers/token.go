@@ -29,7 +29,7 @@ func DecodeToken(tokenString, secret string) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	log.Printf("claim = %#v", token.Claims)
+	//log.Printf("claim = %#v", token.Claims)
 
 	if mc, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		claims := map[string]interface{}(mc)
