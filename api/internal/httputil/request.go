@@ -80,7 +80,8 @@ func (rh RequestHandler) WrapAsJSONAPIErrors(err *Error) JSONAPIErrors {
 func (rh RequestHandler) HandleDBError(dberr *DBOpError) bool {
 	if dberr != nil {
 		c := rh.Context
-		LogDBErr(rh.TX(), dberr.Query, "db error", dberr.Err)
+		e := Wrap(DatabaseError, QueryingFailed, dberr)
+		rh.LogError(e)
 		c.AbortWithStatus(500)
 		return true
 	}

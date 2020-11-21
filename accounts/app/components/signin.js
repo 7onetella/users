@@ -34,19 +34,21 @@ export default Component.extend({
         }
       }, data => {
         console.log("> data:" + JSON.stringify(data));
-        var reason = data.json.reason
+        var code = data.json.code
         var message = data.json.message
         var signin_session_token = data.json.signin_session_token
         console.log("> reason:" + reason)
-        if (reason === 'login_totp_requested') {
+        // totp auth requested
+        if (code === 4800) {
           that.set('datastore.signin_session_token', signin_session_token)
           that.router.transitionTo('totp-signin');
         }
-        if (reason === 'login_webauthn_requested') {
+        // webauthn auth required
+        if (code === 4900) {
           that.set('datastore.signin_session_token', signin_session_token)
           that.router.transitionTo('webauthn-signin');
-        }
-        if (reason === 'login_password_invalid') {
+        } // invalid password
+        if (code === 4300) {
           that.set("login_failed", true);
           that.set("login_failure_reason", message)
         }

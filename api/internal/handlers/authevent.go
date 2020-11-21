@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"time"
 
 	. "github.com/7onetella/users/api/internal/dbutil"
@@ -21,16 +22,16 @@ func (ah AuthEventHandler) Context() *gin.Context {
 
 func (ah AuthEventHandler) DenyAccessForAnonymous(e *Error) {
 	c := ah.Context()
-	c.AbortWithStatusJSON(401, e)
+	c.AbortWithStatusJSON(http.StatusUnauthorized, e)
 	ah.RequestHandler.LogError(e)
-	ah.RecordEvent("", e.ErrorCodeHuman)
+	ah.RecordEvent("", e.Message)
 }
 
 func (ah AuthEventHandler) DenyAccessForUser(userID string, e *Error) {
 	c := ah.Context()
 	c.AbortWithStatusJSON(401, e)
 	ah.RequestHandler.LogError(e)
-	ah.RecordEvent(userID, e.ErrorCodeHuman)
+	ah.RecordEvent(userID, e.Message)
 }
 
 func (ah AuthEventHandler) ExtractEventID(s string) (string, error) {
@@ -50,7 +51,7 @@ func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
 	event := rh.NewAuthEvent(userID, eventName)
 	dberr := ah.UserService.RecordAuthEvent(event)
 	if dberr != nil {
-		LogErr(rh.TX(), "db error", dberr.Err)
+		rh.LogError(Wrap(DatabaseError, PersistingFailed, dberr))
 	}
 }
 
@@ -60,7 +61,7 @@ func (ah AuthEventHandler) AccessDeniedMissingData(userID string, e *Error) {
 	userService := ah.UserService
 
 	//e := New(category, reason)
-	event := rh.NewAuthEvent(userID, e.ErrorCodeHuman)
+	event := rh.NewAuthEvent(userID, e.Message)
 	userService.RecordAuthEvent(event)
 
 	mde := MissingDataError{

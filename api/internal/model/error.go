@@ -21,8 +21,6 @@ type JSONAPIError struct {
 type Error struct {
 	// error code for machine
 	ErrorCode int `json:"code"`
-	// error code for human
-	ErrorCodeHuman string `json:"reason"`
 	// message to display for end user
 	Message string `json:"message"`
 	Err     error  `json:"-"`
@@ -130,7 +128,6 @@ const (
 func New(category Category, reason Reason) *Error {
 	errorCode := int(category) + int(reason)
 	var msg string
-	var errCodeHuman string
 
 	switch category {
 	case DatabaseError:
@@ -161,7 +158,6 @@ func New(category Category, reason Reason) *Error {
 			msg = "Error occurred during marshalling"
 		case Unmarshalling:
 			msg = "Error occurred during unmarshalling"
-			errCodeHuman = "error_unmarshalling"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category JSONAPISpecError.",
 				reason))
@@ -172,28 +168,21 @@ func New(category Category, reason Reason) *Error {
 		case SigninSessionTokenDecodingFailed:
 			msg = "Error decoding signin_session_token"
 		case SigninSessionExpired:
-			msg = "Your login session timed out"
-			errCodeHuman = "login_auth_expired"
+			msg = "Your signin session timed out"
 		case UsernameOrPasswordDoesNotMatch:
-			msg = "Check login name or password"
-			errCodeHuman = "login_password_invalid"
+			msg = "Check your username or password"
 		case WebauthnAuthFailure:
 			msg = "Webauthn authentication failed"
-			errCodeHuman = "invalid_webauthn_session_token"
 		case TOTPAuthFailure:
-			msg = "Your code is invalid"
-			errCodeHuman = "login_totp_invalid"
+			msg = "Your TOTP code is invalid"
 		case UserUnknown:
 			msg = "User is unknown"
-			errCodeHuman = "login_user_unknown"
 		case JWTEncodingFailure:
 			msg = "Problem with encoding jwt token"
 		case TOTPRequired:
 			msg = "TOTP required"
-			errCodeHuman = "login_totp_requested"
 		case WebAuthnRequired:
 			msg = "WebAuthn Auth Required"
-			errCodeHuman = "login_webauthn_requested"
 		case WebauthnRegistrationFailure:
 			msg = "Failed to register user's U2F key"
 		default:
@@ -225,7 +214,7 @@ func New(category Category, reason Reason) *Error {
 		panic(fmt.Sprintf("Unsupported error type: %d.",
 			category))
 	}
-	return &Error{ErrorCode: errorCode, ErrorCodeHuman: errCodeHuman, Message: msg}
+	return &Error{ErrorCode: errorCode, Message: msg}
 }
 
 // The error interface implementation, which formats to a JSON object string.

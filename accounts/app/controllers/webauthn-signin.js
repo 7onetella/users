@@ -80,17 +80,17 @@ export default Controller.extend({
             }, data => {
               console.log("> data:" + JSON.stringify(data));
               if (data.json) {
-                let reason = data.json.reason
                 let message = data.json.message
-                console.log("> reason:" + reason)
-
-                if (reason === 'login_auth_expired') {
+                let code = data.json.code
+                console.log("> message:" + message)
+                // signin session expired
+                if (code === 4200) {
                   that.get('router').transitionTo('login-session-expired');
                   that.set("login_failed", true);
                   that.set("login_failure_reason", message)
                 }
-
-                if (reason === 'invalid_webauthn_session_token') {
+                // webauthn auth failed
+                if (code === 4400) {
                   that.set("login_failed", true);
                   that.set("login_failure_reason", message)
                   return

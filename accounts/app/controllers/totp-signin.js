@@ -35,14 +35,16 @@ export default Controller.extend({
           that.set("login_failure_reason", data.statusText)
         }
         if (data.json) {
-          var reason = data.json.reason
+          var code = data.json.code
           var message = data.json.message
-          console.log("> reason:" + reason)
-          if (reason === 'login_totp_invalid') {
+          console.log("> message:" + message)
+          // totp code is invalid
+          if (code === 4500) {
             that.set("login_failed", true);
             that.set("login_failure_reason", message)
           }
-          if (reason === 'login_auth_expired') {
+          // signin session expired
+          if (code === 4200) {
             that.get('router').transitionTo('login-session-expired');
           }
         }

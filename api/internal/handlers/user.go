@@ -208,11 +208,9 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		cred := Credentials{}
 		err := c.ShouldBind(&cred)
 		if err != nil {
-			auth.DenyAccessForAnonymous(Wrap(JSONAPISpecError, Unmarshalling, err))
+			auth.DenyAccessForAnonymous(New(JSONAPISpecError, Unmarshalling))
 			return
 		}
-
-		//log.Printf("cred = %#v", cred)
 
 		var user User
 
@@ -220,12 +218,14 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		if cred.IsSigninSessionTokenPresent() {
 			eventID, err := auth.ExtractEventID(cred.SigninSessionToken)
 			if err != nil {
-				auth.DenyAccessForAnonymous(Wrap(AuthenticationError, SigninSessionTokenDecodingFailed, err))
+				rh.Logf("signin_session_token=%s", cred.SigninSessionToken)
+				auth.DenyAccessForAnonymous(New(AuthenticationError, SigninSessionTokenDecodingFailed))
 				return
 			}
 			e, dberr := userService.GetAuthEvent(eventID)
 			if dberr != nil {
-				auth.DenyAccessForAnonymous(Wrap(DatabaseError, QueryingFailed, dberr))
+				rh.Logf("querying for event_id %s", eventID)
+				auth.DenyAccessForAnonymous(New(DatabaseError, QueryingFailed))
 				return
 			}
 			if auth.IsSigninSessionStillValid(e.Timestamp, time.Minute*5) {
@@ -283,7 +283,6 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 	GrantAccess:
 		// guard against empty json payload
 		if len(user.ID) == 0 {
-			log.Printf("user = %#v", user)
 			auth.DenyAccessForAnonymous(New(AuthenticationError, UserUnknown))
 			return
 		}
