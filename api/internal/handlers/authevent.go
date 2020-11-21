@@ -23,14 +23,14 @@ func (ah AuthEventHandler) Context() *gin.Context {
 func (ah AuthEventHandler) DenyAccessForAnonymous(e *Error) {
 	c := ah.Context()
 	c.AbortWithStatusJSON(http.StatusUnauthorized, e)
-	ah.RequestHandler.LogError(e)
+	// record potential attacker's ip address and browser agent
 	ah.RecordEvent("", e.Message)
 }
 
 func (ah AuthEventHandler) DenyAccessForUser(userID string, e *Error) {
 	c := ah.Context()
-	c.AbortWithStatusJSON(401, e)
-	ah.RequestHandler.LogError(e)
+	c.AbortWithStatusJSON(http.StatusUnauthorized, e)
+	// record potential attacker's ip address and browser agent
 	ah.RecordEvent(userID, e.Message)
 }
 

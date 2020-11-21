@@ -218,13 +218,13 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		if cred.IsSigninSessionTokenPresent() {
 			eventID, err := auth.ExtractEventID(cred.SigninSessionToken)
 			if err != nil {
-				rh.Logf("signin_session_token=%s", cred.SigninSessionToken)
+				rh.Logf("signin.decode-userid.failed signin_session_token=%s error=%#v", cred.SigninSessionToken, err.Error())
 				auth.DenyAccessForAnonymous(New(AuthenticationError, SigninSessionTokenDecodingFailed))
 				return
 			}
 			e, dberr := userService.GetAuthEvent(eventID)
 			if dberr != nil {
-				rh.Logf("querying for event_id %s", eventID)
+				rh.Logf("signin.get-auth-event.failed event_id=%s error=%v", eventID, dberr)
 				auth.DenyAccessForAnonymous(New(DatabaseError, QueryingFailed))
 				return
 			}
@@ -234,7 +234,8 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 			}
 			userFromDB, dberr := userService.Get(e.UserID)
 			if dberr != nil {
-				auth.DenyAccessForUser(e.UserID, Wrap(DatabaseError, QueryingFailed, err))
+				rh.Logf("querying for user_id %s", e.UserID)
+				auth.DenyAccessForUser(e.UserID, New(DatabaseError, QueryingFailed))
 				return
 			}
 			user = userFromDB
@@ -244,7 +245,7 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		if cred.IsUsernamePresent() {
 			userFromDB, dberr := userService.FindByEmail(cred.Username)
 			if dberr != nil {
-				auth.DenyAccessForAnonymous(Wrap(DatabaseError, QueryingFailed, dberr))
+				auth.DenyAccessForAnonymous(New(DatabaseError, QueryingFailed))
 				return
 			}
 
@@ -289,7 +290,8 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 
 		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, issuer, ttl)
 		if err != nil {
-			auth.DenyAccessForUser(user.ID, Wrap(AuthenticationError, JWTEncodingFailure, err))
+			rh.Logf("encoding user=%s issuer=%", user.ID, issuer)
+			auth.DenyAccessForUser(user.ID, New(AuthenticationError, JWTEncodingFailure))
 			return
 		}
 
@@ -297,7 +299,7 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 			Token:      tokenString,
 			Expiration: expTime.Unix(),
 		}
-		c.JSON(200, token)
+		c.JSON(http.StatusOK, token)
 
 		auth.RecordEvent(user.ID, "login_successful")
 	}

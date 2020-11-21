@@ -114,8 +114,11 @@ func (rh RequestHandler) Log(message string) {
 	log.Printf("%s %s", rh.TX(), message)
 }
 
-func (rh RequestHandler) Logf(format, message string) {
-	log.Printf("%s "+format, rh.TX(), message)
+func (rh RequestHandler) Logf(format string, v ...interface{}) {
+	var message []interface{}
+	message = append(message, rh.TX())
+	message = append(message, v...)
+	log.Printf("%s "+format, message...)
 }
 
 func (rh RequestHandler) LogError(e *Error) {

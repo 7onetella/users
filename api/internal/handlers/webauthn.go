@@ -106,7 +106,6 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		if rh.HandleDBError(dberr) {
 			return
 		}
-		log.Printf("user = %#v", user)
 
 		userCredentials, dberr := service.FindUserCredentialByUserID(user.ID)
 		if rh.HandleDBError(dberr) {
