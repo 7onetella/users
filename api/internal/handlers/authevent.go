@@ -20,15 +20,13 @@ func (ah AuthEventHandler) Context() *gin.Context {
 	return ah.RequestHandler.Context
 }
 
-func (ah AuthEventHandler) DenyAccessForAnonymous(e *Error) {
-	c := ah.Context()
-	c.AbortWithStatusJSON(http.StatusUnauthorized, e)
-	// record potential attacker's ip address and browser agent
-	ah.RecordEvent("", e.Message)
+func (ah AuthEventHandler) DenyAccessForAnonymous(category Category, reason Reason) {
+	ah.DenyAccessForUser("", category, reason)
 }
 
-func (ah AuthEventHandler) DenyAccessForUser(userID string, e *Error) {
+func (ah AuthEventHandler) DenyAccessForUser(userID string, category Category, reason Reason) {
 	c := ah.Context()
+	e := New(category, reason)
 	c.AbortWithStatusJSON(http.StatusUnauthorized, e)
 	// record potential attacker's ip address and browser agent
 	ah.RecordEvent(userID, e.Message)
@@ -55,9 +53,10 @@ func (ah AuthEventHandler) RecordEvent(userID, eventName string) {
 	}
 }
 
-func (ah AuthEventHandler) AccessDeniedMissingData(userID string, e *Error) {
+func (ah AuthEventHandler) AccessDeniedMissingData(userID string, category Category, reason Reason) {
 	rh := ah.RequestHandler
 	c := rh.Context
+	e := New(category, reason)
 	userService := ah.UserService
 
 	//e := New(category, reason)

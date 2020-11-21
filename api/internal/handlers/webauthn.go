@@ -16,43 +16,44 @@ const SigninSessionTokenHeader = "SignSessionToken"
 
 func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c)
+		r.WriteCORSHeader()
 
-		user, err := rh.UserFromContext()
+		user, err := r.UserFromContext()
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(AuthenticationError, UserUnknown))
+			r.AbortWithStatusInternalServerError(AuthenticationError, UserUnknown)
 			return
 		}
 
 		// generate PublicKeyCredentialCreationOptions, session data
 		options, sessionData, err := web.BeginRegistration(user)
 		if err != nil {
-			LogErr(rh.TX(), "error registering user", err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(AuthenticationError, WebauthnRegistrationFailure))
+			r.Logf("signup.begin-registration.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(AuthenticationError, WebauthnRegistrationFailure)
 			return
 		}
 
 		marshaledData, err := json.Marshal(sessionData)
 		if err != nil {
-			rh.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling, err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling)
 			return
 		}
 
 		user.WebAuthnSessionData = string(marshaledData)
 		dberr := service.SaveWebauthnSession(user)
-		if rh.HandleDBError(dberr) {
-			return
+		if dberr != nil {
+			r.Logf("signup.begin-registration.failed err=%s", dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, GeneralError)
 		}
 
-		rh.SetContentTypeJSON()
-		out, err := json.Marshal(options)
+		r.SetContentTypeJSON()
+		response, err := json.Marshal(options)
 		if err != nil {
-			LogErr(rh.TX(), "error marshalling PublicKeyCredentialCreationOptions", err)
+			r.Logf("webauthn.begin-registration.failed err=%s", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Marshalling))
 			return
 		}
-		c.String(http.StatusOK, string(out))
+		c.String(http.StatusOK, string(response))
 	}
 }
 

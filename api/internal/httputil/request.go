@@ -39,16 +39,6 @@ func (rh RequestHandler) TX() string {
 	return c.Request.Context().Value("tid").(string)
 }
 
-func (rh RequestHandler) GetPayload(v interface{}) ([]byte, []error) {
-
-	payload, err := rh.GetBody()
-	if err != nil {
-		return nil, []error{err}
-	}
-
-	return payload, nil
-}
-
 func (rh RequestHandler) CheckUserIDMatchUserFromContext(id string) *Error {
 	ctxUser, err := rh.UserFromContext()
 	if err != nil {
@@ -80,9 +70,9 @@ func (rh RequestHandler) WrapAsJSONAPIErrors(err *Error) JSONAPIErrors {
 func (rh RequestHandler) HandleDBError(dberr *DBOpError) bool {
 	if dberr != nil {
 		c := rh.Context
-		e := Wrap(DatabaseError, QueryingFailed, dberr)
+		e := Wrap(DatabaseError, GeneralError, dberr)
 		rh.LogError(e)
-		c.AbortWithStatus(500)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return true
 	}
 	return false
@@ -126,8 +116,7 @@ func (rh RequestHandler) LogError(e *Error) {
 	log.Printf("%s error=%s", rh.TX(), e)
 }
 
-func (rh RequestHandler) AbortWithStatusInternalServerError(category Category, reason Reason, err error) {
-	e := Wrap(category, reason, err)
-	rh.LogError(e)
+func (rh RequestHandler) AbortWithStatusInternalServerError(category Category, reason Reason) {
+	e := New(category, reason)
 	rh.Context.AbortWithStatusJSON(http.StatusInternalServerError, e)
 }

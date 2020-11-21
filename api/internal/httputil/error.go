@@ -1,23 +1,26 @@
 package httputil
 
 import (
+	"encoding/json"
 	"log"
 )
 
 type DBOpError struct {
-	Query string
-	Err   error
+	Query string `json:"query"`
+	Err   error  `json:"error"`
 }
 
 func (e *DBOpError) Unwrap() error {
 	return e.Err
 }
 
+// The error interface implementation, which formats to a JSON object string.
 func (e *DBOpError) Error() string {
-	if e.Err != nil {
-		return e.Err.Error()
+	marshaled, err := json.Marshal(e)
+	if err != nil {
+		panic(err)
 	}
-	return ""
+	return string(marshaled)
 }
 
 func (e *DBOpError) Log(tx string) {

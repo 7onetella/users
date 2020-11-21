@@ -65,9 +65,11 @@ const (
 	// QueryingFailed indicates general database error during SQL execution
 	QueryingFailed Reason = 100 * (iota + 1) //11XX
 
+	PersistingFailed
+
 	Unknown
 
-	PersistingFailed
+	GeneralError
 )
 
 // None is a non-specified error.
@@ -116,6 +118,8 @@ const (
 // ServerError reasons
 const (
 	QRCodeFailure Reason = 100 * (iota + 1) // 51XX
+
+	RetrievingPayloadError
 )
 
 // TOTPError reasons

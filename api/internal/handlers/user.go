@@ -52,19 +52,19 @@ func init() {
 // security: []
 func Signup(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
+		r := NewRequestHandler(c)
 
-		rh.WriteCORSHeader()
+		r.WriteCORSHeader()
 
-		payload, errs := rh.GetPayload(User{})
-		if rh.HandleError(errs...) {
+		payload, err := r.GetBody()
+		if err != nil {
+			r.AbortWithStatusInternalServerError(ServerError, RetrievingPayloadError)
 			return
 		}
 
-		//rh.Logf("user.signup.info payload=%s", string(payload))
 		user, err := UnmarshalUser(payload, UserJSONSchema)
 		if err != nil {
-			rh.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling, err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling)
 			return
 		}
 
@@ -74,17 +74,20 @@ func Signup(userService UserService) gin.HandlerFunc {
 		user.JWTSecret = gotp.RandomSecret(16)
 
 		dberr := userService.Register(user)
-		if rh.HandleDBError(dberr) {
-			return
+		if dberr != nil {
+			r.Logf("signup.register.failed err=%s", dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, GeneralError)
 		}
 
-		rh.SetContentTypeJSON()
-		out, err := MarshalUser(c.Request.URL.RequestURI(), UserJSONSchema, user)
+		r.SetContentTypeJSON()
+		uri := c.Request.URL.RequestURI()
+		response, err := MarshalUser(uri, UserJSONSchema, user)
 		if err != nil {
-			rh.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling, err)
+			r.Logf("signup.marshall-user.failed uri=% schema=%s err=%s", uri, UserJSONSchema, err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling)
 			return
 		}
-		c.String(http.StatusOK, out)
+		c.String(http.StatusOK, response)
 	}
 }
 
@@ -208,7 +211,7 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		cred := Credentials{}
 		err := c.ShouldBind(&cred)
 		if err != nil {
-			auth.DenyAccessForAnonymous(New(JSONAPISpecError, Unmarshalling))
+			auth.DenyAccessForAnonymous(JSONAPISpecError, Unmarshalling)
 			return
 		}
 
@@ -219,23 +222,23 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 			eventID, err := auth.ExtractEventID(cred.SigninSessionToken)
 			if err != nil {
 				rh.Logf("signin.decode-userid.failed signin_session_token=%s error=%#v", cred.SigninSessionToken, err.Error())
-				auth.DenyAccessForAnonymous(New(AuthenticationError, SigninSessionTokenDecodingFailed))
+				auth.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
 				return
 			}
 			e, dberr := userService.GetAuthEvent(eventID)
 			if dberr != nil {
 				rh.Logf("signin.get-auth-event.failed event_id=%s error=%v", eventID, dberr)
-				auth.DenyAccessForAnonymous(New(DatabaseError, QueryingFailed))
+				auth.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
 				return
 			}
 			if auth.IsSigninSessionStillValid(e.Timestamp, time.Minute*5) {
-				auth.DenyAccessForUser(e.UserID, New(AuthenticationError, SigninSessionExpired))
+				auth.DenyAccessForUser(e.UserID, AuthenticationError, SigninSessionExpired)
 				return
 			}
 			userFromDB, dberr := userService.Get(e.UserID)
 			if dberr != nil {
 				rh.Logf("querying for user_id %s", e.UserID)
-				auth.DenyAccessForUser(e.UserID, New(DatabaseError, QueryingFailed))
+				auth.DenyAccessForUser(e.UserID, DatabaseError, QueryingFailed)
 				return
 			}
 			user = userFromDB
@@ -245,12 +248,12 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		if cred.IsUsernamePresent() {
 			userFromDB, dberr := userService.FindByEmail(cred.Username)
 			if dberr != nil {
-				auth.DenyAccessForAnonymous(New(DatabaseError, QueryingFailed))
+				auth.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
 				return
 			}
 
 			if userFromDB.Password != cred.Password {
-				auth.DenyAccessForUser(user.ID, New(AuthenticationError, UsernameOrPasswordDoesNotMatch))
+				auth.DenyAccessForUser(user.ID, AuthenticationError, UsernameOrPasswordDoesNotMatch)
 				return
 			}
 			user = userFromDB
@@ -259,11 +262,11 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 	CheckIf2FARequired:
 		if user.WebAuthnEnabled {
 			if !cred.IsWebauthnTokenPresent() {
-				auth.AccessDeniedMissingData(user.ID, New(AuthenticationError, WebAuthnRequired))
+				auth.AccessDeniedMissingData(user.ID, AuthenticationError, WebAuthnRequired)
 				return
 			}
 			if !auth.IsWebAuthnSessionTokenValidForUer(user.ID, cred.WebAuthnSessionToken) {
-				auth.DenyAccessForUser(user.ID, New(AuthenticationError, WebauthnAuthFailure))
+				auth.DenyAccessForUser(user.ID, AuthenticationError, WebauthnAuthFailure)
 				return
 			}
 			goto GrantAccess
@@ -271,11 +274,11 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 
 		if user.TOTPEnabled {
 			if !cred.IsTOTPCodePresent() {
-				auth.AccessDeniedMissingData(user.ID, New(AuthenticationError, TOTPRequired))
+				auth.AccessDeniedMissingData(user.ID, AuthenticationError, TOTPRequired)
 				return
 			}
 			if !IsTOTPValid(user, cred.TOTP) {
-				auth.DenyAccessForUser(user.ID, New(AuthenticationError, TOTPAuthFailure))
+				auth.DenyAccessForUser(user.ID, AuthenticationError, TOTPAuthFailure)
 				return
 			}
 			goto GrantAccess
@@ -284,14 +287,14 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 	GrantAccess:
 		// guard against empty json payload
 		if len(user.ID) == 0 {
-			auth.DenyAccessForAnonymous(New(AuthenticationError, UserUnknown))
+			auth.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
 			return
 		}
 
 		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, issuer, ttl)
 		if err != nil {
 			rh.Logf("encoding user=%s issuer=%", user.ID, issuer)
-			auth.DenyAccessForUser(user.ID, New(AuthenticationError, JWTEncodingFailure))
+			auth.DenyAccessForUser(user.ID, AuthenticationError, JWTEncodingFailure)
 			return
 		}
 
@@ -325,26 +328,26 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 func GetUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// user granted access to his/her own account
-		rh := NewRequestHandler(c)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c)
+		r.WriteCORSHeader()
 
 		id := c.Param("id")
-		serr := rh.CheckUserIDMatchUserFromContext(id)
+		serr := r.CheckUserIDMatchUserFromContext(id)
 		if serr != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, rh.WrapAsJSONAPIErrors(serr))
+			c.AbortWithStatusJSON(http.StatusBadRequest, r.WrapAsJSONAPIErrors(serr))
 			return
 		}
 
 		user, dberr := service.Get(id)
-		if rh.HandleDBError(dberr) {
+		if r.HandleDBError(dberr) {
 			return
 		}
 
-		rh.SetContentTypeJSON()
+		r.SetContentTypeJSON()
 		out, err := MarshalUser(c.Request.URL.RequestURI(), UserJSONSchema, user)
 		if err != nil {
-			LogErr(rh.TX(), "error marshalling user", err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Marshalling))
+			r.Logf("user.get-profile.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling)
 			return
 		}
 
@@ -410,32 +413,34 @@ func DeleteUser(service UserService) gin.HandlerFunc {
 //	     - 'write:profile'
 func UpdateUser(service UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c)
+		r.WriteCORSHeader()
 
 		id := c.Param("id")
-		serr := rh.CheckUserIDMatchUserFromContext(id)
+		serr := r.CheckUserIDMatchUserFromContext(id)
 		if serr != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, rh.WrapAsJSONAPIErrors(serr))
+			c.AbortWithStatusJSON(http.StatusBadRequest, r.WrapAsJSONAPIErrors(serr))
 			return
 		}
 
-		payload, errs := rh.GetPayload(User{})
-		if rh.HandleError(errs...) {
+		payload, err := r.GetBody()
+		if err != nil {
+			r.AbortWithStatusInternalServerError(ServerError, RetrievingPayloadError)
 			return
 		}
 
 		user, err := UnmarshalUser(payload, UserJSONSchema)
-		if rh.HandleError(err) {
+		if r.HandleError(err) {
 			return
 		}
 
 		dberr := service.UpdateProfile(user)
-		if rh.HandleDBError(dberr) {
-			return
+		if dberr != nil {
+			r.Logf("signup.profile-update.failed err=%s", dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, GeneralError)
 		}
 
-		c.Status(204)
+		c.Status(http.StatusNoContent)
 	}
 }
 
