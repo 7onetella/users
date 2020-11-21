@@ -81,9 +81,17 @@ const (
 const (
 	// QueryingFailed indicates general database error during SQL execution
 	ContextUserDoesNotMatchGivenUserID Reason = 100 * (iota + 1) //21XX
+
+	UserNotFoundFromContext
+
+	MissingAuthorizationHeader
+
+	InternalError
+
+	ValidatingAuthTokenError
 )
 
-// JsonError reasons
+// JSONAPISpecError reasons
 const (
 	// Marshalling indicates general database error during SQL execution
 	Marshalling Reason = 100 * (iota + 1) //31XX
@@ -147,10 +155,14 @@ func New(category Category, reason Reason) *Error {
 
 	case SecurityError:
 		switch reason {
-		case Unknown:
-			msg = "Unknown security error"
 		case ContextUserDoesNotMatchGivenUserID:
 			msg = "User ID in context does not match given user's ID"
+		case UserNotFoundFromContext:
+			msg = "User not found from context"
+		case MissingAuthorizationHeader:
+			msg = "Missing Authorization header"
+		case InternalError:
+			msg = "Internal error"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category SecurityError.",
 				reason))

@@ -149,57 +149,61 @@ func PreflightOptions() gin.HandlerFunc {
 	}
 }
 
-func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
+func (a JWTAuth) TokenValidator(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//rh := NewRequestHandler(c)
+		r := NewRequestHandler(c, userService)
 
 		tokenString, err := ParseAuthTokenFromAuthorizationHeader(c.Request)
 		if err != nil {
-			_ = c.AbortWithError(http.StatusUnauthorized, err)
+			r.Logf("jwt.token-validation.failed err=%s", err)
+			r.AbortWithStatusUnauthorizedError(SecurityError, ValidatingAuthTokenError)
 			return
 		}
-		//rh.Logf("Authentication: Bearer %s", tokenString)
+
+		//r.Logf("Authentication: Bearer %s", tokenString)
 		terms := strings.Split(tokenString, ".")
 		payloadRaw := terms[1]
-		jwtSecret, dberr := GetJWTSecretForUser(payloadRaw, service)
-		if dberr != nil {
-			_ = c.AbortWithError(http.StatusUnauthorized, err)
+		jwtSecret, err := GetJWTSecretForUser(payloadRaw, userService)
+		if err != nil {
+			r.Logf("jwt.token-validation.failed err=%s", err)
+			r.AbortWithStatusUnauthorizedError(SecurityError, ValidatingAuthTokenError)
 			return
 		}
 
 		claims, err := DecodeTokenAsCustomClaims(tokenString, jwtSecret)
 		if err != nil {
-			log.Printf("error decoding: %v", err)
-			c.AbortWithStatus(http.StatusUnauthorized)
+			r.Logf("jwt.token-validation.failed err=%s", err)
+			r.AbortWithStatusUnauthorizedError(SecurityError, ValidatingAuthTokenError)
 			return
 		}
 
 		// if this is oauth2 delegated api call
 		// make sure the token was actually issued
 		if claims.Issuer != claims.Audience {
-			accessToken, dberr := service.GetAccessToken(claims.Id)
+			accessToken, dberr := userService.GetAccessToken(claims.Id)
 			if dberr != nil {
-				log.Printf("token not found")
-				_ = c.AbortWithError(http.StatusUnauthorized, dberr.Err)
+				r.Logf("jwt.token-validation.failed err=%s", dberr)
+				r.AbortWithStatusUnauthorizedError(SecurityError, ValidatingAuthTokenError)
 				return
 			}
 			if accessToken.Token != tokenString {
-				log.Printf("invalid access token")
-				c.AbortWithStatus(http.StatusUnauthorized)
+				r.Log("jwt.token-validation.failed err=invalid access token")
+				r.AbortWithStatusUnauthorizedError(SecurityError, ValidatingAuthTokenError)
 				return
 			}
 			if claims.Subject != accessToken.UserID {
-				log.Printf("user id differs from what's stored in db")
-				c.AbortWithStatus(http.StatusUnauthorized)
+				r.Log("jwt.token-validation.failed err=user id differs from what's stored in db")
+				r.AbortWithStatusUnauthorizedError(SecurityError, ValidatingAuthTokenError)
 				return
 			}
 		}
 
 		userID := claims.Subject
 		req := c.Request
-		user, operr := service.Get(userID)
-		if operr != nil {
-			_ = c.AbortWithError(http.StatusUnauthorized, operr.Err)
+		user, dberr := userService.Get(userID)
+		if dberr != nil {
+			r.Logf("jwt.token-validation.failed err=%s", dberr)
+			r.AbortWithStatusUnauthorizedError(SecurityError, ValidatingAuthTokenError)
 			return
 		}
 		ctx := context.WithValue(req.Context(), "user", user)
@@ -208,14 +212,13 @@ func (a JWTAuth) TokenValidator(service UserService) gin.HandlerFunc {
 	}
 }
 
-func GetJWTSecretForUser(payloadRaw string, userService UserService) (string, *DBOpError) {
+func GetJWTSecretForUser(payloadRaw string, userService UserService) (string, error) {
 	claims, err := ExtractClaimsFromPayload(payloadRaw)
 	if err != nil {
-		log.Printf("jmap err = %v", err)
+		return "", err
 	}
 	claimedUser, dberr := userService.Get(claims.Subject)
 	if dberr != nil {
-		log.Print(err)
 		return "", dberr
 	}
 	return claimedUser.JWTSecret, nil

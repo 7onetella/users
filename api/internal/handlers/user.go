@@ -337,7 +337,9 @@ func GetUser(userService UserService) gin.HandlerFunc {
 		}
 
 		user, dberr := userService.Get(id)
-		if r.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("user.get-profile.failed err=%s", dberr)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling)
 			return
 		}
 

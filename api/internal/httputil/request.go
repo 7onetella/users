@@ -61,7 +61,7 @@ func (r RequestHandler) TX() string {
 func (r RequestHandler) CheckUserIDMatchUserFromContext(id string) *Error {
 	ctxUser, err := r.UserFromContext()
 	if err != nil {
-		return New(SecurityError, Unknown)
+		return New(SecurityError, UserNotFoundFromContext)
 	}
 
 	if id != ctxUser.ID {
@@ -138,6 +138,11 @@ func (r RequestHandler) LogError(e *Error) {
 func (r RequestHandler) AbortWithStatusInternalServerError(category Category, reason Reason) {
 	e := New(category, reason)
 	r.Context.AbortWithStatusJSON(http.StatusInternalServerError, e)
+}
+
+func (r RequestHandler) AbortWithStatusUnauthorizedError(category Category, reason Reason) {
+	e := New(category, reason)
+	r.Context.AbortWithStatusJSON(http.StatusUnauthorized, e)
 }
 
 func (r RequestHandler) DenyAccessForAnonymous(category Category, reason Reason) {
