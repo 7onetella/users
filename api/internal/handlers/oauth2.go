@@ -38,9 +38,9 @@ import (
 //     schema:
 //       type: object
 //       "$ref": "#/definitions/AuthorizationResponse"
-func OAuth2Authorize(service UserService) gin.HandlerFunc {
+func OAuth2Authorize(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
+		rh := NewRequestHandler(c, userService)
 		user, err := rh.UserFromContext()
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, New(AuthenticationError, UserUnknown))
@@ -55,7 +55,7 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 		}
 
 		// does client exist?
-		clientExists, dberr := service.DoesClientExist(ar.ClientID)
+		clientExists, dberr := userService.DoesClientExist(ar.ClientID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -69,7 +69,7 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 		}
 
 		// has this request been made before with the current nonce
-		if service.NonceUsedBefore(ar.ClientID, user.ID, ar.Nonce) {
+		if userService.NonceUsedBefore(ar.ClientID, user.ID, ar.Nonce) {
 			c.JSON(401, gin.H{
 				"status": "error",
 				"reason": "nonce has been used already",
@@ -78,14 +78,14 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 		}
 
 		// NamedExec permission for the user
-		dberr = service.UpdatePermissions(oauth2.UserGrants{UserID: user.ID, ClientID: ar.ClientID, Scope: ar.Scope})
+		dberr = userService.UpdatePermissions(oauth2.UserGrants{UserID: user.ID, ClientID: ar.ClientID, Scope: ar.Scope})
 		if rh.HandleDBError(dberr) {
 			return
 		}
 
 		code := uuid.New().String()
 		authorizationCode := oauth2.AuthorizationCode{Code: code, ClientID: ar.ClientID, CreatedAt: time.Now().Unix(), UserID: user.ID}
-		dberr = service.StoreAuthorizationRequestCode(authorizationCode)
+		dberr = userService.StoreAuthorizationRequestCode(authorizationCode)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -157,9 +157,9 @@ func OAuth2Authorize(service UserService) gin.HandlerFunc {
 //       type: object
 //       "$ref": "#/definitions/AccessTokenResponse"
 // security: []
-func OAuth2AccessToken(service UserService) gin.HandlerFunc {
+func OAuth2AccessToken(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
+		rh := NewRequestHandler(c, userService)
 		rh.WriteCORSHeader()
 
 		grantType := c.PostForm("grant_type")
@@ -177,7 +177,7 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 
 		// is this valid request from client?
 		// validate client with client_secret
-		authenticated, dberr := service.AuthenticateClientUsingSecret(clientID, clientSecret)
+		authenticated, dberr := userService.AuthenticateClientUsingSecret(clientID, clientSecret)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -198,7 +198,7 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 		}
 
 		// find authorization request record with (code, client_id)
-		authCode, dberr := service.GetAuthorizationRequestCode(code, clientID)
+		authCode, dberr := userService.GetAuthorizationRequestCode(code, clientID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -211,12 +211,12 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 		//	})
 		//}
 
-		userFromDB, dberr := service.Get(authCode.UserID)
+		userFromDB, dberr := userService.Get(authCode.UserID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
 
-		grants, dberr := service.GetUserGrantsForClient(authCode.UserID, clientID)
+		grants, dberr := userService.GetUserGrantsForClient(authCode.UserID, clientID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -231,7 +231,7 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 			UserID:  authCode.UserID,
 			Token:   accessTokenStr,
 		}
-		dberr = service.StoreAccessTokenForUser(accessToken)
+		dberr = userService.StoreAccessTokenForUser(accessToken)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -249,13 +249,13 @@ func OAuth2AccessToken(service UserService) gin.HandlerFunc {
 	}
 }
 
-func GetClientName(service UserService) gin.HandlerFunc {
+func GetClientName(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
+		rh := NewRequestHandler(c, userService)
 		rh.WriteCORSHeader()
 		clientID := c.Param("id")
 
-		client, dberr := service.GetClient(clientID)
+		client, dberr := userService.GetClient(clientID)
 		if dberr != nil {
 			dberr.Log(rh.TX())
 			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, QueryingFailed))
@@ -274,15 +274,15 @@ func DoesRedirectURIMatch(redirectURI string) bool {
 	return true
 }
 
-func OAuth2Scope(service UserService) gin.HandlerFunc {
+func OAuth2Scope(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
+		rh := NewRequestHandler(c, userService)
 		rh.WriteCORSHeader()
 
 		scope := c.Param("scope")
 
 		// ping to suppress ide warning
-		_ = service.Ping()
+		_ = userService.Ping()
 		c.Header("Cache-Control", "no-store")
 		c.Header("Pragma", "no-cache")
 		c.JSON(200, gin.H{

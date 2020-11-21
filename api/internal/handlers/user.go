@@ -52,7 +52,7 @@ func init() {
 // security: []
 func Signup(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		r := NewRequestHandler(c)
+		r := NewRequestHandler(c, userService)
 
 		r.WriteCORSHeader()
 
@@ -203,15 +203,13 @@ func Signup(userService UserService) gin.HandlerFunc {
 func Signin(userService UserService, ttl time.Duration, issuer string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		rh := NewRequestHandler(c)
-		auth := AuthEventHandler{rh, userService}
-
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
 
 		cred := Credentials{}
 		err := c.ShouldBind(&cred)
 		if err != nil {
-			auth.DenyAccessForAnonymous(JSONAPISpecError, Unmarshalling)
+			r.DenyAccessForAnonymous(JSONAPISpecError, Unmarshalling)
 			return
 		}
 
@@ -219,26 +217,26 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 
 		// if 2fa and password signin was already completed
 		if cred.IsSigninSessionTokenPresent() {
-			eventID, err := auth.ExtractEventID(cred.SigninSessionToken)
+			eventID, err := r.ExtractEventID(cred.SigninSessionToken)
 			if err != nil {
-				rh.Logf("signin.decode-userid.failed signin_session_token=%s error=%#v", cred.SigninSessionToken, err.Error())
-				auth.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
+				r.Logf("signin.decode-userid.failed signin_session_token=%s error=%s", cred.SigninSessionToken, err)
+				r.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
 				return
 			}
 			e, dberr := userService.GetAuthEvent(eventID)
 			if dberr != nil {
-				rh.Logf("signin.get-auth-event.failed event_id=%s error=%v", eventID, dberr)
-				auth.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
+				r.Logf("signin.get-auth-event.failed event_id=%s error=%v", eventID, dberr)
+				r.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
 				return
 			}
-			if auth.IsSigninSessionStillValid(e.Timestamp, time.Minute*5) {
-				auth.DenyAccessForUser(e.UserID, AuthenticationError, SigninSessionExpired)
+			if r.IsSigninSessionStillValid(e.Timestamp, time.Minute*5) {
+				r.DenyAccessForUser(e.UserID, AuthenticationError, SigninSessionExpired)
 				return
 			}
 			userFromDB, dberr := userService.Get(e.UserID)
 			if dberr != nil {
-				rh.Logf("querying for user_id %s", e.UserID)
-				auth.DenyAccessForUser(e.UserID, DatabaseError, QueryingFailed)
+				r.Logf("querying for user_id %s", e.UserID)
+				r.DenyAccessForUser(e.UserID, DatabaseError, QueryingFailed)
 				return
 			}
 			user = userFromDB
@@ -248,12 +246,12 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		if cred.IsUsernamePresent() {
 			userFromDB, dberr := userService.FindByEmail(cred.Username)
 			if dberr != nil {
-				auth.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
+				r.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
 				return
 			}
 
 			if userFromDB.Password != cred.Password {
-				auth.DenyAccessForUser(user.ID, AuthenticationError, UsernameOrPasswordDoesNotMatch)
+				r.DenyAccessForUser(user.ID, AuthenticationError, UsernameOrPasswordDoesNotMatch)
 				return
 			}
 			user = userFromDB
@@ -262,11 +260,11 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 	CheckIf2FARequired:
 		if user.WebAuthnEnabled {
 			if !cred.IsWebauthnTokenPresent() {
-				auth.AccessDeniedMissingData(user.ID, AuthenticationError, WebAuthnRequired)
+				r.AccessDeniedMissingData(user.ID, AuthenticationError, WebAuthnRequired)
 				return
 			}
-			if !auth.IsWebAuthnSessionTokenValidForUer(user.ID, cred.WebAuthnSessionToken) {
-				auth.DenyAccessForUser(user.ID, AuthenticationError, WebauthnAuthFailure)
+			if !r.IsWebAuthnSessionTokenValidForUer(user.ID, cred.WebAuthnSessionToken) {
+				r.DenyAccessForUser(user.ID, AuthenticationError, WebauthnAuthFailure)
 				return
 			}
 			goto GrantAccess
@@ -274,11 +272,11 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 
 		if user.TOTPEnabled {
 			if !cred.IsTOTPCodePresent() {
-				auth.AccessDeniedMissingData(user.ID, AuthenticationError, TOTPRequired)
+				r.AccessDeniedMissingData(user.ID, AuthenticationError, TOTPRequired)
 				return
 			}
 			if !IsTOTPValid(user, cred.TOTP) {
-				auth.DenyAccessForUser(user.ID, AuthenticationError, TOTPAuthFailure)
+				r.DenyAccessForUser(user.ID, AuthenticationError, TOTPAuthFailure)
 				return
 			}
 			goto GrantAccess
@@ -287,14 +285,14 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 	GrantAccess:
 		// guard against empty json payload
 		if len(user.ID) == 0 {
-			auth.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
+			r.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
 			return
 		}
 
 		tokenString, expTime, err := EncodeToken(user.ID, user.JWTSecret, issuer, ttl)
 		if err != nil {
-			rh.Logf("encoding user=%s issuer=%", user.ID, issuer)
-			auth.DenyAccessForUser(user.ID, AuthenticationError, JWTEncodingFailure)
+			r.Logf("encoding user=%s issuer=%", user.ID, issuer)
+			r.DenyAccessForUser(user.ID, AuthenticationError, JWTEncodingFailure)
 			return
 		}
 
@@ -304,7 +302,7 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		}
 		c.JSON(http.StatusOK, token)
 
-		auth.RecordEvent(user.ID, "login_successful")
+		r.RecordEvent(user.ID, "login_successful")
 	}
 }
 
@@ -325,10 +323,10 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 //   - bearer_token: []
 //   - oauth2:
 //	     - 'read:profile'
-func GetUser(service UserService) gin.HandlerFunc {
+func GetUser(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// user granted access to his/her own account
-		r := NewRequestHandler(c)
+		r := NewRequestHandler(c, userService)
 		r.WriteCORSHeader()
 
 		id := c.Param("id")
@@ -338,7 +336,7 @@ func GetUser(service UserService) gin.HandlerFunc {
 			return
 		}
 
-		user, dberr := service.Get(id)
+		user, dberr := userService.Get(id)
 		if r.HandleDBError(dberr) {
 			return
 		}
@@ -368,20 +366,20 @@ func GetUser(service UserService) gin.HandlerFunc {
 //     description: user profile deleted
 // security:
 //   - bearer_token: []
-func DeleteUser(service UserService) gin.HandlerFunc {
+func DeleteUser(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
 
 		id := c.Param("id")
-		serr := rh.CheckUserIDMatchUserFromContext(id)
+		serr := r.CheckUserIDMatchUserFromContext(id)
 		if serr != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, rh.WrapAsJSONAPIErrors(serr))
+			c.AbortWithStatusJSON(http.StatusBadRequest, r.WrapAsJSONAPIErrors(serr))
 			return
 		}
 
-		dberr := service.Delete(id)
-		if rh.HandleDBError(dberr) {
+		dberr := userService.Delete(id)
+		if r.HandleDBError(dberr) {
 			return
 		}
 
@@ -411,9 +409,9 @@ func DeleteUser(service UserService) gin.HandlerFunc {
 //   - bearer_token: []
 //   - oauth2:
 //	     - 'write:profile'
-func UpdateUser(service UserService) gin.HandlerFunc {
+func UpdateUser(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		r := NewRequestHandler(c)
+		r := NewRequestHandler(c, userService)
 		r.WriteCORSHeader()
 
 		id := c.Param("id")
@@ -434,7 +432,7 @@ func UpdateUser(service UserService) gin.HandlerFunc {
 			return
 		}
 
-		dberr := service.UpdateProfile(user)
+		dberr := userService.UpdateProfile(user)
 		if dberr != nil {
 			r.Logf("signup.profile-update.failed err=%s", dberr)
 			r.AbortWithStatusInternalServerError(DatabaseError, GeneralError)

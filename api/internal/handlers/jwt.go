@@ -234,10 +234,10 @@ func ExtractClaimsFromPayload(s string) (*CustomClaims, error) {
 }
 
 // SigninHandlerFunc signs in user
-func (a JWTAuth) RefreshToken(service UserService, issuer string) gin.HandlerFunc {
+func (a JWTAuth) RefreshToken(userService UserService, issuer string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//log.Println("Token Refresh Started")
-		rh := NewRequestHandler(c)
+		rh := NewRequestHandler(c, userService)
 		rh.WriteCORSHeader()
 
 		var rt JWTToken
@@ -249,7 +249,7 @@ func (a JWTAuth) RefreshToken(service UserService, issuer string) gin.HandlerFun
 
 		terms := strings.Split(rt.Token, ".")
 		payloadRaw := terms[1]
-		jwtSecret, dberr := GetJWTSecretForUser(payloadRaw, service)
+		jwtSecret, dberr := GetJWTSecretForUser(payloadRaw, userService)
 		if dberr != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, New(DatabaseError, QueryingFailed))
 			return

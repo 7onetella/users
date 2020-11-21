@@ -16,14 +16,13 @@ import (
 // Hiding endpoint to not to confuse developer reading the API
 func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
-		auth := AuthEventHandler{rh, userService}
-		user, err := rh.UserFromContext()
+		r := NewRequestHandler(c, userService)
+		user, err := r.UserFromContext()
 		if err != nil {
-			auth.DenyAccessForAnonymous(Wrap(AuthenticationError, SigninSessionTokenDecodingFailed, err))
+			r.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
 			return
 		}
-		rh.WriteCORSHeader()
+		r.WriteCORSHeader()
 
 		secret := gotp.RandomSecret(16)
 		totp := gotp.NewDefaultTOTP(secret)
@@ -33,14 +32,14 @@ func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc 
 		user.TOTPSecretTmpExp = CurrentTimeInSeconds() + 60*5
 		dberr := userService.UpdateTOTPTmp(user)
 		if dberr != nil {
-			dberr.Log(rh.TX())
+			dberr.Log(r.TX())
 			c.AbortWithStatusJSON(http.StatusBadRequest, New(DatabaseError, PersistingFailed))
 			return
 		}
 
 		qrBytes, err := QR(url)
 		if err != nil {
-			LogErr(rh.TX(), "error encoding qr code", err)
+			LogErr(r.TX(), "error encoding qr code", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, New(TOTPError, ProblemEncodingQRCode))
 			return
 		}
@@ -49,7 +48,7 @@ func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc 
 		w.Header().Add(ContentType, ImagePNG)
 		_, err = w.Write(qrBytes)
 		if err != nil {
-			LogErr(rh.TX(), "error writing image bytes", err)
+			LogErr(r.TX(), "error writing image bytes", err)
 		}
 	}
 }
@@ -82,13 +81,12 @@ func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc 
 //     description: internal server error
 func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
-		rh.WriteCORSHeader()
-		auth := AuthEventHandler{rh, userService}
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
 
-		user, err := rh.UserFromContext()
+		user, err := r.UserFromContext()
 		if err != nil {
-			auth.DenyAccessForAnonymous(Wrap(AuthenticationError, UserUnknown, err))
+			r.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
 			return
 		}
 
@@ -101,14 +99,14 @@ func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc
 		user.TOTPSecretTmpExp = CurrentTimeInSeconds() + 60*5
 		dberr := userService.UpdateTOTPTmp(user)
 		if dberr != nil {
-			dberr.Log(rh.TX())
+			dberr.Log(r.TX())
 			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, PersistingFailed))
 			return
 		}
 
 		qrBytes, err := QR(url)
 		if err != nil {
-			LogErr(rh.TX(), "error encoding qr code", err)
+			LogErr(r.TX(), "error encoding qr code", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, New(TOTPError, ProblemEncodingQRCode))
 			return
 		}
@@ -174,14 +172,13 @@ func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc
 //     description: problem with retrieving user from authorization header
 //   '500':
 //     description: internal server error
-func ConfirmToken(service UserService) gin.HandlerFunc {
+func ConfirmToken(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
-		rh.WriteCORSHeader()
-		auth := AuthEventHandler{rh, service}
-		user, err := rh.UserFromContext()
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
+		user, err := r.UserFromContext()
 		if err != nil {
-			auth.DenyAccessForAnonymous(Wrap(AuthenticationError, UserUnknown, err))
+			r.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
 			return
 		}
 
@@ -206,9 +203,9 @@ func ConfirmToken(service UserService) gin.HandlerFunc {
 		user.TOTPSecretTmp = ""
 		user.TOTPSecretTmpExp = 0
 
-		dberr := service.UpdateTOTP(user)
+		dberr := userService.UpdateTOTP(user)
 		if dberr != nil {
-			dberr.Log(rh.TX())
+			dberr.Log(r.TX())
 			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, PersistingFailed))
 			return
 		}

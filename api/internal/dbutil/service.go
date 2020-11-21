@@ -1,10 +1,11 @@
 package dbutil
 
 import (
-	. "github.com/7onetella/users/api/internal/httputil"
+	"encoding/json"
 	. "github.com/7onetella/users/api/internal/model"
 	"github.com/7onetella/users/api/internal/model/oauth2"
 	"github.com/jmoiron/sqlx"
+	"log"
 	"time"
 )
 
@@ -14,6 +15,28 @@ type UserService struct {
 
 func CurrentTimeInSeconds() int64 {
 	return time.Now().Unix()
+}
+
+type DBOpError struct {
+	Query string `json:"query"`
+	Err   error  `json:"error"`
+}
+
+func (e *DBOpError) Unwrap() error {
+	return e.Err
+}
+
+// The error interface implementation, which formats to a JSON object string.
+func (e *DBOpError) Error() string {
+	marshaled, err := json.Marshal(e)
+	if err != nil {
+		panic(err)
+	}
+	return string(marshaled)
+}
+
+func (e *DBOpError) Log(tx string) {
+	log.Printf("%s sql.excute.errored: %#v, sql: %s", tx, e.Err, e.Query)
 }
 
 func (u UserService) NamedExec(sql string, obj interface{}) *DBOpError {

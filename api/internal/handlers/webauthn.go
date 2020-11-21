@@ -14,9 +14,9 @@ import (
 
 const SigninSessionTokenHeader = "SignSessionToken"
 
-func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
+func BeginRegistration(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		r := NewRequestHandler(c)
+		r := NewRequestHandler(c, userService)
 		r.WriteCORSHeader()
 
 		user, err := r.UserFromContext()
@@ -40,7 +40,7 @@ func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerF
 		}
 
 		user.WebAuthnSessionData = string(marshaledData)
-		dberr := service.SaveWebauthnSession(user)
+		dberr := userService.SaveWebauthnSession(user)
 		if dberr != nil {
 			r.Logf("signup.begin-registration.failed err=%s", dberr)
 			r.AbortWithStatusInternalServerError(DatabaseError, GeneralError)
@@ -57,9 +57,9 @@ func BeginRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerF
 	}
 }
 
-func FinishRegistration(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
+func FinishRegistration(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
+		rh := NewRequestHandler(c, userService)
 		rh.WriteCORSHeader()
 
 		user, err := rh.UserFromContext()
@@ -84,31 +84,31 @@ func FinishRegistration(service UserService, web *webauthn.WebAuthn) gin.Handler
 			return
 		}
 
-		service.SaveUserCredential(NewUserCredential(user.ID, string(marshaledCredential)))
+		userService.SaveUserCredential(NewUserCredential(user.ID, string(marshaledCredential)))
 
 		user.WebAuthnEnabled = true
 		// clean up the session data after successful registration
 		user.WebAuthnSessionData = ""
-		service.UpdateWebAuthn(user)
+		userService.UpdateWebAuthn(user)
 
 		c.JSON(200, gin.H{"result": true})
 	}
 }
 
-func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
+func BeginLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
+		rh := NewRequestHandler(c, userService)
 		rh.WriteCORSHeader()
 
 		signinSessionToken := c.GetHeader(SigninSessionTokenHeader)
 		eventID, _ := Base64Decode(signinSessionToken)
 		log.Printf("event id = %s", eventID)
-		user, dberr := service.FindUserByAuthEventID(eventID)
+		user, dberr := userService.FindUserByAuthEventID(eventID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
 
-		userCredentials, dberr := service.FindUserCredentialByUserID(user.ID)
+		userCredentials, dberr := userService.FindUserCredentialByUserID(user.ID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -135,7 +135,7 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 			return
 		}
 		user.WebAuthnSessionData = string(marshaledData)
-		dberr = service.SaveWebauthnSession(user)
+		dberr = userService.SaveWebauthnSession(user)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -149,14 +149,14 @@ func BeginLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	}
 }
 
-func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
+func FinishLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c)
+		rh := NewRequestHandler(c, userService)
 		rh.WriteCORSHeader()
 
 		signInSessionToken := c.GetHeader(SigninSessionTokenHeader)
 		eventID, _ := Base64Decode(signInSessionToken)
-		user, dberr := service.FindUserByAuthEventID(eventID)
+		user, dberr := userService.FindUserByAuthEventID(eventID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -168,7 +168,7 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 			return
 		}
 
-		userCredentials, dberr := service.FindUserCredentialByUserID(user.ID)
+		userCredentials, dberr := userService.FindUserCredentialByUserID(user.ID)
 		if rh.HandleDBError(dberr) {
 			return
 		}
@@ -190,7 +190,7 @@ func FinishLogin(service UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 		}
 
 		secAuthEvent := NewAuthEvent(user.ID, "sec_auth_success", "", "", "")
-		service.RecordAuthEvent(secAuthEvent)
+		userService.RecordAuthEvent(secAuthEvent)
 
 		c.JSON(http.StatusOK, gin.H{
 			"result":                 true,
