@@ -435,7 +435,8 @@ func UpdateUser(userService UserService) gin.HandlerFunc {
 		}
 
 		user, err := UnmarshalUser(payload, UserJSONSchema)
-		if r.HandleError(err) {
+		if err != nil {
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling)
 			return
 		}
 

@@ -86,39 +86,6 @@ func (r RequestHandler) WrapAsJSONAPIErrors(err *Error) JSONAPIErrors {
 	return out
 }
 
-func (r RequestHandler) HandleDBError(dberr *DBOpError) bool {
-	if dberr != nil {
-		c := r.Context
-		e := Wrap(DatabaseError, GeneralError, dberr)
-		r.LogError(e)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return true
-	}
-	return false
-}
-
-func (r RequestHandler) HandleError(errs ...error) bool {
-	c := r.Context
-
-	if errs == nil || len(errs) == 0 {
-		return false
-	}
-
-	errFound := false
-	for i := range errs {
-		err := errs[i]
-		if err != nil {
-			LogErr(r.TX(), "errs[i]", err)
-			errFound = true
-		}
-	}
-	if errFound {
-		c.AbortWithStatus(500)
-		return true
-	}
-	return false
-}
-
 func (r RequestHandler) Log(message string) {
 	log.Printf("%s %s", r.TX(), message)
 }

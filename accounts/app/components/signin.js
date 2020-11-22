@@ -37,7 +37,7 @@ export default Component.extend({
         var code = data.json.code
         var message = data.json.message
         var signin_session_token = data.json.signin_session_token
-        console.log("> reason:" + reason)
+        console.log("> message:" + message)
         // totp auth requested
         if (code === 4800) {
           that.set('datastore.signin_session_token', signin_session_token)

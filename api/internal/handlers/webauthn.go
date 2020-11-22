@@ -59,28 +59,36 @@ func BeginRegistration(userService UserService, web *webauthn.WebAuthn) gin.Hand
 
 func FinishRegistration(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c, userService)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
 
-		user, err := rh.UserFromContext()
-		if rh.HandleError(err) {
+		user, err := r.UserFromContext()
+		if err != nil {
+			r.Logf("webauthn.finish-registration.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(AuthenticationError, UserUnknown)
 			return
 		}
 
 		marshaledData := []byte(user.WebAuthnSessionData)
 		sessionData := webauthn.SessionData{}
 		err = json.Unmarshal(marshaledData, &sessionData)
-		if rh.HandleError(err) {
+		if err != nil {
+			r.Logf("webauthn.finish-registration.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling)
 			return
 		}
 
 		credential, err := web.FinishRegistration(user, sessionData, c.Request)
-		if rh.HandleError(err) {
+		if err != nil {
+			r.Logf("webauthn.finish-registration.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(WebauthnError, RegistrationError)
 			return
 		}
 
 		marshaledCredential, err := json.Marshal(credential)
-		if rh.HandleError(err) {
+		if err != nil {
+			r.Logf("webauthn.finish-registration.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling)
 			return
 		}
 
@@ -130,12 +138,16 @@ func BeginLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc
 
 		// generate PublicKeyCredentialCreationOptions, session data
 		options, sessionData, err := web.BeginLogin(user)
-		if r.HandleError(err) {
+		if err != nil {
+			r.Logf("webauthn.begin-login.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(WebauthnError, LoginFailed)
 			return
 		}
 
 		marshaledData, err := json.Marshal(sessionData)
-		if r.HandleError(err) {
+		if err != nil {
+			r.Logf("webauthn.begin-login.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling)
 			return
 		}
 		user.WebAuthnSessionData = string(marshaledData)
@@ -146,11 +158,13 @@ func BeginLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc
 		}
 
 		r.SetContentTypeJSON()
-		out, err := json.Marshal(&options)
-		if r.HandleError(err) {
+		response, err := json.Marshal(&options)
+		if err != nil {
+			r.Logf("webauthn.begin-login.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling)
 			return
 		}
-		c.String(http.StatusOK, string(out))
+		c.String(http.StatusOK, string(response))
 	}
 }
 
@@ -171,7 +185,9 @@ func FinishLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFun
 		marshaledData := []byte(user.WebAuthnSessionData)
 		sessionData := webauthn.SessionData{}
 		err := json.Unmarshal(marshaledData, &sessionData)
-		if r.HandleError(err) {
+		if err != nil {
+			r.Logf("webauthn.finish-login.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling)
 			return
 		}
 
@@ -186,7 +202,7 @@ func FinishLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFun
 			credential := webauthn.Credential{}
 			err = json.Unmarshal([]byte(cred.Credential), &credential)
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Unmarshalling))
+				r.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling)
 				return
 			}
 			credentials = append(credentials, credential)
@@ -194,7 +210,9 @@ func FinishLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFun
 		user.Credentials = credentials
 
 		_, err = web.FinishLogin(user, sessionData, c.Request)
-		if r.HandleError(err) {
+		if err != nil {
+			r.Logf("webauthn.finish-login.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(WebauthnError, FinishLoginError)
 			return
 		}
 

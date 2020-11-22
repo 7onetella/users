@@ -58,6 +58,8 @@ const (
 	ServerError // 5xxx
 
 	TOTPError // 6xxx
+
+	WebauthnError // 7xxx
 )
 
 // DatabaseError reasons
@@ -145,6 +147,15 @@ const (
 	InvalidTOTP Reason = 100 * (iota + 1) // 61XX
 
 	ProblemEncodingQRCode
+)
+
+// Webauthn reasons
+const (
+	RegistrationError Reason = 100 * (iota + 1) // 71XX
+
+	LoginFailed
+
+	FinishLoginError
 )
 
 func New(category Category, reason Reason) *Error {
@@ -243,6 +254,19 @@ func New(category Category, reason Reason) *Error {
 			msg = "There was an error while encoding QR Code"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category TOTPError.",
+				reason))
+		}
+
+	case WebauthnError:
+		switch reason {
+		case RegistrationError:
+			msg = "Error registering"
+		case LoginFailed:
+			msg = "Login failed"
+		case FinishLoginError:
+			msg = "Finishing login failed"
+		default:
+			panic(fmt.Sprintf("Unsupported error reason %d under category WebauthnError.",
 				reason))
 		}
 
