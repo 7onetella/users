@@ -32,15 +32,15 @@ func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc 
 		user.TOTPSecretTmpExp = CurrentTimeInSeconds() + 60*5
 		dberr := userService.UpdateTOTPTmp(user)
 		if dberr != nil {
-			dberr.Log(r.TX())
-			c.AbortWithStatusJSON(http.StatusBadRequest, New(DatabaseError, PersistingFailed))
+			r.Logf("totp.persisting-user.failed user=%#v error=%s", user, dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, PersistingFailed)
 			return
 		}
 
 		qrBytes, err := QR(url)
 		if err != nil {
-			LogErr(r.TX(), "error encoding qr code", err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(TOTPError, ProblemEncodingQRCode))
+			r.Logf("totp.encoding-qr-code.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(TOTPError, ProblemEncodingQRCode)
 			return
 		}
 
@@ -48,7 +48,7 @@ func NewTOTPRaw(userService UserService, totpIssuerName string) gin.HandlerFunc 
 		w.Header().Add(ContentType, ImagePNG)
 		_, err = w.Write(qrBytes)
 		if err != nil {
-			LogErr(r.TX(), "error writing image bytes", err)
+			r.Logf("totp.writing-image-bytes.failed err=%s", err)
 		}
 	}
 }
@@ -99,15 +99,15 @@ func NewTOTPJson(userService UserService, totpIssuerName string) gin.HandlerFunc
 		user.TOTPSecretTmpExp = CurrentTimeInSeconds() + 60*5
 		dberr := userService.UpdateTOTPTmp(user)
 		if dberr != nil {
-			dberr.Log(r.TX())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, PersistingFailed))
+			r.Logf("totp.persisting-user.failed user=%#v error=%s", user, dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, PersistingFailed)
 			return
 		}
 
 		qrBytes, err := QR(url)
 		if err != nil {
-			LogErr(r.TX(), "error encoding qr code", err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(TOTPError, ProblemEncodingQRCode))
+			r.Logf("totp.encoding-qr-code.failed err=%s", err)
+			r.AbortWithStatusInternalServerError(TOTPError, ProblemEncodingQRCode)
 			return
 		}
 
@@ -178,14 +178,14 @@ func ConfirmToken(userService UserService) gin.HandlerFunc {
 		r.WriteCORSHeader()
 		user, err := r.UserFromContext()
 		if err != nil {
-			r.DenyAccessForAnonymous(AuthenticationError, UserUnknown)
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, UserUnknown)
 			return
 		}
 
 		var cred TOTPCredentials
 		err = c.ShouldBindJSON(&cred)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Marshalling))
+			r.AbortWithStatusInternalServerError(JSONAPISpecError, Marshalling)
 			return
 		}
 
@@ -205,10 +205,11 @@ func ConfirmToken(userService UserService) gin.HandlerFunc {
 
 		dberr := userService.UpdateTOTP(user)
 		if dberr != nil {
-			dberr.Log(r.TX())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, PersistingFailed))
+			r.Logf("totp.persisting-user.failed user=%#v error=%s", user, dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, PersistingFailed)
 			return
 		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"status": "totp enabled",
 		})

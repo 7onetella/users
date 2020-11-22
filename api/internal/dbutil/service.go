@@ -113,7 +113,7 @@ func (u UserService) FindByEmail(email string) (User, *DBOpError) {
 	return user, nil
 }
 
-func (u UserService) FindUserByAuthEventID(eventID string) (User, *DBOpError) {
+func (u UserService) FindUserByAuthEventID(eventID string) (User, error) {
 	db := u.DB
 	user := User{}
 	sql := `

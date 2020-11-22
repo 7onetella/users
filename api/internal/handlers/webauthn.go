@@ -97,19 +97,23 @@ func FinishRegistration(userService UserService, web *webauthn.WebAuthn) gin.Han
 
 func BeginLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c, userService)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
 
 		signinSessionToken := c.GetHeader(SigninSessionTokenHeader)
 		eventID, _ := Base64Decode(signinSessionToken)
 		log.Printf("event id = %s", eventID)
 		user, dberr := userService.FindUserByAuthEventID(eventID)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("webauthn.finding-user.failed event_id=%s error=%s", eventID, dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, QueryingFailed)
 			return
 		}
 
 		userCredentials, dberr := userService.FindUserCredentialByUserID(user.ID)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("webauthn.finding-user-credential.failed user_id=%s error=%s", user.ID, dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, QueryingFailed)
 			return
 		}
 		var credentials []webauthn.Credential
@@ -117,7 +121,7 @@ func BeginLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc
 			credential := webauthn.Credential{}
 			err := json.Unmarshal([]byte(cred.Credential), &credential)
 			if err != nil {
-				c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Unmarshalling))
+				r.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling)
 				return
 			}
 			credentials = append(credentials, credential)
@@ -126,23 +130,24 @@ func BeginLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc
 
 		// generate PublicKeyCredentialCreationOptions, session data
 		options, sessionData, err := web.BeginLogin(user)
-		if rh.HandleError(err) {
+		if r.HandleError(err) {
 			return
 		}
 
 		marshaledData, err := json.Marshal(sessionData)
-		if rh.HandleError(err) {
+		if r.HandleError(err) {
 			return
 		}
 		user.WebAuthnSessionData = string(marshaledData)
 		dberr = userService.SaveWebauthnSession(user)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.AbortWithStatusInternalServerError(DatabaseError, PersistingFailed)
 			return
 		}
 
-		rh.SetContentTypeJSON()
+		r.SetContentTypeJSON()
 		out, err := json.Marshal(&options)
-		if rh.HandleError(err) {
+		if r.HandleError(err) {
 			return
 		}
 		c.String(http.StatusOK, string(out))
@@ -151,25 +156,29 @@ func BeginLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc
 
 func FinishLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c, userService)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
 
 		signInSessionToken := c.GetHeader(SigninSessionTokenHeader)
 		eventID, _ := Base64Decode(signInSessionToken)
 		user, dberr := userService.FindUserByAuthEventID(eventID)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("webauthn.finding-auth-event.failed event_id=%s error=%s", eventID, dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, QueryingFailed)
 			return
 		}
 
 		marshaledData := []byte(user.WebAuthnSessionData)
 		sessionData := webauthn.SessionData{}
 		err := json.Unmarshal(marshaledData, &sessionData)
-		if rh.HandleError(err) {
+		if r.HandleError(err) {
 			return
 		}
 
 		userCredentials, dberr := userService.FindUserCredentialByUserID(user.ID)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("webauthn.finding-credentials-for-user.failed usert_id=%s error=%s", user.ID, dberr)
+			r.AbortWithStatusInternalServerError(DatabaseError, QueryingFailed)
 			return
 		}
 		var credentials []webauthn.Credential
@@ -185,7 +194,7 @@ func FinishLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFun
 		user.Credentials = credentials
 
 		_, err = web.FinishLogin(user, sessionData, c.Request)
-		if rh.HandleError(err) {
+		if r.HandleError(err) {
 			return
 		}
 

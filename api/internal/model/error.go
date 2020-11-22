@@ -70,6 +70,8 @@ const (
 	Unknown
 
 	GeneralError
+
+	DeletingFailed
 )
 
 // None is a non-specified error.
@@ -121,6 +123,14 @@ const (
 	WebAuthnRequired
 
 	WebauthnRegistrationFailure
+
+	ClientNotFound
+
+	OAuth2NonceUsedAlready
+
+	ValidatingClientFailed
+
+	AuthorizationRequestRecordNotFound
 )
 
 // ServerError reasons
@@ -148,6 +158,8 @@ func New(category Category, reason Reason) *Error {
 			msg = "Database query failed"
 		case PersistingFailed:
 			msg = "Writing to database failed"
+		case DeletingFailed:
+			msg = "Deleting failed"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category DatabaseError.",
 				reason))
@@ -201,6 +213,14 @@ func New(category Category, reason Reason) *Error {
 			msg = "WebAuthn Auth Required"
 		case WebauthnRegistrationFailure:
 			msg = "Failed to register user's U2F key"
+		case ClientNotFound:
+			msg = "Client not found"
+		case OAuth2NonceUsedAlready:
+			msg = "OAuth2 Nonce already used"
+		case ValidatingClientFailed:
+			msg = "Client authentication failed"
+		case AuthorizationRequestRecordNotFound:
+			msg = "Authorization request record not found"
 		default:
 			panic(fmt.Sprintf("Unsupported error reason %d under category AuthenticationError.",
 				reason))

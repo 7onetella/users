@@ -40,57 +40,55 @@ import (
 //       "$ref": "#/definitions/AuthorizationResponse"
 func OAuth2Authorize(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c, userService)
-		user, err := rh.UserFromContext()
+		r := NewRequestHandler(c, userService)
+		user, err := r.UserFromContext()
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, New(AuthenticationError, UserUnknown))
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, UserUnknown)
 			return
 		}
-		rh.WriteCORSHeader()
+		r.WriteCORSHeader()
 
 		ar := oauth2.AuthorizationRequest{}
 		err = c.BindJSON(&ar)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(JSONAPISpecError, Unmarshalling))
+			r.AbortWithStatusUnauthorizedError(JSONAPISpecError, Unmarshalling)
 		}
 
 		// does client exist?
 		clientExists, dberr := userService.DoesClientExist(ar.ClientID)
-		if rh.HandleDBError(dberr) {
-			return
+		if dberr != nil {
+			r.Logf("oauth2.authorize.failed client_id=%s error=%s", ar.ClientID, dberr)
+			r.AbortWithStatusUnauthorizedError(JSONAPISpecError, Unmarshalling)
 		}
 		// if no then send error
 		if !clientExists {
-			c.JSON(401, gin.H{
-				"status": "error",
-				"reason": "unknown client",
-			})
+			r.Logf("oauth2.client-check.failed client_id=%s error=%s", ar.ClientID, dberr)
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, ClientNotFound)
 			return
 		}
 
 		// has this request been made before with the current nonce
 		if userService.NonceUsedBefore(ar.ClientID, user.ID, ar.Nonce) {
-			c.JSON(401, gin.H{
-				"status": "error",
-				"reason": "nonce has been used already",
-			})
+			r.Logf("oauth2.nonce-check.failed client_id=%s user_id=%s nonce=%s, error=%s", ar.ClientID, user.ID, ar.Nonce, dberr)
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, OAuth2NonceUsedAlready)
 			return
 		}
 
-		// NamedExec permission for the user
-		dberr = userService.UpdatePermissions(oauth2.UserGrants{UserID: user.ID, ClientID: ar.ClientID, Scope: ar.Scope})
-		if rh.HandleDBError(dberr) {
-			return
+		// update permission for the user
+		grant := oauth2.UserGrants{UserID: user.ID, ClientID: ar.ClientID, Scope: ar.Scope}
+		dberr = userService.UpdatePermissions(grant)
+		if dberr != nil {
+			r.Logf("oauth2.updating-permission.failed grant=%#v error=%s", grant, dberr)
+			r.AbortWithStatusUnauthorizedError(JSONAPISpecError, Unmarshalling)
 		}
 
 		code := uuid.New().String()
 		authorizationCode := oauth2.AuthorizationCode{Code: code, ClientID: ar.ClientID, CreatedAt: time.Now().Unix(), UserID: user.ID}
 		dberr = userService.StoreAuthorizationRequestCode(authorizationCode)
-		if rh.HandleDBError(dberr) {
-			return
+		if dberr != nil {
+			r.Logf("oauth2.updating-permission.failed authorization_code=%#v error=%s", authorizationCode, dberr)
+			r.AbortWithStatusUnauthorizedError(JSONAPISpecError, Unmarshalling)
 		}
-
-		log.Printf("payload = \n%#v\n", ar)
 
 		response := oauth2.AuthorizationResponse{
 			Code:        code,
@@ -99,7 +97,7 @@ func OAuth2Authorize(userService UserService) gin.HandlerFunc {
 			State:       ar.State,
 		}
 
-		c.JSON(200, response)
+		c.JSON(http.StatusOK, response)
 	}
 }
 
@@ -159,8 +157,8 @@ func OAuth2Authorize(userService UserService) gin.HandlerFunc {
 // security: []
 func OAuth2AccessToken(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c, userService)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
 
 		grantType := c.PostForm("grant_type")
 		if grantType != "authorization_code" {
@@ -178,15 +176,14 @@ func OAuth2AccessToken(userService UserService) gin.HandlerFunc {
 		// is this valid request from client?
 		// validate client with client_secret
 		authenticated, dberr := userService.AuthenticateClientUsingSecret(clientID, clientSecret)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("oauth2.access-token-authentication.failed client_id error=%s", clientID, dberr)
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, ValidatingClientFailed)
 			return
 		}
 
 		if !authenticated {
-			c.JSON(401, gin.H{
-				"status": "error",
-				"reason": "we don't know who you are",
-			})
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, ValidatingClientFailed)
 			return
 		}
 
@@ -199,7 +196,9 @@ func OAuth2AccessToken(userService UserService) gin.HandlerFunc {
 
 		// find authorization request record with (code, client_id)
 		authCode, dberr := userService.GetAuthorizationRequestCode(code, clientID)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("oauth2.find-auth-request-code.failed client_id error=%s", clientID, dberr)
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, AuthorizationRequestRecordNotFound)
 			return
 		}
 
@@ -212,12 +211,16 @@ func OAuth2AccessToken(userService UserService) gin.HandlerFunc {
 		//}
 
 		userFromDB, dberr := userService.Get(authCode.UserID)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("oauth2.finding-user.failed user_id error=%s", authCode.UserID, dberr)
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, UserUnknown)
 			return
 		}
 
 		grants, dberr := userService.GetUserGrantsForClient(authCode.UserID, clientID)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("oauth2.finding-grants-for-user.failed user_id client_id=%s error=%s", authCode.UserID, clientID, dberr)
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, UserUnknown)
 			return
 		}
 
@@ -232,7 +235,9 @@ func OAuth2AccessToken(userService UserService) gin.HandlerFunc {
 			Token:   accessTokenStr,
 		}
 		dberr = userService.StoreAccessTokenForUser(accessToken)
-		if rh.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("oauth2.storing-access-token.failed error=%s", dberr)
+			r.AbortWithStatusUnauthorizedError(DatabaseError, PersistingFailed)
 			return
 		}
 
@@ -251,18 +256,18 @@ func OAuth2AccessToken(userService UserService) gin.HandlerFunc {
 
 func GetClientName(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		rh := NewRequestHandler(c, userService)
-		rh.WriteCORSHeader()
+		r := NewRequestHandler(c, userService)
+		r.WriteCORSHeader()
 		clientID := c.Param("id")
 
 		client, dberr := userService.GetClient(clientID)
 		if dberr != nil {
-			dberr.Log(rh.TX())
-			c.AbortWithStatusJSON(http.StatusInternalServerError, New(DatabaseError, QueryingFailed))
+			r.Logf("oauth2.finding-client.failed client_id=%s error=%s", clientID, dberr)
+			r.AbortWithStatusUnauthorizedError(AuthenticationError, ClientNotFound)
 			return
 		}
 
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"name": client.Name,
 		})
 	}

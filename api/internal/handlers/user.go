@@ -49,6 +49,8 @@ func init() {
 //     schema:
 //       type: object
 //       "$ref": "#/definitions/JSONAPIUserSignupResponse"
+//   '500':
+//     description: internal server issue
 // security: []
 func Signup(userService UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -76,7 +78,7 @@ func Signup(userService UserService) gin.HandlerFunc {
 		dberr := userService.Register(user)
 		if dberr != nil {
 			r.Logf("signup.register.failed err=%s", dberr)
-			r.AbortWithStatusInternalServerError(DatabaseError, GeneralError)
+			r.AbortWithStatusInternalServerError(DatabaseError, PersistingFailed)
 		}
 
 		r.SetContentTypeJSON()
@@ -209,7 +211,8 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 		cred := Credentials{}
 		err := c.ShouldBind(&cred)
 		if err != nil {
-			r.DenyAccessForAnonymous(JSONAPISpecError, Unmarshalling)
+			r.Logf("signin.jsong-binding.failed error=%s", err)
+			r.AbortWithStatusUnauthorizedError(JSONAPISpecError, Unmarshalling)
 			return
 		}
 
@@ -220,17 +223,17 @@ func Signin(userService UserService, ttl time.Duration, issuer string) gin.Handl
 			eventID, err := r.ExtractEventID(cred.SigninSessionToken)
 			if err != nil {
 				r.Logf("signin.decode-userid.failed signin_session_token=%s error=%s", cred.SigninSessionToken, err)
-				r.DenyAccessForAnonymous(AuthenticationError, SigninSessionTokenDecodingFailed)
+				r.AbortWithStatusUnauthorizedError(AuthenticationError, SigninSessionTokenDecodingFailed)
 				return
 			}
 			e, dberr := userService.GetAuthEvent(eventID)
 			if dberr != nil {
 				r.Logf("signin.get-auth-event.failed event_id=%s error=%v", eventID, dberr)
-				r.DenyAccessForAnonymous(DatabaseError, QueryingFailed)
+				r.AbortWithStatusUnauthorizedError(DatabaseError, QueryingFailed)
 				return
 			}
 			if r.IsSigninSessionStillValid(e.Timestamp, time.Minute*5) {
-				r.DenyAccessForUser(e.UserID, AuthenticationError, SigninSessionExpired)
+				r.AbortWithStatusUnauthorizedError(AuthenticationError, SigninSessionExpired)
 				return
 			}
 			userFromDB, dberr := userService.Get(e.UserID)
@@ -381,7 +384,9 @@ func DeleteUser(userService UserService) gin.HandlerFunc {
 		}
 
 		dberr := userService.Delete(id)
-		if r.HandleDBError(dberr) {
+		if dberr != nil {
+			r.Logf("user.delete.failed id=%s error=%s", id, dberr)
+			r.AbortWithStatusUnauthorizedError(DatabaseError, DeletingFailed)
 			return
 		}
 
