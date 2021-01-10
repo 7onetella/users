@@ -246,10 +246,10 @@ func OAuth2AccessToken(userService UserService) gin.HandlerFunc {
 		c.Header("Pragma", "no-cache")
 		c.JSON(200, gin.H{
 			"access_token":  accessTokenStr, // jwt token
-			"token_type":    "bearer",
+			"token_type":    "Bearer",
 			"expires_in":    1 * 60 * 60 * 24,
 			"refresh_token": "IwOGYzYTlmM2YxOTQ5MGE3YmNmMDFkNTVk", // random string token
-			"scope":         grants.Scope,
+			"scope":         grants.Scope,                         // openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile
 		})
 	}
 }

@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-const SigninSessionTokenHeader = "SignSessionToken"
+const SigninSessionTokenHeader = "SignInSessionToken"
 
 func BeginRegistration(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -111,9 +111,9 @@ func BeginLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFunc
 		signinSessionToken := c.GetHeader(SigninSessionTokenHeader)
 		eventID, _ := Base64Decode(signinSessionToken)
 		log.Printf("event id = %s", eventID)
-		user, dberr := userService.FindUserByAuthEventID(eventID)
-		if dberr != nil {
-			r.Logf("webauthn.finding-user.failed event_id=%s error=%s", eventID, dberr)
+		user, err := userService.FindUserByAuthEventID(eventID)
+		if err != nil {
+			r.Logf("webauthn.finding-user.failed event_id=%s error=%s", eventID, err)
 			r.AbortWithStatusInternalServerError(DatabaseError, QueryingFailed)
 			return
 		}
@@ -175,16 +175,16 @@ func FinishLogin(userService UserService, web *webauthn.WebAuthn) gin.HandlerFun
 
 		signInSessionToken := c.GetHeader(SigninSessionTokenHeader)
 		eventID, _ := Base64Decode(signInSessionToken)
-		user, dberr := userService.FindUserByAuthEventID(eventID)
-		if dberr != nil {
-			r.Logf("webauthn.finding-auth-event.failed event_id=%s error=%s", eventID, dberr)
+		user, err := userService.FindUserByAuthEventID(eventID)
+		if err != nil {
+			r.Logf("webauthn.finding-auth-event.failed event_id=%s error=%s", eventID, err)
 			r.AbortWithStatusInternalServerError(DatabaseError, QueryingFailed)
 			return
 		}
 
 		marshaledData := []byte(user.WebAuthnSessionData)
 		sessionData := webauthn.SessionData{}
-		err := json.Unmarshal(marshaledData, &sessionData)
+		err = json.Unmarshal(marshaledData, &sessionData)
 		if err != nil {
 			r.Logf("webauthn.finish-login.failed err=%s", err)
 			r.AbortWithStatusInternalServerError(JSONAPISpecError, Unmarshalling)
