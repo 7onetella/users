@@ -30,8 +30,8 @@ go get -u github.com/mitchellh/gox
 echo cross compile
 "${GOPATH}"/bin/gox -osarch="linux/amd64"
 
-mv api_linux_amd64 api_linux_amd64
-cp api_linux_amd64 ../../box/playbooks/roles/authp/files/api_linux_amd64
-scp -i ~/.aws/7onetella.pem api_linux_amd64 ubuntu@authp.7onetella.net:/root/
+# mv api_linux_amd64 api_linux_amd64
+# cp api_linux_amd64 ../../box/playbooks/roles/authp/files/api_linux_amd64
+# scp -i ~/.aws/7onetella.pem api_linux_amd64 ubuntu@authp.7onetella.net:/root/
 
 
