@@ -58,6 +58,13 @@ package main
 
 import (
 	"context"
+	"embed"
+	_ "embed"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/handlers"
 	"github.com/duo-labs/webauthn/webauthn"
@@ -65,10 +72,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"log"
-	"net/http"
-	"os"
-	"path/filepath"
 )
 
 var db *sqlx.DB
@@ -126,7 +129,10 @@ func main() {
 	}
 
 	// ----- EmberJS SPA resource ---------------------------------
-	h := http.StripPrefix("/accounts/", http.FileServer(assetFS()))
+	//go:embed accounts/*
+	var assets embed.FS
+
+	h := http.StripPrefix("/accounts/", http.FileServer(http.FS(assets)))
 	r.GET("/accounts/*path", func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
 	})
