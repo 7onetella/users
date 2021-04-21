@@ -18,11 +18,10 @@ cp -r ../accounts/dist/* ./accounts/
 # Jenkins path can be missing this
 PATH=$PATH:.:~/bin
 
-echo generate binddata.go file
+echo generating redoc documentation
 swagger generate spec -m > accounts/swagger.json
 cp -r redoc/redoc.html accounts
 cp -r redoc/*.png accounts/assets/
-go-bindata-assetfs accounts/...
 
 # get gox for cross compilation
 go get -u github.com/mitchellh/gox
