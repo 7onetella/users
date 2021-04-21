@@ -59,7 +59,6 @@ package main
 import (
 	"context"
 	"embed"
-	_ "embed"
 	"log"
 	"net/http"
 	"os"
@@ -81,6 +80,9 @@ var _RPID string
 var _RPOrigin string
 var connStr string
 var issuerName string
+
+//go:embed accounts/*
+var assets embed.FS
 
 func init() {
 	stage = GetEnvWithDefault("STAGE", "localhost")
@@ -129,10 +131,8 @@ func main() {
 	}
 
 	// ----- EmberJS SPA resource ---------------------------------
-	//go:embed accounts/*
-	var assets embed.FS
 
-	h := http.StripPrefix("/accounts/", http.FileServer(http.FS(assets)))
+	h := http.StripPrefix("", http.FileServer(http.FS(assets)))
 	r.GET("/accounts/*path", func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
 	})
