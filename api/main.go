@@ -58,6 +58,12 @@ package main
 
 import (
 	"context"
+	"embed"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+
 	. "github.com/7onetella/users/api/internal/dbutil"
 	. "github.com/7onetella/users/api/internal/handlers"
 	"github.com/duo-labs/webauthn/webauthn"
@@ -65,10 +71,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"log"
-	"net/http"
-	"os"
-	"path/filepath"
 )
 
 var db *sqlx.DB
@@ -78,6 +80,9 @@ var _RPID string
 var _RPOrigin string
 var connStr string
 var issuerName string
+
+//go:embed accounts/*
+var assets embed.FS
 
 func init() {
 	stage = GetEnvWithDefault("STAGE", "localhost")
@@ -126,7 +131,8 @@ func main() {
 	}
 
 	// ----- EmberJS SPA resource ---------------------------------
-	h := http.StripPrefix("/accounts/", http.FileServer(assetFS()))
+
+	h := http.StripPrefix("", http.FileServer(http.FS(assets)))
 	r.GET("/accounts/*path", func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
 	})

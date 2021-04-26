@@ -18,11 +18,10 @@ cp -r ../accounts/dist/* ./accounts/
 # Jenkins path can be missing this
 PATH=$PATH:.:~/bin
 
-echo generate binddata.go file
+echo generating redoc documentation
 swagger generate spec -m > accounts/swagger.json
 cp -r redoc/redoc.html accounts
 cp -r redoc/*.png accounts/assets/
-go-bindata-assetfs accounts/...
 
 # get gox for cross compilation
 go get -u github.com/mitchellh/gox
@@ -30,8 +29,8 @@ go get -u github.com/mitchellh/gox
 echo cross compile
 "${GOPATH}"/bin/gox -osarch="linux/amd64"
 
-mv api_linux_amd64 api_linux_amd64
-cp api_linux_amd64 ../../box/playbooks/roles/authp/files/api_linux_amd64
-scp -i ~/.aws/7onetella.pem api_linux_amd64 ubuntu@accounts.7onetella.net:/root/
+# mv api_linux_amd64 api_linux_amd64
+# cp api_linux_amd64 ../../box/playbooks/roles/authp/files/api_linux_amd64
+# scp -i ~/.aws/7onetella.pem api_linux_amd64 ubuntu@authp.7onetella.net:/root/
 
 

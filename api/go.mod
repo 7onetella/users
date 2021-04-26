@@ -1,6 +1,6 @@
 module github.com/7onetella/users/api
 
-go 1.13
+go 1.16
 
 require (
 	github.com/bombsimon/wsl v1.2.8 // indirect
