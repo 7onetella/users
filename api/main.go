@@ -87,7 +87,7 @@ var assets embed.FS
 func init() {
 	stage = GetEnvWithDefault("STAGE", "localhost")
 
-	port = ":" + GetEnvWithDefault("HTTP_PORT", "8080")
+	port = ":" + GetEnvWithDefault("HTTP_PORT", "9090")
 
 	_RPID = GetEnvWithDefault("RPID", "localhost")
 
