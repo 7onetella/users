@@ -2,6 +2,8 @@ package main
 
 import (
 	"embed"
+	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 
@@ -15,8 +17,10 @@ func main() {
 
 	r := gin.Default()
 
-	h := http.StripPrefix("", http.FileServer(http.FS(assets)))
+	fsys, _ := fs.Sub(assets, "dist")
+	h := http.StripPrefix("", http.FileServer(http.FS(fsys)))
 	r.GET("/*path", func(c *gin.Context) {
+		fmt.Println(c.Request.URL.Path)
 		h.ServeHTTP(c.Writer, c.Request)
 	})
 

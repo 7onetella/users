@@ -4,7 +4,7 @@ module.exports = function(environment) {
   let ENV = {
     modulePrefix: 'accounts',
     environment,
-    rootURL: '/proxy/4200/dist/',
+    rootURL: '/',
     locationType: 'hash',
     EmberENV: {
       FEATURES: {
@@ -51,7 +51,7 @@ module.exports = function(environment) {
     // ENV.APP.LOG_TRANSITIONS_INTERNAL = true;
     // ENV.APP.LOG_VIEW_LOOKUPS = true;
     ENV.modulePrefix = 'accounts'
-    ENV.rootURL = '/proxy/4200/accounts/',
+    ENV.rootURL = '/proxy/4200/',
 
 
     ENV['ember-simple-auth-token'].serverTokenEndpoint = 'http://localhost:9090/signin'
