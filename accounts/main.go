@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +16,10 @@ import (
 var assets embed.FS
 
 func main() {
+	proxy()
+}
+
+func fileserver() {
 
 	r := gin.Default()
 
@@ -26,4 +32,24 @@ func main() {
 
 	log.Println(r.Run(":4200"))
 
+}
+
+func proxy() {
+	origin, _ := url.Parse("http://localhost:4200/")
+
+	director := func(req *http.Request) {
+		req.Header.Add("X-Forwarded-Host", req.Host)
+		req.Header.Add("X-Origin-Host", origin.Host)
+		req.URL.Scheme = "http"
+		req.URL.Host = origin.Host
+	}
+
+	proxy := &httputil.ReverseProxy{Director: director}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.RequestURI)
+		proxy.ServeHTTP(w, r)
+	})
+
+	log.Fatal(http.ListenAndServe(":9001", nil))
 }
