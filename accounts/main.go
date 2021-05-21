@@ -42,14 +42,17 @@ func proxy() {
 		req.Header.Add("X-Origin-Host", origin.Host)
 		req.URL.Scheme = "http"
 		req.URL.Host = origin.Host
+		req.URL.Path = "/proxy/9200" + req.URL.Path
+		fmt.Println("director path : " + req.URL.Path)
+		fmt.Println()
 	}
 
 	proxy := &httputil.ReverseProxy{Director: director}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r.RequestURI)
+		fmt.Println("vscode   path : " + r.RequestURI)
 		proxy.ServeHTTP(w, r)
 	})
 
-	log.Fatal(http.ListenAndServe(":9001", nil))
+	log.Fatal(http.ListenAndServe(":9200", nil))
 }

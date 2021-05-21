@@ -51,7 +51,7 @@ module.exports = function(environment) {
     // ENV.APP.LOG_TRANSITIONS_INTERNAL = true;
     // ENV.APP.LOG_VIEW_LOOKUPS = true;
     ENV.modulePrefix = 'accounts';
-    ENV.rootURL = '/proxy/4200/';
+    ENV.rootURL = '/proxy/9200/';
 
     ENV['ember-simple-auth-token'].serverTokenEndpoint = 'http://localhost:9090/signin';
     ENV['ember-simple-auth-token'].serverTokenRefreshEndpoint = 'http://localhost:9090/refresh';
